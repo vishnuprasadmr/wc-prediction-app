@@ -56,21 +56,37 @@ curl -X POST https://YOUR_PROJECT.supabase.co/functions/v1/sync-scores \
 
 Admin can still override scores in the app; enable **manual override** to block auto-sync for a match.
 
-## 3. Frontend Deploy (Vercel)
+## 3. Frontend Deploy
+
+### Vercel
 
 1. Push repo to GitHub.
 2. Import project in Vercel.
-3. Set environment variables:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-   - `VITE_LEAGUE_INVITE_CODE=SIMELABS-WC26`
+3. Set environment variables (see below).
 4. Deploy.
 
-Or deploy via CLI:
 ```bash
 npm run build
 npx vercel --prod
 ```
+
+### Netlify
+
+1. Import the GitHub repo in Netlify.
+2. Build settings (also in `netlify.toml`):
+   - **Build command:** `npm run build`
+   - **Publish directory:** `dist` ← must be `dist`, not the repo root
+3. Site settings → Environment variables → add:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+   - `VITE_LEAGUE_INVITE_CODE=SIMELABS-WC26`
+4. Deploy → **Clear cache and deploy site** if you previously saw a blank page.
+
+### Required environment variables
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+- `VITE_LEAGUE_INVITE_CODE=SIMELABS-WC26`
 
 ## 4. Share with Simelabs Team
 
