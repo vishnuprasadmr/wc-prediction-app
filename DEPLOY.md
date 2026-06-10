@@ -73,14 +73,15 @@ npx vercel --prod
 ### Netlify
 
 1. Import the GitHub repo in Netlify.
-2. Build settings (also in `netlify.toml`):
+2. Build settings — use `netlify.toml` defaults; **do not override in the UI** unless necessary:
    - **Build command:** `npm run build`
-   - **Publish directory:** `dist` ← must be `dist`, not the repo root
-3. Site settings → Environment variables → add:
+   - **Publish directory:** `dist` ← if this is `.` or empty, you get a blank page and MIME errors (`/src/main.tsx` served as octet-stream)
+3. Confirm the deploy log shows `verify-build: production bundle OK`
+4. Site settings → Environment variables → add:
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
    - `VITE_LEAGUE_INVITE_CODE=SIMELABS-WC26`
-4. Deploy → **Clear cache and deploy site** if you previously saw a blank page.
+5. Deploy → **Clear cache and deploy site** if you previously saw a blank page.
 
 ### Required environment variables
 
