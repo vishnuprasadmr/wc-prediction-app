@@ -1,0 +1,40 @@
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { Layout } from './components/Layout'
+import { ProtectedRoute, AdminRoute } from './components/ProtectedRoute'
+import { LoginPage } from './pages/LoginPage'
+import { RegisterPage } from './pages/RegisterPage'
+import { FixturesPage } from './pages/FixturesPage'
+import { PredictPage } from './pages/PredictPage'
+import { LeaderboardPage } from './pages/LeaderboardPage'
+import { ProfilePage } from './pages/ProfilePage'
+import { AdminPage } from './pages/AdminPage'
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route
+        element={
+          <ProtectedRoute>
+            <Layout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<FixturesPage />} />
+        <Route path="predict" element={<PredictPage />} />
+        <Route path="leaderboard" element={<LeaderboardPage />} />
+        <Route path="profile" element={<ProfilePage />} />
+        <Route
+          path="admin"
+          element={
+            <AdminRoute>
+              <AdminPage />
+            </AdminRoute>
+          }
+        />
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  )
+}

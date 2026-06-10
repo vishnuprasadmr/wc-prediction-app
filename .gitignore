@@ -1,0 +1,9 @@
+node_modules
+dist
+.env
+.env.local
+scripts/score-sync/.env
+.DS_Store
+*.log
+.vite
+dev-dist

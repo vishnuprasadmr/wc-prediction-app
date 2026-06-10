@@ -1,0 +1,16 @@
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn('Supabase env vars missing. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.')
+}
+
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder-key',
+)
+
+export const LEAGUE_INVITE_CODE = import.meta.env.VITE_LEAGUE_INVITE_CODE || 'SIMELABS-WC26'
+export const LEAGUE_ID = '00000000-0000-0000-0000-000000000001'

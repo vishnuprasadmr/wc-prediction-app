@@ -1,0 +1,171 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Official Simelabs brand (simelabs.com)
+ * Primary:  #26cb99 — headlines, links, accents
+ * Teal:     #009688 — secondary / widgets
+ * Black:    #000000 — dark backgrounds
+ * White:    #ffffff — text on dark
+ */
+
+/* ── Light mode ── */
+:root {
+  color-scheme: light;
+  --color-page: #f8fffc;
+  --color-page-accent: rgba(38, 203, 153, 0.1);
+  --color-card: #ffffff;
+  --color-muted: #e8f7f1;
+  --color-elevated: #ffffff;
+  --color-text: #0a1a14;
+  --color-text-muted: #5a6f66;
+  --color-text-subtle: #2a4a3c;
+  --color-border: #c5ebe0;
+  --color-accent-fg: #ffffff;
+  /* RGB channels for Tailwind opacity */
+  --color-accent: 38 203 153;
+  --color-accent-light: 77 217 176;
+  --color-accent-dark: 0 150 136;
+  --color-accent-neon: 38 203 153;
+  --shadow-card: 0 1px 3px 0 rgb(38 203 153 / 0.1);
+  --glow-accent: rgb(38 203 153 / 0.2);
+}
+
+/* ── Dark mode (Simelabs.com style) ── */
+.dark {
+  color-scheme: dark;
+  --color-page: #000000;
+  --color-page-accent: rgba(38, 203, 153, 0.06);
+  --color-card: #111111;
+  --color-muted: #1a1a1a;
+  --color-elevated: #0a0a0a;
+  --color-text: #ffffff;
+  --color-text-muted: #a0b0a8;
+  --color-text-subtle: #d0e8e0;
+  --color-border: rgba(38, 203, 153, 0.16);
+  --color-accent-fg: #000000;
+  --color-accent: 38 203 153;
+  --color-accent-light: 77 217 176;
+  --color-accent-dark: 0 150 136;
+  --color-accent-neon: 38 203 153;
+  --shadow-card: 0 0 20px rgb(38 203 153 / 0.05);
+  --glow-accent: rgb(38 203 153 / 0.18);
+}
+
+@layer base {
+  *,
+  ::before,
+  ::after {
+    --tw-ring-color: rgb(var(--color-accent) / 0.45);
+  }
+
+  html {
+    transition: background-color 0.4s ease, color 0.4s ease;
+  }
+
+  body {
+    @apply font-sans antialiased;
+    background-color: var(--color-page);
+    color: var(--color-text);
+    min-height: 100dvh;
+  }
+
+  #root {
+    min-height: 100dvh;
+  }
+
+  a {
+    color: rgb(var(--color-accent));
+  }
+}
+
+@layer components {
+  .page-shell {
+    position: relative;
+    min-height: 100dvh;
+    background-color: var(--color-page);
+  }
+
+  .page-shell::before {
+    content: '';
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 75% 50% at 100% 0%, var(--glow-accent), transparent 50%),
+      radial-gradient(ellipse 60% 40% at 0% 100%, var(--color-page-accent), transparent 45%);
+  }
+
+  .dark .page-shell::after {
+    content: '';
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    opacity: 0.28;
+    background-image: radial-gradient(circle, rgb(38 203 153 / 0.12) 1px, transparent 1px);
+    background-size: 22px 22px;
+    mask-image: linear-gradient(to bottom left, black 0%, transparent 55%);
+  }
+
+  .page-content {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+@layer utilities {
+  .bg-page {
+    background-color: var(--color-page);
+  }
+
+  .bg-card {
+    background-color: var(--color-card);
+  }
+
+  .bg-muted {
+    background-color: var(--color-muted);
+  }
+
+  .bg-elevated {
+    background-color: var(--color-elevated);
+  }
+
+  .text-theme {
+    color: var(--color-text);
+  }
+
+  .text-muted {
+    color: var(--color-text-muted);
+  }
+
+  .text-subtle {
+    color: var(--color-text-subtle);
+  }
+
+  .text-accent-fg {
+    color: var(--color-accent-fg);
+  }
+
+  .border-default {
+    border-color: var(--color-border);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  .hover\:bg-muted:hover {
+    background-color: var(--color-muted);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+}
