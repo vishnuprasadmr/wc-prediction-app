@@ -12,6 +12,7 @@ import { useState } from 'react'
 import { TruncatedText } from '../components/TruncatedText'
 import { SeasonPicksCard } from '../components/SeasonPicksCard'
 import { useSeasonQuestionnaire } from '../hooks/useSeasonQuestionnaire'
+import { ProfileAvatar } from '../components/ProfileAvatar'
 import { TeamFlag } from '../components/TeamFlag'
 
 export function ProfilePage() {
@@ -41,11 +42,17 @@ export function ProfilePage() {
         animate={{ opacity: 1, y: 0 }}
         className="rounded-2xl border border-default bg-card p-6 text-center shadow-card"
       >
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-simelabs to-simelabs-dark text-2xl font-bold text-simelabs-foreground">
-          {profile?.display_name?.charAt(0).toUpperCase() ?? '?'}
-        </div>
+        <ProfileAvatar
+          name={profile?.display_name ?? 'Player'}
+          avatarUrl={profile?.avatar_url}
+          size="lg"
+          className="mx-auto ring-2 ring-simelabs/30"
+        />
         <h2 className="type-page-title mt-3 break-words">{profile?.display_name}</h2>
         <p className="type-body-sm mt-1 break-all text-muted">{user?.email}</p>
+        {profile?.employee_id && (
+          <p className="type-caption mt-1 font-mono text-simelabs">{profile.employee_id}</p>
+        )}
         {heartTeam && (
           <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-simelabs/10 px-2.5 py-1">
             <TeamFlag team={heartTeam} emoji="" size="sm" />

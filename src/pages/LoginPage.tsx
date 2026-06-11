@@ -1,27 +1,44 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
+import { GoogleSignInButton } from '../components/GoogleSignInButton'
+import { AuthLoadingScreen } from '../components/AuthLoadingScreen'
+import { isSimelabsEmployee } from '../lib/employeeId'
+import { consumeAuthError, isOAuthCallback } from '../lib/authOAuth'
 
 export function LoginPage() {
-  const { signIn, session, loading } = useAuth()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const { signInGoogle, session, profile, loading } = useAuth()
   const [error, setError] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
 
-  if (!loading && session) return <Navigate to="/" replace />
+  useEffect(() => {
+    const oauthError = consumeAuthError()
+    if (oauthError) setError(oauthError)
+  }, [])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSubmitting(true)
+  if (loading || isOAuthCallback()) {
+    return (
+      <AuthLoadingScreen
+        message={isOAuthCallback() ? 'Signing you in...' : 'Loading...'}
+      />
+    )
+  }
+
+  if (session && isSimelabsEmployee(profile)) return <Navigate to="/" replace />
+
+  if (session && !isSimelabsEmployee(profile)) {
+    return <Navigate to="/register" replace />
+  }
+
+  const handleGoogle = async () => {
+    setGoogleLoading(true)
     setError(null)
     try {
-      await signIn(email, password)
+      await signInGoogle()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed')
-    } finally {
-      setSubmitting(false)
+      setError(err instanceof Error ? err.message : 'Google sign-in failed')
+      setGoogleLoading(false)
     }
   }
 
@@ -38,51 +55,29 @@ export function LoginPage() {
           </div>
           <h1 className="type-display">Welcome back</h1>
           <p className="type-body-sm mt-2 text-muted">
-            Simelabs WC 2026
-            <span className="block sm:inline">
-              <span className="hidden sm:inline"> </span>
-              Prediction League
-            </span>
+            Simelabs WC 2026 Prediction League
+          </p>
+          <p className="type-caption mt-2 text-pretty text-muted">
+            Sign in with your Google work account
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="type-label mb-1.5 block">Email</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="input-field"
-              placeholder="you@simelabs.com"
-              autoComplete="email"
-            />
-          </div>
-          <div>
-            <label className="type-label mb-1.5 block">Password</label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="input-field"
-              placeholder="••••••••"
-              autoComplete="current-password"
-            />
-          </div>
+        <GoogleSignInButton
+          onClick={() => void handleGoogle()}
+          loading={googleLoading}
+          label="Sign in with Google"
+        />
 
-          {error && <p className="text-sm text-red-400">{error}</p>}
-
-          <button type="submit" disabled={submitting} className="btn-primary">
-            {submitting ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
+        {error && (
+          <p className="mt-4 text-center text-sm text-red-400" role="alert">
+            {error}
+          </p>
+        )}
 
         <p className="mt-6 text-center text-sm text-muted">
-          No account?{' '}
+          New here?{' '}
           <Link to="/register" className="font-semibold text-simelabs hover:underline">
-            Join the league
+            Join with Google
           </Link>
         </p>
       </motion.div>

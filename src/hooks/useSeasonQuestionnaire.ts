@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useMatches } from './useMatches'
+import { ensureUserProfile, formatSupabaseError } from '../lib/ensureProfile'
 import { supabase } from '../lib/supabase'
 import type { SeasonAnswers } from '../lib/seasonQuestions'
 import { isSeasonAnswersComplete } from '../lib/seasonQuestions'
@@ -67,6 +68,12 @@ export function useSeasonQuestionnaire() {
       throw new Error('Please answer every question.')
     }
 
+    try {
+      await ensureUserProfile(user)
+    } catch (err) {
+      throw formatSupabaseError(err, 'Could not verify your league profile.')
+    }
+
     const now = new Date().toISOString()
     const { error: predError } = await supabase.from('season_predictions').upsert(
       {
@@ -78,14 +85,18 @@ export function useSeasonQuestionnaire() {
       { onConflict: 'user_id' },
     )
 
-    if (predError) throw predError
+    if (predError) {
+      throw formatSupabaseError(predError, 'Could not save picks')
+    }
 
     const { error: profileError } = await supabase
       .from('profiles')
       .update({ questionnaire_completed_at: now })
       .eq('id', user.id)
 
-    if (profileError) throw profileError
+    if (profileError) {
+      throw formatSupabaseError(profileError, 'Could not save picks')
+    }
 
     await refreshProfile()
     await fetchRow()

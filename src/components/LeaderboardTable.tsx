@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import type { LeaderboardEntry } from '../lib/types'
 import { sortPlayersAlphabetically } from '../lib/leaderboardUtils'
 import { useAuth } from '../contexts/AuthContext'
+import { ProfileAvatar } from './ProfileAvatar'
 import { TruncatedText } from './TruncatedText'
 
 interface LeaderboardTableProps {
@@ -11,14 +12,6 @@ interface LeaderboardTableProps {
 }
 
 const rankColors = ['text-yellow-500', 'text-subtle', 'text-amber-600']
-
-function PlayerAvatar({ name }: { name: string }) {
-  return (
-    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-simelabs/30 to-simelabs-dark/30 text-sm font-bold">
-      {name.charAt(0).toUpperCase()}
-    </div>
-  )
-}
 
 export function LeaderboardTable({
   entries,
@@ -76,7 +69,11 @@ export function LeaderboardTable({
                     : 'border-default bg-card'
                 }`}
               >
-                <PlayerAvatar name={entry.display_name} />
+                <ProfileAvatar
+                  name={entry.display_name}
+                  avatarUrl={entry.avatar_url}
+                  size="sm"
+                />
                 <div className="flex-1 min-w-0">
                   <p className="flex min-w-0 items-baseline gap-1 font-semibold">
                     <TruncatedText text={entry.display_name} className="min-w-0 flex-1" />
@@ -129,7 +126,11 @@ export function LeaderboardTable({
               {entry.rank <= 3 ? ['🥇', '🥈', '🥉'][entry.rank - 1] : entry.rank}
             </div>
 
-            <PlayerAvatar name={entry.display_name} />
+            <ProfileAvatar
+              name={entry.display_name}
+              avatarUrl={entry.avatar_url}
+              size="sm"
+            />
 
             <div className="flex-1 min-w-0">
               <p className="flex min-w-0 items-baseline gap-1 font-semibold">

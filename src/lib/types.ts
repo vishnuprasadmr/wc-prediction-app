@@ -13,6 +13,8 @@ export interface Profile {
   display_name: string
   league_id: string
   is_admin: boolean
+  employee_id?: string | null
+  avatar_url?: string | null
   created_at: string
   questionnaire_completed_at?: string | null
 }
@@ -50,6 +52,7 @@ export interface Prediction {
 export interface LeaderboardEntry {
   user_id: string
   display_name: string
+  avatar_url?: string | null
   total_points: number
   exact_scores: number
   early_bonuses?: number

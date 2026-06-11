@@ -1,19 +1,21 @@
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { AuthLoadingScreen } from './AuthLoadingScreen'
+import { isSimelabsEmployee } from '../lib/employeeId'
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { session, loading } = useAuth()
+  const { session, profile, loading } = useAuth()
 
   if (loading) {
-    return (
-      <div className="flex min-h-dvh items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-simelabs border-t-transparent" />
-      </div>
-    )
+    return <AuthLoadingScreen message="Loading..." />
   }
 
   if (!session) {
     return <Navigate to="/login" replace />
+  }
+
+  if (!isSimelabsEmployee(profile)) {
+    return <Navigate to="/register" replace />
   }
 
   return <>{children}</>
@@ -23,11 +25,7 @@ export function AdminRoute({ children }: { children: React.ReactNode }) {
   const { profile, loading } = useAuth()
 
   if (loading) {
-    return (
-      <div className="flex min-h-dvh items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-simelabs border-t-transparent" />
-      </div>
-    )
+    return <AuthLoadingScreen />
   }
 
   if (!profile?.is_admin) {

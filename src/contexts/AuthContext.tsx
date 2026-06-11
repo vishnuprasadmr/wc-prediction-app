@@ -8,16 +8,24 @@ import {
   type ReactNode,
 } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
-import { LEAGUE_ID, LEAGUE_INVITE_CODE, supabase } from '../lib/supabase'
+import {
+  completeGoogleAuth,
+  signInWithGoogle,
+  startGoogleRegistration,
+} from '../lib/authGoogle'
+import { consumeOAuthRedirectError, setAuthError } from '../lib/authOAuth'
+import { completeEmployeeProfile, ensureUserProfile, syncProfileAvatar } from '../lib/ensureProfile'
 import type { Profile } from '../lib/types'
+import { supabase } from '../lib/supabase'
 
 interface AuthContextValue {
   session: Session | null
   user: User | null
   profile: Profile | null
   loading: boolean
-  signIn: (email: string, password: string) => Promise<void>
-  signUp: (email: string, password: string, displayName: string, inviteCode: string) => Promise<void>
+  signInGoogle: () => Promise<void>
+  signUpGoogle: () => Promise<void>
+  completeEmployeeProfile: (displayName: string, employeeId: string) => Promise<void>
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
 }
@@ -29,84 +37,81 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const fetchProfile = useCallback(async (userId: string) => {
+  const fetchProfile = useCallback(async (authUser: User) => {
+    try {
+      await ensureUserProfile(authUser)
+    } catch (err) {
+      console.error('Profile ensure failed:', err)
+    }
+
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', userId)
-      .single()
+      .eq('id', authUser.id)
+      .maybeSingle()
 
     if (error) {
       console.error('Failed to fetch profile:', error.message)
       setProfile(null)
       return
     }
-    setProfile(data as Profile)
+
+    if (!data) {
+      setProfile(null)
+      return
+    }
+
+    const syncedAvatar = await syncProfileAvatar(authUser, data.avatar_url)
+    setProfile({
+      ...(data as Profile),
+      avatar_url: syncedAvatar ?? data.avatar_url,
+    })
   }, [])
 
   const refreshProfile = useCallback(async () => {
-    if (session?.user?.id) {
-      await fetchProfile(session.user.id)
+    if (session?.user) {
+      await fetchProfile(session.user)
     }
-  }, [session?.user?.id, fetchProfile])
+  }, [session?.user, fetchProfile])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
-      setSession(s)
-      if (s?.user) {
-        fetchProfile(s.user.id).finally(() => setLoading(false))
-      } else {
-        setLoading(false)
-      }
-    })
+    const oauthRedirectError = consumeOAuthRedirectError()
+    if (oauthRedirectError) setAuthError(oauthRedirectError)
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, s) => {
       setSession(s)
+
       if (s?.user) {
-        fetchProfile(s.user.id)
+        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+          await completeGoogleAuth(s.user)
+        }
+        await fetchProfile(s.user)
       } else {
         setProfile(null)
       }
+
+      setLoading(false)
     })
 
     return () => subscription.unsubscribe()
   }, [fetchProfile])
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) throw error
+  const signInGoogle = useCallback(async () => {
+    await signInWithGoogle('/login')
   }, [])
 
-  const signUp = useCallback(async (
-    email: string,
-    password: string,
-    displayName: string,
-    inviteCode: string,
-  ) => {
-    if (inviteCode.trim().toUpperCase() !== LEAGUE_INVITE_CODE.toUpperCase()) {
-      throw new Error('Invalid invite code. Ask your Simelabs admin for the league code.')
-    }
-
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { display_name: displayName, league_id: LEAGUE_ID },
-      },
-    })
-    if (error) throw error
-
-    // Profile is created by DB trigger; upsert only as fallback after session exists
-    if (data.session?.user) {
-      const { error: profileError } = await supabase.from('profiles').upsert({
-        id: data.session.user.id,
-        display_name: displayName,
-        league_id: LEAGUE_ID,
-        is_admin: false,
-      })
-      if (profileError) console.warn('Profile fallback upsert:', profileError.message)
-    }
+  const signUpGoogle = useCallback(async () => {
+    startGoogleRegistration()
+    await signInWithGoogle('/register')
   }, [])
+
+  const completeEmployeeProfileFn = useCallback(async (displayName: string, employeeId: string) => {
+    if (!session?.user) {
+      throw new Error('You must be signed in to complete registration.')
+    }
+    await completeEmployeeProfile(session.user, displayName, employeeId)
+    await fetchProfile(session.user)
+  }, [session?.user, fetchProfile])
 
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut()
@@ -120,12 +125,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: session?.user ?? null,
       profile,
       loading,
-      signIn,
-      signUp,
+      signInGoogle,
+      signUpGoogle,
+      completeEmployeeProfile: completeEmployeeProfileFn,
       signOut,
       refreshProfile,
     }),
-    [session, profile, loading, signIn, signUp, signOut, refreshProfile],
+    [session, profile, loading, signInGoogle, signUpGoogle, completeEmployeeProfileFn, signOut, refreshProfile],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
