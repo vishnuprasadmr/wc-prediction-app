@@ -1,0 +1,17 @@
+-- Season questionnaire migration (copy of 006_season_questionnaire.sql)
+-- Run the full file in Supabase SQL Editor:
+--   supabase/migrations/006_season_questionnaire.sql
+--
+-- After the Final, admin sets results in the app (Admin → Season settlement)
+-- or manually:
+--
+-- INSERT INTO season_official_results (result_key, result_value) VALUES
+--   ('world_cup_winner', 'Brazil'),
+--   ('runner_up', 'France'),
+--   ('golden_boot', 'Kylian Mbappé'),
+--   ('dark_horse', 'Morocco'),
+--   ('top_scoring_team', 'Germany')
+-- ON CONFLICT (result_key) DO UPDATE
+--   SET result_value = EXCLUDED.result_value, settled_at = now();
+--
+-- SELECT settle_season_predictions();

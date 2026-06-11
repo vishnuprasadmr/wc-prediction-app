@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { TruncatedText } from './TruncatedText'
 
 interface ScoreStepperProps {
   value: number
@@ -10,7 +11,10 @@ interface ScoreStepperProps {
 export function ScoreStepper({ value, onChange, disabled, label }: ScoreStepperProps) {
   return (
     <div className="flex flex-col items-center gap-2">
-      <span className="text-xs font-medium text-muted">{label}</span>
+      <TruncatedText
+        text={label}
+        className="type-caption max-w-[5.5rem] text-center font-medium"
+      />
       <div className="flex items-center gap-3">
         <motion.button
           whileTap={{ scale: 0.9 }}
@@ -25,7 +29,7 @@ export function ScoreStepper({ value, onChange, disabled, label }: ScoreStepperP
           key={value}
           initial={{ scale: 1.3, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="w-10 text-center text-3xl font-bold tabular-nums"
+          className="type-stat w-10 text-center"
         >
           {value}
         </motion.span>

@@ -8,6 +8,7 @@ import { ScoreStepper } from './ScoreStepper'
 import { TeamFlag } from './TeamFlag'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { TruncatedText } from './TruncatedText'
 
 interface PredictionModalProps {
   match: Match | null
@@ -96,22 +97,28 @@ export function PredictionModal({
             <div className="p-6 pb-8">
               <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-muted" />
 
-              <h2 className="text-center text-lg font-bold">Your Prediction</h2>
-              <div className="mt-3 flex items-center justify-center gap-4">
-                <div className="flex flex-col items-center gap-1.5">
+              <h2 className="type-section-title text-center">Your Prediction</h2>
+              <div className="mt-4 flex items-start justify-center gap-3 sm:gap-4">
+                <div className="flex min-w-0 max-w-[34%] flex-col items-center gap-1.5">
                   <TeamFlag team={match.home_team} emoji={match.home_flag} size="lg" />
-                  <span className="text-xs font-medium text-subtle">{match.home_team}</span>
+                  <TruncatedText
+                    text={match.home_team}
+                    className="type-caption w-full text-center font-medium text-subtle"
+                  />
                 </div>
-                <span className="text-sm font-medium text-muted">vs</span>
-                <div className="flex flex-col items-center gap-1.5">
+                <span className="type-caption shrink-0 pt-8 font-medium text-muted">vs</span>
+                <div className="flex min-w-0 max-w-[34%] flex-col items-center gap-1.5">
                   <TeamFlag team={match.away_team} emoji={match.away_flag} size="lg" />
-                  <span className="text-xs font-medium text-subtle">{match.away_team}</span>
+                  <TruncatedText
+                    text={match.away_team}
+                    className="type-caption w-full text-center font-medium text-subtle"
+                  />
                 </div>
               </div>
 
               <div className="mt-8 flex items-center justify-center gap-8">
                 <ScoreStepper value={home} onChange={setHome} label={match.home_team} />
-                <span className="text-2xl font-light text-muted">-</span>
+                <span className="type-score font-light text-muted">–</span>
                 <ScoreStepper value={away} onChange={setAway} label={match.away_team} />
               </div>
 

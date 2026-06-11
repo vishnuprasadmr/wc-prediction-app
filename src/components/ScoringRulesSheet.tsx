@@ -1,6 +1,8 @@
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { SCORING_RULES } from '../lib/scoring'
+import { SEASON_SCORING_RULES } from '../lib/seasonScoring'
+import { MAX_SEASON_BONUS } from '../lib/seasonQuestions'
 
 interface ScoringRulesSheetProps {
   open: boolean
@@ -31,26 +33,56 @@ export function ScoringRulesSheet({ open, onClose }: ScoringRulesSheetProps) {
             <div className="p-6 pb-8">
               <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-muted" />
 
-              <h2 className="text-lg font-bold">How Scoring Works</h2>
-              <p className="mt-1 text-sm text-muted">Extended scoring for each match</p>
+              <h2 className="type-section-title">How Scoring Works</h2>
+              <p className="type-body-sm mt-1 text-muted">Match picks + season specials</p>
 
-              <div className="mt-6 space-y-3">
+              <h3 className="type-label mt-6 mb-2">Per match</h3>
+              <div className="space-y-3">
                 {SCORING_RULES.map((rule) => (
                   <div
                     key={rule.label}
                     className="flex items-center justify-between rounded-xl bg-muted p-4"
                   >
-                    <div>
+                    <div className="min-w-0 pr-2">
                       <p className="font-medium">{rule.label}</p>
-                      <p className="text-xs text-muted">{rule.description}</p>
+                      <p className="text-xs text-muted text-pretty">{rule.description}</p>
                     </div>
-                    <span className="text-lg font-bold text-simelabs">{rule.points}</span>
+                    <span className="shrink-0 text-lg font-bold text-simelabs">{rule.points}</span>
                   </div>
                 ))}
               </div>
 
-              <p className="mt-4 text-center text-xs text-muted">
-                Up to 6 pts per match (5 exact + 1 early bird) · Up to 5 without exact score
+              <h3 className="type-label mt-6 mb-2">Season specials (after Final)</h3>
+              <p className="type-caption mb-3 text-pretty">
+                Pre-tournament picks — up to {MAX_SEASON_BONUS} bonus pts can change who wins the
+                league.
+              </p>
+              <div className="space-y-3">
+                {SEASON_SCORING_RULES.map((rule) => (
+                  <div
+                    key={rule.label}
+                    className="flex items-center justify-between rounded-xl border border-simelabs/20 bg-simelabs/5 p-4"
+                  >
+                    <div className="min-w-0 pr-2">
+                      <p className="flex flex-wrap items-center gap-1.5 font-medium">
+                        <span>{rule.label}</span>
+                        <span className="rounded-full bg-simelabs/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-simelabs">
+                          {rule.badge}
+                        </span>
+                      </p>
+                      <p className="text-xs text-muted text-pretty">{rule.description}</p>
+                    </div>
+                    <span className="shrink-0 text-lg font-bold text-simelabs">{rule.points}</span>
+                  </div>
+                ))}
+              </div>
+
+              <p className="type-caption mt-4 text-center text-pretty">
+                Up to 6 pts per match (5 exact + 1 early bird)
+                <span className="block sm:inline">
+                  <span className="hidden sm:inline text-muted/50"> · </span>
+                  + up to {MAX_SEASON_BONUS} season bonus
+                </span>
               </p>
 
               <button

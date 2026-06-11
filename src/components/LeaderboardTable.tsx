@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import type { LeaderboardEntry } from '../lib/types'
 import { sortPlayersAlphabetically } from '../lib/leaderboardUtils'
 import { useAuth } from '../contexts/AuthContext'
+import { TruncatedText } from './TruncatedText'
 
 interface LeaderboardTableProps {
   entries: LeaderboardEntry[]
@@ -51,9 +52,14 @@ export function LeaderboardTable({
 
     return (
       <div>
-        <p className="mb-3 text-sm text-muted">
-          {players.length} player{players.length === 1 ? '' : 's'} in the league · Rankings open
-          after the first match
+        <p className="type-body-sm mb-3 text-balance text-muted">
+          <span className="font-medium text-subtle">
+            {players.length} player{players.length === 1 ? '' : 's'} in the league
+          </span>
+          <span className="mt-0.5 block sm:mt-0 sm:inline">
+            <span className="hidden sm:inline text-muted/50"> · </span>
+            Rankings open after the first match
+          </span>
         </p>
         <div className="space-y-2">
           {players.map((entry, index) => {
@@ -72,9 +78,9 @@ export function LeaderboardTable({
               >
                 <PlayerAvatar name={entry.display_name} />
                 <div className="flex-1 min-w-0">
-                  <p className="truncate font-semibold">
-                    {entry.display_name}
-                    {isMe && <span className="ml-1 text-xs text-simelabs">(you)</span>}
+                  <p className="flex min-w-0 items-baseline gap-1 font-semibold">
+                    <TruncatedText text={entry.display_name} className="min-w-0 flex-1" />
+                    {isMe && <span className="shrink-0 text-xs text-simelabs">(you)</span>}
                   </p>
                   <p className="text-xs text-muted">
                     {entry.predictions_made > 0
@@ -126,13 +132,14 @@ export function LeaderboardTable({
             <PlayerAvatar name={entry.display_name} />
 
             <div className="flex-1 min-w-0">
-              <p className="truncate font-semibold">
-                {entry.display_name}
-                {isMe && <span className="ml-1 text-xs text-simelabs">(you)</span>}
+              <p className="flex min-w-0 items-baseline gap-1 font-semibold">
+                <TruncatedText text={entry.display_name} className="min-w-0 flex-1" />
+                {isMe && <span className="shrink-0 text-xs text-simelabs">(you)</span>}
               </p>
-              <p className="text-xs text-muted">
+              <p className="text-xs text-muted text-pretty">
                 {entry.exact_scores} exact
                 {(entry.early_bonuses ?? 0) > 0 && ` · ${entry.early_bonuses} early`}
+                {(entry.season_bonuses ?? 0) > 0 && ` · ${entry.season_bonuses} season`}
                 {' · '}
                 {entry.predictions_made} predicted
               </p>
@@ -144,10 +151,8 @@ export function LeaderboardTable({
               animate={{ scale: 1 }}
               className="text-right"
             >
-              <p className="text-xl font-bold tabular-nums text-simelabs">
-                {entry.total_points}
-              </p>
-              <p className="text-xs text-muted">pts</p>
+              <p className="type-stat text-simelabs">{entry.total_points}</p>
+              <p className="type-caption">pts</p>
             </motion.div>
           </motion.div>
         )

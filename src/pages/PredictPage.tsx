@@ -35,12 +35,12 @@ export function PredictPage() {
         animate={{ opacity: 1 }}
         className="mb-4 rounded-2xl border border-default bg-card p-4 shadow-card"
       >
-        <p className="text-sm text-subtle">
+        <p className="type-body-sm text-subtle text-pretty">
           {nextMatch ? (
             <>
-              <span className="font-bold text-simelabs">Next match</span>
-              {' — '}
-              {hasPrediction ? 'prediction saved' : 'make your pick before the lock'}
+              <span className="font-semibold text-simelabs">Next match</span>
+              <span className="text-muted/50"> — </span>
+              {hasPrediction ? 'Prediction saved' : 'Make your pick before the lock'}
             </>
           ) : (
             'No open matches right now'
@@ -56,11 +56,21 @@ export function PredictPage() {
           </div>
         )}
         {nextMatch && (
-          <p className="mt-2 text-xs text-muted">
-            Picks lock at {formatPredictionLockTimeIst(nextMatch.kickoff_at)} IST
-            ({PREDICTION_LOCK_BUFFER_MINUTES} min before kickoff)
-            {queuedCount > 0 &&
-              ` · ${queuedCount} more match${queuedCount === 1 ? '' : 'es'} after this`}
+          <p className="type-caption mt-2 text-pretty">
+            Picks lock at{' '}
+            <span className="whitespace-nowrap font-medium text-subtle">
+              {formatPredictionLockTimeIst(nextMatch.kickoff_at)} IST
+            </span>
+            <span className="block sm:inline">
+              <span className="hidden sm:inline"> </span>
+              ({PREDICTION_LOCK_BUFFER_MINUTES} min before kickoff)
+            </span>
+            {queuedCount > 0 && (
+              <span className="mt-0.5 block sm:mt-0 sm:inline">
+                <span className="hidden sm:inline text-muted/50"> · </span>
+                {queuedCount} more match{queuedCount === 1 ? '' : 'es'} after this
+              </span>
+            )}
           </p>
         )}
       </motion.div>

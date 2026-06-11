@@ -81,10 +81,8 @@ export function FixturesPage() {
           {Object.entries(grouped).map(([date, dayMatches]) => (
             <section key={date}>
               <div className="mb-3 flex items-baseline justify-between gap-2">
-                <h2 className="text-base font-semibold sm:text-lg">
-                  {formatIstDateHeader(date)}
-                </h2>
-                <span className="text-xs text-muted">IST</span>
+                <h2 className="type-section-title min-w-0">{formatIstDateHeader(date)}</h2>
+                <span className="type-caption shrink-0 font-medium">IST</span>
               </div>
               <div className="space-y-2.5">
                 {dayMatches.map((match, i) => (

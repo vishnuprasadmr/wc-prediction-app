@@ -36,7 +36,7 @@ export function EngagementPrompt() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 120, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-          className="fixed inset-x-0 bottom-[calc(5.75rem+env(safe-area-inset-bottom))] z-[60] px-3"
+          className="fixed inset-x-0 bottom-[calc(4.25rem+env(safe-area-inset-bottom))] z-[60] px-3"
         >
           <div className="mx-auto max-w-lg overflow-hidden rounded-2xl border border-simelabs/35 bg-card shadow-[0_8px_32px_rgb(0_0_0/0.25),0_0_24px_rgb(38_203_153/0.15)]">
             <div className="flex items-start gap-3 p-4">
@@ -53,7 +53,9 @@ export function EngagementPrompt() {
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm font-bold text-theme">{message.title}</p>
+                  <p className="text-sm font-semibold leading-snug text-theme text-balance">
+                    {message.title}
+                  </p>
                   <button
                     type="button"
                     onClick={dismiss}
@@ -63,7 +65,7 @@ export function EngagementPrompt() {
                     ✕
                   </button>
                 </div>
-                <p className="mt-1 text-xs leading-relaxed text-muted">{message.body}</p>
+                <p className="type-caption mt-1 text-pretty">{message.body}</p>
 
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <button

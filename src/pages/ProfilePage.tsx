@@ -9,6 +9,10 @@ import { useUserPredictions } from '../hooks/usePredictions'
 import { ScoringRulesSheet } from '../components/ScoringRulesSheet'
 import { ThemePreferenceRow } from '../components/ThemePreferenceRow'
 import { useState } from 'react'
+import { TruncatedText } from '../components/TruncatedText'
+import { SeasonPicksCard } from '../components/SeasonPicksCard'
+import { useSeasonQuestionnaire } from '../hooks/useSeasonQuestionnaire'
+import { TeamFlag } from '../components/TeamFlag'
 
 export function ProfilePage() {
   const { user, profile, signOut } = useAuth()
@@ -16,6 +20,8 @@ export function ProfilePage() {
   const { entries } = useLeaderboard()
   const { predictions, loading } = useUserPredictions(user?.id)
   const [showRules, setShowRules] = useState(false)
+  const { row: seasonRow, loading: seasonLoading } = useSeasonQuestionnaire()
+  const heartTeam = seasonRow?.answers?.heart_team
 
   const rankingsAvailable = useMemo(() => hasFinishedMatches(matches), [matches])
 
@@ -38,8 +44,14 @@ export function ProfilePage() {
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-simelabs to-simelabs-dark text-2xl font-bold text-simelabs-foreground">
           {profile?.display_name?.charAt(0).toUpperCase() ?? '?'}
         </div>
-        <h2 className="mt-3 text-xl font-bold">{profile?.display_name}</h2>
-        <p className="text-sm text-muted">{user?.email}</p>
+        <h2 className="type-page-title mt-3 break-words">{profile?.display_name}</h2>
+        <p className="type-body-sm mt-1 break-all text-muted">{user?.email}</p>
+        {heartTeam && (
+          <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-simelabs/10 px-2.5 py-1">
+            <TeamFlag team={heartTeam} emoji="" size="sm" />
+            <span className="text-xs font-medium text-simelabs">Backing {heartTeam}</span>
+          </div>
+        )}
 
         <div className="mt-6 grid grid-cols-3 gap-4">
           <Stat label="Rank" value={String(rank)} />
@@ -47,6 +59,12 @@ export function ProfilePage() {
           <Stat label="Exact" value={String(exactScores)} />
         </div>
       </motion.div>
+
+      <SeasonPicksCard
+        answers={seasonRow?.answers}
+        pointsEarned={seasonRow?.points_earned}
+        loading={seasonLoading}
+      />
 
       <ThemePreferenceRow />
 
@@ -70,15 +88,19 @@ export function ProfilePage() {
         )}
 
         <div className="rounded-xl bg-card p-4">
-          <p className="mb-1 text-sm font-medium text-subtle">📲 Install on your phone</p>
-          <p className="text-xs text-muted">
-            iOS: Share → Add to Home Screen. Android: Use the install banner or browser menu.
+          <p className="type-label mb-1">📲 Install on your phone</p>
+          <p className="type-caption text-pretty">
+            iOS: Share → Add to Home Screen.
+            <span className="mt-0.5 block sm:inline">
+              <span className="hidden sm:inline"> </span>
+              Android: Use the install banner or browser menu.
+            </span>
           </p>
         </div>
       </div>
 
       <div>
-        <h3 className="mb-3 font-semibold">Your Predictions</h3>
+        <h3 className="type-section-title mb-3">Your Predictions</h3>
         {loading ? (
           <div className="space-y-2">
             {[...Array(3)].map((_, i) => (
@@ -94,9 +116,10 @@ export function ProfilePage() {
                 key={p.id}
                 className="flex items-center justify-between rounded-xl bg-card p-3 text-sm"
               >
-                <span className="truncate">
-                  {p.match?.home_team} vs {p.match?.away_team}
-                </span>
+                <TruncatedText
+                  text={`${p.match?.home_team ?? 'Home'} vs ${p.match?.away_team ?? 'Away'}`}
+                  className="min-w-0 flex-1 text-sm"
+                />
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="font-mono font-medium">
                     {p.home_pred}-{p.away_pred}
@@ -133,10 +156,8 @@ export function ProfilePage() {
 function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
     <div>
-      <p className={`text-2xl font-bold tabular-nums ${highlight ? 'text-simelabs' : ''}`}>
-        {value}
-      </p>
-      <p className="text-xs text-muted">{label}</p>
+      <p className={`type-stat ${highlight ? 'text-simelabs' : ''}`}>{value}</p>
+      <p className="type-caption mt-1">{label}</p>
     </div>
   )
 }

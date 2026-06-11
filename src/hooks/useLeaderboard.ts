@@ -43,6 +43,9 @@ export function useLeaderboard(stageFilter?: string) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'predictions' }, () => {
         fetchLeaderboard()
       })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'season_predictions' }, () => {
+        fetchLeaderboard()
+      })
       .subscribe()
 
     return () => {

@@ -4,6 +4,7 @@ import { useMatches } from '../hooks/useMatches'
 import { supabase } from '../lib/supabase'
 import { formatKickoff } from '../lib/matchUtils'
 import type { Match, MatchStatus } from '../lib/types'
+import { AdminSeasonPanel } from '../components/AdminSeasonPanel'
 
 export function AdminPage() {
   const { matches, loading, refetch } = useMatches()
@@ -86,6 +87,8 @@ export function AdminPage() {
         onChange={(e) => setSearch(e.target.value)}
         className="mb-4 w-full rounded-xl border border-default bg-card px-4 py-2.5 text-sm text-theme outline-none focus:border-simelabs"
       />
+
+      <AdminSeasonPanel />
 
       {message && (
         <motion.p

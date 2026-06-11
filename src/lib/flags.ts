@@ -57,6 +57,11 @@ export function getFifaCountryCode(teamName: string): string | null {
   return TEAM_TO_FIFA_CODE[teamName] ?? null
 }
 
+/** All WC 2026 teams (alphabetical) for season questionnaire pickers */
+export function getWcTeams(): string[] {
+  return Object.keys(TEAM_TO_FIFA_CODE).sort((a, b) => a.localeCompare(b))
+}
+
 export function getFlagUrl(teamName: string): string | null {
   const code = getFifaCountryCode(teamName)
   return code ? `${FLAG_BASE}/${code}.png` : null

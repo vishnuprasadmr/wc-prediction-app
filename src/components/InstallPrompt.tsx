@@ -50,7 +50,7 @@ export function InstallPrompt() {
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
-          className="fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] left-4 right-4 z-40 mx-auto max-w-lg"
+          className="fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom))] left-4 right-4 z-40 mx-auto max-w-lg"
         >
           <div className="rounded-2xl border border-default bg-card p-4 shadow-card">
             <div className="flex items-start gap-3">

@@ -35,64 +35,67 @@ export function RegisterPage() {
         className="page-content w-full max-w-sm"
       >
         <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold">Join the League</h1>
-          <p className="mt-1 text-sm text-muted">Enter your Simelabs invite code to register</p>
+          <h1 className="type-display">Join the League</h1>
+          <p className="type-body-sm mt-2 text-muted text-pretty">
+            Enter your Simelabs invite code to register
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-subtle">Display Name</label>
+            <label className="type-label mb-1.5 block">Display Name</label>
             <input
               type="text"
               required
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full rounded-xl border border-default bg-card px-4 py-3 text-theme outline-none transition focus:border-simelabs"
+              className="input-field"
               placeholder="Your name"
+              autoComplete="name"
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-subtle">Email</label>
+            <label className="type-label mb-1.5 block">Email</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-default bg-card px-4 py-3 text-theme outline-none transition focus:border-simelabs"
+              className="input-field"
               placeholder="you@simelabs.com"
+              autoComplete="email"
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-subtle">Password</label>
+            <label className="type-label mb-1.5 block">Password</label>
             <input
               type="password"
               required
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-default bg-card px-4 py-3 text-theme outline-none transition focus:border-simelabs"
+              className="input-field"
               placeholder="Min 6 characters"
+              autoComplete="new-password"
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-subtle">Invite Code</label>
+            <label className="type-label mb-1.5 block">Invite Code</label>
             <input
               type="text"
               required
               value={inviteCode}
               onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-              className="w-full rounded-xl border border-default bg-card px-4 py-3 font-mono text-theme uppercase outline-none transition focus:border-simelabs"
+              className="input-field font-mono uppercase tracking-wide"
               placeholder="SIMELABS-WC26"
+              autoComplete="off"
+              spellCheck={false}
             />
           </div>
 
           {error && <p className="text-sm text-red-400">{error}</p>}
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full rounded-xl bg-simelabs py-3 font-semibold text-simelabs-foreground transition hover:bg-simelabs-dark disabled:opacity-50"
-          >
+          <button type="submit" disabled={submitting} className="btn-primary">
             {submitting ? 'Creating account...' : 'Create Account'}
           </button>
         </form>

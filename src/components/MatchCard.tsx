@@ -13,6 +13,7 @@ import { formatKickoffTimeIst } from '../lib/timezone'
 import { formatVenueLabel, getMatchVenueCity } from '../lib/venues'
 import { isExactScorePoints } from '../lib/scoring'
 import { TeamFlag } from './TeamFlag'
+import { TruncatedText } from './TruncatedText'
 
 interface MatchCardProps {
   match: Match
@@ -59,12 +60,12 @@ export function MatchCard({ match, prediction, index = 0, onPredict, showPoints 
           <TeamSide name={match.away_team} emoji={match.away_flag} side="away" />
         </div>
 
-        <p className="mt-3 text-center text-xs text-muted">
-          {formatStageLabel(match.stage, match.group_name)}
+        <p className="type-caption mt-3 text-center text-pretty">
+          <span className="font-medium text-subtle">{formatStageLabel(match.stage, match.group_name)}</span>
           {venueCity && (
             <>
-              <span className="mx-1.5">·</span>
-              {formatVenueLabel(venueCity)}
+              <span className="mx-1 text-muted/50">·</span>
+              <span>{formatVenueLabel(venueCity)}</span>
             </>
           )}
         </p>
@@ -109,10 +110,26 @@ export function MatchCard({ match, prediction, index = 0, onPredict, showPoints 
       )}
 
       {locked && match.status === 'scheduled' && (
-        <div className="border-t border-default py-2 text-center text-xs text-red-500">
-          {prediction
-            ? `Locked · your pick ${prediction.home_pred}-${prediction.away_pred}`
-            : `Locked · picks close ${PREDICTION_LOCK_BUFFER_MINUTES} min before kickoff (${formatPredictionLockTimeIst(match.kickoff_at)} IST)`}
+        <div className="border-t border-default px-4 py-2.5 text-center type-caption text-red-500">
+          {prediction ? (
+            <p>
+              Locked · your pick{' '}
+              <span className="font-semibold tabular-nums">
+                {prediction.home_pred}–{prediction.away_pred}
+              </span>
+            </p>
+          ) : (
+            <>
+              <p className="font-semibold">Locked · picks closed</p>
+              <p className="mt-0.5 text-pretty">
+                {PREDICTION_LOCK_BUFFER_MINUTES} min before kickoff
+                <span className="block sm:inline">
+                  <span className="hidden sm:inline"> </span>
+                  ({formatPredictionLockTimeIst(match.kickoff_at)} IST)
+                </span>
+              </p>
+            </>
+          )}
         </div>
       )}
     </motion.article>
@@ -136,14 +153,20 @@ function TeamSide({
     >
       {side === 'home' && (
         <>
-          <span className="truncate text-sm font-semibold leading-tight text-theme sm:text-base">{name}</span>
+          <TruncatedText
+            text={name}
+            className="text-sm font-semibold leading-snug text-theme sm:text-base"
+          />
           <TeamFlag team={name} emoji={emoji} />
         </>
       )}
       {side === 'away' && (
         <>
           <TeamFlag team={name} emoji={emoji} />
-          <span className="truncate text-sm font-semibold leading-tight text-theme sm:text-base">{name}</span>
+          <TruncatedText
+            text={name}
+            className="text-sm font-semibold leading-snug text-theme sm:text-base"
+          />
         </>
       )}
     </div>
@@ -166,12 +189,12 @@ function CenterBlock({
   if (match.status === 'live') {
     return (
       <div className="flex shrink-0 flex-col items-center px-1">
-        <span className="mb-0.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-red-500">
+        <span className="type-overline mb-0.5 flex items-center gap-1 !tracking-wide text-red-500">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
           Live
         </span>
-        <span className="text-2xl font-bold tabular-nums tracking-tight sm:text-3xl">
-          {match.home_score} - {match.away_score}
+        <span className="type-score">
+          {match.home_score} – {match.away_score}
         </span>
       </div>
     )
@@ -180,11 +203,11 @@ function CenterBlock({
   if (hasScore || match.status === 'finished') {
     return (
       <div className="flex shrink-0 flex-col items-center px-1">
-        <span className="mb-0.5 text-[10px] font-semibold uppercase text-muted">
+        <span className="type-overline mb-0.5 !text-muted">
           {statusLabel(match.status) || 'FT'}
         </span>
-        <span className="text-2xl font-bold tabular-nums tracking-tight sm:text-3xl">
-          {match.home_score} - {match.away_score}
+        <span className="type-score">
+          {match.home_score} – {match.away_score}
         </span>
       </div>
     )
@@ -193,9 +216,9 @@ function CenterBlock({
   if (showPredictionScore && prediction) {
     return (
       <div className="flex shrink-0 flex-col items-center px-1">
-        <span className="mb-0.5 text-[10px] font-medium text-simelabs">Your pick</span>
-        <span className="text-2xl font-bold tabular-nums tracking-tight sm:text-3xl">
-          {prediction.home_pred} - {prediction.away_pred}
+        <span className="type-overline mb-0.5 !text-simelabs">Your pick</span>
+        <span className="type-score">
+          {prediction.home_pred} – {prediction.away_pred}
         </span>
       </div>
     )
@@ -203,14 +226,11 @@ function CenterBlock({
 
   return (
     <div className="flex shrink-0 flex-col items-center px-2">
-      <time
-        dateTime={match.kickoff_at}
-        className="text-3xl font-bold tabular-nums tracking-tight sm:text-4xl"
-      >
+      <time dateTime={match.kickoff_at} className="type-kickoff">
         {formatKickoffTimeIst(match.kickoff_at)}
       </time>
       {countdown && (
-        <span className="mt-0.5 text-[10px] font-medium text-muted">in {countdown}</span>
+        <span className="type-caption mt-1 font-medium">in {countdown}</span>
       )}
     </div>
   )

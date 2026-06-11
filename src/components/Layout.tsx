@@ -5,19 +5,25 @@ import { InstallPrompt } from './InstallPrompt'
 import { ThemeToggle } from './ThemeToggle'
 import { EngagementPrompt } from './EngagementPrompt'
 import { MatchesProvider } from '../contexts/MatchesContext'
+import { QuestionnaireGate } from './QuestionnaireGate'
 
 export function Layout() {
   return (
     <MatchesProvider>
-    <div className="page-shell safe-top pb-[calc(5.75rem+env(safe-area-inset-bottom))]">
+    <QuestionnaireGate>
+    <div className="page-shell safe-top pb-[calc(4.25rem+env(safe-area-inset-bottom))]">
       <header className="page-content sticky top-0 z-40 border-b border-default bg-elevated/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-lg items-center justify-between px-4 py-3">
-          <div>
-            <h1 className="text-lg font-bold tracking-tight">
+          <div className="min-w-0">
+            <h1 className="type-page-title">
               <span className="text-simelabs">Simelabs</span>{' '}
               <span className="text-theme">WC 26</span>
             </h1>
-            <p className="text-xs text-muted">Prediction League · All times IST</p>
+            <p className="type-caption leading-snug">
+              Prediction League
+              <span className="text-muted/50"> · </span>
+              <span className="whitespace-nowrap">All times IST</span>
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -41,6 +47,7 @@ export function Layout() {
       <BottomNav />
       <InstallPrompt />
     </div>
+    </QuestionnaireGate>
     </MatchesProvider>
   )
 }

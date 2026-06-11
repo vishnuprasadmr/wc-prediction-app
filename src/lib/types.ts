@@ -14,6 +14,7 @@ export interface Profile {
   league_id: string
   is_admin: boolean
   created_at: string
+  questionnaire_completed_at?: string | null
 }
 
 export interface Match {
@@ -52,8 +53,16 @@ export interface LeaderboardEntry {
   total_points: number
   exact_scores: number
   early_bonuses?: number
+  season_bonuses?: number
   predictions_made: number
   rank: number
+}
+
+export interface SeasonPrediction {
+  user_id: string
+  answers: Record<string, string>
+  points_earned: number | null
+  submitted_at: string | null
 }
 
 export interface PredictionWithMatch extends Prediction {

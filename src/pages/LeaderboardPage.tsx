@@ -33,12 +33,12 @@ export function LeaderboardPage() {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-bold">
+        <h2 className="type-section-title">
           {rankingsAvailable ? 'Point Table' : 'League Players'}
         </h2>
         <button
           onClick={() => setShowRules(true)}
-          className="text-sm text-simelabs hover:underline"
+          className="shrink-0 text-sm font-medium text-simelabs hover:underline"
         >
           Scoring rules
         </button>
@@ -50,7 +50,7 @@ export function LeaderboardPage() {
             <button
               key={key}
               onClick={() => setStage(key)}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition ${
+              className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium transition ${
                 stage === key
                   ? 'bg-simelabs text-simelabs-foreground'
                   : 'bg-muted text-muted hover:text-theme'

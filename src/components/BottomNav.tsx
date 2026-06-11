@@ -48,27 +48,27 @@ function ProfileIcon({ className }: IconProps) {
 }
 
 const links = [
-  { to: '/', label: 'Fixtures', Icon: FixturesIcon },
-  { to: '/predict', label: 'Predict', Icon: PredictIcon },
-  { to: '/leaderboard', label: 'Table', Icon: LeaderboardIcon },
-  { to: '/profile', label: 'Profile', Icon: ProfileIcon },
+  { to: '/', label: 'Fixtures', ariaLabel: 'Fixtures', Icon: FixturesIcon },
+  { to: '/predict', label: 'Predict', ariaLabel: 'Predict scores', Icon: PredictIcon },
+  { to: '/leaderboard', label: 'Table', ariaLabel: 'Leaderboard', Icon: LeaderboardIcon },
+  { to: '/profile', label: 'Profile', ariaLabel: 'Profile', Icon: ProfileIcon },
 ] as const
 
 export function BottomNav() {
   return (
     <nav
       aria-label="Main navigation"
-      className="fixed inset-x-0 bottom-0 z-50 px-3 pb-[max(0.625rem,env(safe-area-inset-bottom))] pt-2 pointer-events-none"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-50 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1.5"
     >
-      <div
-        className="pointer-events-auto mx-auto flex max-w-lg items-stretch gap-1 rounded-2xl border border-default bg-card/98 p-1.5 shadow-[0_-4px_24px_rgb(0_0_0/0.18),0_8px_32px_rgb(38_203_153/0.12)] backdrop-blur-xl dark:shadow-[0_-4px_28px_rgb(0_0_0/0.55),0_0_0_1px_rgb(38_203_153/0.08),0_8px_32px_rgb(38_203_153/0.1)]"
-      >
-        {links.map(({ to, label, Icon }) => (
+      <div className="pointer-events-auto mx-auto flex max-w-lg items-stretch gap-0.5 rounded-2xl border border-default bg-card/98 p-1 shadow-[0_-4px_24px_rgb(0_0_0/0.18),0_8px_32px_rgb(38_203_153/0.12)] backdrop-blur-xl dark:shadow-[0_-4px_28px_rgb(0_0_0/0.55),0_0_0_1px_rgb(38_203_153/0.08),0_8px_32px_rgb(38_203_153/0.1)]">
+        {links.map(({ to, label, ariaLabel, Icon }) => (
           <NavLink
             key={to}
             to={to}
             end={to === '/'}
-            className="relative flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-simelabs/50"
+            aria-label={ariaLabel}
+            title={label}
+            className="relative flex min-h-[46px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 py-1 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-simelabs/50"
           >
             {({ isActive }) => (
               <>
@@ -77,15 +77,17 @@ export function BottomNav() {
                     layoutId="bottom-nav-pill"
                     className="absolute inset-0 rounded-xl bg-simelabs/14 ring-1 ring-simelabs/35 dark:bg-simelabs/18"
                     transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                    aria-hidden
                   />
                 )}
                 <Icon
-                  className={`relative z-10 h-[22px] w-[22px] shrink-0 transition-colors ${
+                  className={`relative z-10 h-[18px] w-[18px] shrink-0 transition-colors ${
                     isActive ? 'text-simelabs' : 'text-theme/55 dark:text-white/50'
                   }`}
                 />
                 <span
-                  className={`relative z-10 max-w-full truncate text-[10px] font-semibold uppercase tracking-wide transition-colors ${
+                  aria-hidden
+                  className={`relative z-10 max-w-full truncate text-[10px] font-medium leading-none tracking-tight transition-colors ${
                     isActive ? 'text-simelabs' : 'text-theme/55 dark:text-white/50'
                   }`}
                 >
@@ -94,8 +96,9 @@ export function BottomNav() {
                 {isActive && (
                   <motion.span
                     layoutId="bottom-nav-dot"
-                    className="absolute bottom-1.5 left-1/2 z-10 h-1 w-1 -translate-x-1/2 rounded-full bg-simelabs"
+                    className="absolute bottom-1 left-1/2 z-10 h-0.5 w-0.5 -translate-x-1/2 rounded-full bg-simelabs"
                     transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                    aria-hidden
                   />
                 )}
               </>

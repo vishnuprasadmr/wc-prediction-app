@@ -36,41 +36,45 @@ export function LoginPage() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-simelabs to-simelabs-dark text-2xl font-bold text-simelabs-foreground shadow-glow">
             WC
           </div>
-          <h1 className="text-2xl font-bold">Welcome back</h1>
-          <p className="mt-1 text-sm text-muted">Simelabs WC 2026 Prediction League</p>
+          <h1 className="type-display">Welcome back</h1>
+          <p className="type-body-sm mt-2 text-muted">
+            Simelabs WC 2026
+            <span className="block sm:inline">
+              <span className="hidden sm:inline"> </span>
+              Prediction League
+            </span>
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-subtle">Email</label>
+            <label className="type-label mb-1.5 block">Email</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-default bg-card px-4 py-3 text-theme outline-none transition focus:border-simelabs focus:ring-1 focus:ring-simelabs"
+              className="input-field"
               placeholder="you@simelabs.com"
+              autoComplete="email"
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-subtle">Password</label>
+            <label className="type-label mb-1.5 block">Password</label>
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-default bg-card px-4 py-3 text-theme outline-none transition focus:border-simelabs focus:ring-1 focus:ring-simelabs"
+              className="input-field"
               placeholder="••••••••"
+              autoComplete="current-password"
             />
           </div>
 
           {error && <p className="text-sm text-red-400">{error}</p>}
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full rounded-xl bg-simelabs py-3 font-semibold text-simelabs-foreground transition hover:bg-simelabs-dark disabled:opacity-50"
-          >
+          <button type="submit" disabled={submitting} className="btn-primary">
             {submitting ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
