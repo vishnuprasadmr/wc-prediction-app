@@ -5,11 +5,16 @@ import { useAuth } from '../contexts/AuthContext'
 interface LeaderboardTableProps {
   entries: LeaderboardEntry[]
   loading?: boolean
+  rankingsAvailable?: boolean
 }
 
 const rankColors = ['text-yellow-500', 'text-subtle', 'text-amber-600']
 
-export function LeaderboardTable({ entries, loading }: LeaderboardTableProps) {
+export function LeaderboardTable({
+  entries,
+  loading,
+  rankingsAvailable = true,
+}: LeaderboardTableProps) {
   const { user } = useAuth()
 
   if (loading) {
@@ -22,12 +27,24 @@ export function LeaderboardTable({ entries, loading }: LeaderboardTableProps) {
     )
   }
 
+  if (!rankingsAvailable) {
+    return (
+      <div className="rounded-2xl border border-default bg-card p-8 text-center">
+        <p className="text-4xl">🏆</p>
+        <p className="mt-2 font-medium text-subtle">Table not open yet</p>
+        <p className="mt-1 text-sm text-muted">
+          Rankings appear after the first match finishes. Make your predictions now!
+        </p>
+      </div>
+    )
+  }
+
   if (entries.length === 0) {
     return (
       <div className="rounded-2xl border border-default bg-card p-8 text-center">
         <p className="text-4xl">🏆</p>
-        <p className="mt-2 font-medium text-subtle">No predictions yet</p>
-        <p className="mt-1 text-sm text-muted">Be the first to predict and top the table!</p>
+        <p className="mt-2 font-medium text-subtle">No scores yet</p>
+        <p className="mt-1 text-sm text-muted">Predictions are in — check back once matches kick off.</p>
       </div>
     )
   }

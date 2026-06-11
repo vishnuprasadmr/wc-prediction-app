@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { useLeaderboard } from '../hooks/useLeaderboard'
+import { useMatches } from '../hooks/useMatches'
+import { hasFinishedMatches } from '../lib/leaderboardUtils'
 import { useUserPredictions } from '../hooks/usePredictions'
 import { ScoringRulesSheet } from '../components/ScoringRulesSheet'
 import { ThemePreferenceRow } from '../components/ThemePreferenceRow'
@@ -10,18 +12,21 @@ import { useState } from 'react'
 
 export function ProfilePage() {
   const { user, profile, signOut } = useAuth()
+  const { matches } = useMatches()
   const { entries } = useLeaderboard()
   const { predictions, loading } = useUserPredictions(user?.id)
   const [showRules, setShowRules] = useState(false)
+
+  const rankingsAvailable = useMemo(() => hasFinishedMatches(matches), [matches])
 
   const myEntry = useMemo(
     () => entries.find((e) => e.user_id === user?.id),
     [entries, user?.id],
   )
 
-  const totalPoints = myEntry?.total_points ?? 0
-  const rank = myEntry?.rank ?? '-'
-  const exactScores = myEntry?.exact_scores ?? 0
+  const totalPoints = rankingsAvailable ? (myEntry?.total_points ?? 0) : 0
+  const rank = rankingsAvailable ? String(myEntry?.rank ?? '—') : '—'
+  const exactScores = rankingsAvailable ? (myEntry?.exact_scores ?? 0) : 0
 
   return (
     <div className="space-y-6">

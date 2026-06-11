@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { LeaderboardTable } from '../components/LeaderboardTable'
 import { ScoringRulesSheet } from '../components/ScoringRulesSheet'
 import { useLeaderboard } from '../hooks/useLeaderboard'
+import { useMatches } from '../hooks/useMatches'
+import { hasFinishedMatches } from '../lib/leaderboardUtils'
 
 const stages = [
   { key: 'all', label: 'Overall' },
@@ -16,7 +18,13 @@ const stages = [
 export function LeaderboardPage() {
   const [stage, setStage] = useState('all')
   const [showRules, setShowRules] = useState(false)
+  const { matches } = useMatches()
   const { entries, loading } = useLeaderboard(stage)
+
+  const rankingsAvailable = useMemo(
+    () => hasFinishedMatches(matches, stage),
+    [matches, stage],
+  )
 
   return (
     <div>
@@ -46,7 +54,11 @@ export function LeaderboardPage() {
         ))}
       </div>
 
-      <LeaderboardTable entries={entries} loading={loading} />
+      <LeaderboardTable
+        entries={entries}
+        loading={loading}
+        rankingsAvailable={rankingsAvailable}
+      />
       <ScoringRulesSheet open={showRules} onClose={() => setShowRules(false)} />
     </div>
   )
