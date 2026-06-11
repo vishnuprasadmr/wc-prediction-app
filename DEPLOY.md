@@ -81,13 +81,18 @@ npx vercel --prod
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
    - `VITE_LEAGUE_INVITE_CODE=SIMELABS-WC26`
-5. Deploy → **Clear cache and deploy site** if you previously saw a blank page.
+   - `VITE_APP_URL=https://your-site.netlify.app` (your live URL, no trailing slash)
+5. **Supabase → Authentication → URL Configuration** (see `scripts/auth-url-setup.md`):
+   - **Site URL** = your live Netlify URL (not `localhost`)
+   - **Redirect URLs** = `https://your-site.netlify.app/**` and `http://localhost:5173/**`
+6. Deploy → **Clear cache and deploy site** if you previously saw a blank page or localhost redirects.
 
 ### Required environment variables
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 - `VITE_LEAGUE_INVITE_CODE=SIMELABS-WC26`
+- `VITE_APP_URL` — production app URL (fixes Google OAuth redirect to localhost)
 
 ## 4. Share with Simelabs Team
 

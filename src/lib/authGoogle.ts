@@ -1,3 +1,4 @@
+import { appAuthRedirect } from './appOrigin'
 import { LEAGUE_ID, supabase } from './supabase'
 import type { User } from '@supabase/supabase-js'
 import {
@@ -54,7 +55,7 @@ export async function signInWithGoogle(redirectPath: '/login' | '/register' = '/
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${window.location.origin}${redirectPath}`,
+      redirectTo: appAuthRedirect(redirectPath),
       queryParams: {
         ...(GOOGLE_HD ? { hd: GOOGLE_HD } : {}),
         prompt: 'select_account',
