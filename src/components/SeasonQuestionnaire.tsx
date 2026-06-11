@@ -9,6 +9,7 @@ import {
   type SeasonAnswers,
   type SeasonQuestion,
 } from '../lib/seasonQuestions'
+import { playSound } from '../lib/sounds'
 import { TeamFlag } from './TeamFlag'
 
 interface SeasonQuestionnaireProps {
@@ -60,7 +61,10 @@ function TeamGrid({
             key={team}
             type="button"
             whileTap={{ scale: 0.96 }}
-            onClick={() => onSelect(team)}
+            onClick={() => {
+              playSound('select')
+              onSelect(team)
+            }}
             aria-pressed={active}
             className={`flex flex-col items-center gap-1 rounded-xl border p-2 text-center transition ${
               active
@@ -99,7 +103,10 @@ function PlayerPicker({
             <button
               key={name}
               type="button"
-              onClick={() => onSelect(name)}
+              onClick={() => {
+                playSound('select')
+                onSelect(name)
+              }}
               aria-pressed={active}
               className={`rounded-xl border px-2 py-2.5 text-left text-xs font-medium transition sm:text-sm ${
                 active
@@ -225,10 +232,12 @@ export function SeasonQuestionnaire({ onComplete, onSubmit }: SeasonQuestionnair
     if (!nextAnswers[question.key]?.trim()) return
 
     if (!isLast) {
+      playSound('swipe')
       setStep((s) => s + 1)
       return
     }
 
+    playSound('save')
     setSubmitting(true)
     try {
       await onSubmit(nextAnswers)
@@ -314,7 +323,10 @@ export function SeasonQuestionnaire({ onComplete, onSubmit }: SeasonQuestionnair
           {step > 0 && (
             <button
               type="button"
-              onClick={() => setStep((s) => s - 1)}
+              onClick={() => {
+                playSound('swipe')
+                setStep((s) => s - 1)
+              }}
               disabled={submitting}
               className="flex-1 rounded-xl border border-default py-3.5 text-sm font-semibold text-subtle transition hover:bg-muted disabled:opacity-50"
             >

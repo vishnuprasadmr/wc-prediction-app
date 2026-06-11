@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
+import { playSound } from '../lib/sounds'
 import { markSplashSeen } from '../lib/splash'
 
 interface WelcomeSplashProps {
@@ -105,6 +106,8 @@ export function WelcomeSplash({ onComplete }: WelcomeSplashProps) {
         return
       }
 
+      playSound('kick')
+      playSound('impact', 0.58)
       setPhase('kick')
       window.setTimeout(() => setPhase('shatter'), 580)
       window.setTimeout(() => onComplete(), 1100)

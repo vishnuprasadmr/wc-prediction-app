@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { playSound, primeAudio } from '../lib/sounds'
 import { TruncatedText } from './TruncatedText'
 
 interface ScoreStepperProps {
@@ -20,7 +21,11 @@ export function ScoreStepper({ value, onChange, disabled, label }: ScoreStepperP
           whileTap={{ scale: 0.9 }}
           type="button"
           disabled={disabled || value <= 0}
-          onClick={() => onChange(Math.max(0, value - 1))}
+          onPointerDown={() => primeAudio()}
+          onClick={() => {
+            if (value > 0) playSound('goalDown')
+            onChange(Math.max(0, value - 1))
+          }}
           className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-lg font-bold text-theme transition disabled:opacity-30"
         >
           −
@@ -37,7 +42,11 @@ export function ScoreStepper({ value, onChange, disabled, label }: ScoreStepperP
           whileTap={{ scale: 0.9 }}
           type="button"
           disabled={disabled || value >= 15}
-          onClick={() => onChange(Math.min(15, value + 1))}
+          onPointerDown={() => primeAudio()}
+          onClick={() => {
+            if (value < 15) playSound('goalUp')
+            onChange(Math.min(15, value + 1))
+          }}
           className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-lg font-bold text-theme transition disabled:opacity-30"
         >
           +

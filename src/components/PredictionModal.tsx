@@ -6,6 +6,7 @@ import type { Match } from '../lib/types'
 import { canPredictMatch } from '../lib/matchUtils'
 import { ScoreStepper } from './ScoreStepper'
 import { TeamFlag } from './TeamFlag'
+import { playSound } from '../lib/sounds'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { TruncatedText } from './TruncatedText'
@@ -49,6 +50,7 @@ export function PredictionModal({
       setError('You can only predict the next upcoming match.')
       return
     }
+    playSound('save')
     setSaving(true)
     setError(null)
 

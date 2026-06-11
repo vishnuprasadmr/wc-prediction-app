@@ -12,6 +12,7 @@ import {
 import { formatKickoffTimeIst } from '../lib/timezone'
 import { formatVenueLabel, getMatchVenueCity } from '../lib/venues'
 import { isExactScorePoints } from '../lib/scoring'
+import { playSound } from '../lib/sounds'
 import { TeamFlag } from './TeamFlag'
 import { TruncatedText } from './TruncatedText'
 
@@ -102,7 +103,10 @@ export function MatchCard({ match, prediction, index = 0, onPredict, showPoints 
       {onPredict && !locked && (
         <button
           type="button"
-          onClick={() => onPredict(match)}
+          onClick={() => {
+            playSound('select')
+            onPredict(match)
+          }}
           className="w-full border-t border-default py-2.5 text-sm font-semibold text-simelabs transition hover:bg-muted"
         >
           {prediction ? 'Edit prediction' : 'Predict score'}
