@@ -11,6 +11,7 @@ import {
 } from '../lib/matchUtils'
 import { formatKickoffTimeIst } from '../lib/timezone'
 import { formatVenueLabel, getMatchVenueCity } from '../lib/venues'
+import { isExactScorePoints } from '../lib/scoring'
 import { TeamFlag } from './TeamFlag'
 
 interface MatchCardProps {
@@ -74,17 +75,24 @@ export function MatchCard({ match, prediction, index = 0, onPredict, showPoints 
               Your pick: {prediction.home_pred} - {prediction.away_pred}
             </span>
             {prediction.points_earned !== null && (
-              <span
-                className={`rounded-full px-2 py-0.5 font-semibold ${
-                  prediction.points_earned === 5
-                    ? 'bg-amber-500/20 text-amber-500'
-                    : prediction.points_earned > 0
-                      ? 'bg-emerald-500/20 text-emerald-600'
-                      : 'bg-muted text-muted'
-                }`}
-              >
-                +{prediction.points_earned} pts
-              </span>
+              <>
+                <span
+                  className={`rounded-full px-2 py-0.5 font-semibold ${
+                    isExactScorePoints(prediction.points_earned, prediction.first_bonus ?? 0)
+                      ? 'bg-amber-500/20 text-amber-500'
+                      : prediction.points_earned > 0
+                        ? 'bg-emerald-500/20 text-emerald-600'
+                        : 'bg-muted text-muted'
+                  }`}
+                >
+                  +{prediction.points_earned} pts
+                </span>
+                {(prediction.first_bonus ?? 0) > 0 && (
+                  <span className="rounded-full bg-simelabs/15 px-2 py-0.5 font-semibold text-simelabs">
+                    early
+                  </span>
+                )}
+              </>
             )}
           </div>
         )}

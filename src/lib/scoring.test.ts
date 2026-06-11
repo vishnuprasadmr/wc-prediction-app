@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { calculatePoints } from './scoring'
+import { basePointsEarned, calculatePoints, isExactScorePoints } from './scoring'
+
+describe('early bird helpers', () => {
+  it('separates base points from early bonus', () => {
+    expect(basePointsEarned(6, 1)).toBe(5)
+    expect(isExactScorePoints(6, 1)).toBe(true)
+    expect(isExactScorePoints(5, 0)).toBe(true)
+  })
+})
 
 describe('calculatePoints', () => {
   it('awards 5 points for an exact score', () => {

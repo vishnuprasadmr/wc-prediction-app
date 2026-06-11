@@ -40,6 +40,7 @@ export interface Prediction {
   home_pred: number
   away_pred: number
   points_earned: number | null
+  first_bonus?: number
   locked_at: string | null
   created_at: string
   updated_at: string
@@ -50,6 +51,7 @@ export interface LeaderboardEntry {
   display_name: string
   total_points: number
   exact_scores: number
+  early_bonuses?: number
   predictions_made: number
   rank: number
 }

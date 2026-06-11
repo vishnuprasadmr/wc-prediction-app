@@ -50,7 +50,7 @@ export function ScoringRulesSheet({ open, onClose }: ScoringRulesSheetProps) {
               </div>
 
               <p className="mt-4 text-center text-xs text-muted">
-                Max 5 pts per match (exact score) · Max 4 pts without exact score
+                Up to 6 pts per match (5 exact + 1 early bird) · Up to 5 without exact score
               </p>
 
               <button

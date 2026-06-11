@@ -131,7 +131,10 @@ export function LeaderboardTable({
                 {isMe && <span className="ml-1 text-xs text-simelabs">(you)</span>}
               </p>
               <p className="text-xs text-muted">
-                {entry.exact_scores} exact · {entry.predictions_made} predicted
+                {entry.exact_scores} exact
+                {(entry.early_bonuses ?? 0) > 0 && ` · ${entry.early_bonuses} early`}
+                {' · '}
+                {entry.predictions_made} predicted
               </p>
             </div>
 

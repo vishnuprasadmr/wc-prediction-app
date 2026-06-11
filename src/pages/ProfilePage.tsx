@@ -102,8 +102,13 @@ export function ProfilePage() {
                     {p.home_pred}-{p.away_pred}
                   </span>
                   {p.points_earned !== null && (
-                    <span className="rounded-full bg-simelabs/20 px-2 py-0.5 text-xs font-bold text-simelabs">
-                      +{p.points_earned}
+                    <span className="flex items-center gap-1">
+                      <span className="rounded-full bg-simelabs/20 px-2 py-0.5 text-xs font-bold text-simelabs">
+                        +{p.points_earned}
+                      </span>
+                      {(p.first_bonus ?? 0) > 0 && (
+                        <span className="text-[10px] font-semibold text-simelabs">early</span>
+                      )}
                     </span>
                   )}
                 </div>
