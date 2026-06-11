@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { registerSW } from 'virtual:pwa-register'
 import App from './App'
 import { EnvGuard } from './components/EnvGuard'
+import { SplashGate } from './components/SplashGate'
 import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import './index.css'
@@ -31,9 +32,11 @@ createRoot(root).render(
     <EnvGuard>
       <BrowserRouter>
         <AuthProvider>
-          <ThemeProvider>
+        <ThemeProvider>
+          <SplashGate>
             <App />
-          </ThemeProvider>
+          </SplashGate>
+        </ThemeProvider>
         </AuthProvider>
       </BrowserRouter>
     </EnvGuard>
