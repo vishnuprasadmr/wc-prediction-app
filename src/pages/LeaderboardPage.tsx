@@ -19,17 +19,23 @@ export function LeaderboardPage() {
   const [stage, setStage] = useState('all')
   const [showRules, setShowRules] = useState(false)
   const { matches } = useMatches()
-  const { entries, loading } = useLeaderboard(stage)
+
+  const tournamentStarted = useMemo(() => hasFinishedMatches(matches, 'all'), [matches])
 
   const rankingsAvailable = useMemo(
     () => hasFinishedMatches(matches, stage),
     [matches, stage],
   )
 
+  const effectiveStage = rankingsAvailable ? stage : 'all'
+  const { entries, loading } = useLeaderboard(effectiveStage)
+
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-bold">Point Table</h2>
+        <h2 className="text-lg font-bold">
+          {rankingsAvailable ? 'Point Table' : 'League Players'}
+        </h2>
         <button
           onClick={() => setShowRules(true)}
           className="text-sm text-simelabs hover:underline"
@@ -38,21 +44,23 @@ export function LeaderboardPage() {
         </button>
       </div>
 
-      <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
-        {stages.map(({ key, label }) => (
-          <button
-            key={key}
-            onClick={() => setStage(key)}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition ${
-              stage === key
-                ? 'bg-simelabs text-simelabs-foreground'
-                : 'bg-muted text-muted hover:text-theme'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      {tournamentStarted && (
+        <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+          {stages.map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setStage(key)}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                stage === key
+                  ? 'bg-simelabs text-simelabs-foreground'
+                  : 'bg-muted text-muted hover:text-theme'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
 
       <LeaderboardTable
         entries={entries}
