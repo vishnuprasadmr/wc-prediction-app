@@ -3,7 +3,12 @@ import {
   PREDICTION_LOCK_BUFFER_MINUTES,
   canPredictMatch,
   formatCountdown,
+  formatLockCountdown,
+  formatLockCountdownLive,
   formatStageLabel,
+  getMsUntilPredictionLock,
+  isLockWarningWindow,
+  LOCK_WARNING_MINUTES,
   getMatchFilterStatus,
   getNextPredictableMatch,
   getPredictionLockAt,
@@ -106,6 +111,35 @@ describe('matchUtils', () => {
     it('treats open scheduled matches as upcoming', () => {
       const match = makeMatch({ kickoff_at: '2026-06-15T18:00:00.000Z' })
       expect(getMatchFilterStatus(match)).toBe('upcoming')
+    })
+  })
+
+  describe('formatLockCountdown', () => {
+    it('returns null after lock', () => {
+      vi.setSystemTime(new Date('2026-06-15T13:50:00.000Z'))
+      expect(formatLockCountdown('2026-06-15T14:00:00.000Z')).toBeNull()
+    })
+
+    it('shows minutes and seconds under one hour', () => {
+      vi.setSystemTime(new Date('2026-06-15T13:30:00.000Z'))
+      expect(formatLockCountdown('2026-06-15T14:00:00.000Z')).toBe('15:00')
+    })
+
+    it('detects the fifteen-minute warning window', () => {
+      vi.setSystemTime(new Date('2026-06-15T13:35:00.000Z'))
+      expect(isLockWarningWindow('2026-06-15T14:00:00.000Z')).toBe(true)
+      expect(getMsUntilPredictionLock('2026-06-15T14:00:00.000Z')).toBe(10 * 60 * 1000)
+      expect(LOCK_WARNING_MINUTES).toBe(15)
+    })
+
+    it('formatLockCountdownLive ticks with seconds under one hour', () => {
+      vi.setSystemTime(new Date('2026-06-15T13:30:00.000Z'))
+      expect(formatLockCountdownLive('2026-06-15T14:00:00.000Z')).toBe('15:00')
+    })
+
+    it('formatLockCountdownLive uses H:MM:SS under twenty-four hours', () => {
+      vi.setSystemTime(new Date('2026-06-15T12:00:00.000Z'))
+      expect(formatLockCountdownLive('2026-06-15T14:00:00.000Z')).toBe('1:45:00')
     })
   })
 

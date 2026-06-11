@@ -46,7 +46,25 @@ Authorized redirect URI (only Supabase callback, not your app):
 https://YOUR-PROJECT-REF.supabase.co/auth/v1/callback
 ```
 
-## 4. Verify
+## 4. Local testing (`npm run dev`)
+
+Your **Redirect URLs** must include localhost (step 1). **Site URL** can stay on Netlify — that is fine.
+
+1. Do **not** put `VITE_APP_URL` in local `.env` (only on Netlify).
+2. Run `npm run dev` and open **http://localhost:5173** (use the port Vite prints).
+3. Use a **normal browser tab** — not the installed PWA from the live site.
+4. Optional: incognito avoids an old session tied to the Netlify URL.
+5. Sign in with Google → you should land on `http://localhost:5173/login` or `/register`.
+
+If you still land on Netlify, Supabase is ignoring the localhost redirect — double-check **Redirect URLs** includes:
+
+```
+http://localhost:5173/**
+```
+
+(Add `5174`, `5175` too if Vite picks another port.)
+
+## 5. Verify production
 
 1. Open live app in incognito (not installed PWA from old localhost build).
 2. Register → Continue with Google.

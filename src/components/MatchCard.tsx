@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion'
 import type { Match, Prediction } from '../lib/types'
 import {
-  formatCountdown,
   formatPredictionLockTimeIst,
   formatStageLabel,
   getMatchFilterStatus,
@@ -9,6 +8,7 @@ import {
   PREDICTION_LOCK_BUFFER_MINUTES,
   statusLabel,
 } from '../lib/matchUtils'
+import { LockCountdown } from './LockCountdown'
 import { formatKickoffTimeIst } from '../lib/timezone'
 import { formatVenueLabel, getMatchVenueCity } from '../lib/venues'
 import { isExactScorePoints } from '../lib/scoring'
@@ -27,7 +27,6 @@ interface MatchCardProps {
 export function MatchCard({ match, prediction, index = 0, onPredict, showPoints }: MatchCardProps) {
   const locked = isMatchLocked(match)
   const filterStatus = getMatchFilterStatus(match)
-  const countdown = filterStatus === 'upcoming' ? formatCountdown(match.kickoff_at) : null
   const venueCity = getMatchVenueCity(match)
   const hasScore =
     match.status !== 'scheduled' &&
@@ -56,7 +55,7 @@ export function MatchCard({ match, prediction, index = 0, onPredict, showPoints 
             hasScore={hasScore}
             showPredictionScore={showPredictionScore}
             prediction={prediction}
-            countdown={countdown}
+            showLockTimer={filterStatus === 'upcoming' && !locked}
           />
           <TeamSide name={match.away_team} emoji={match.away_flag} side="away" />
         </div>
@@ -182,13 +181,13 @@ function CenterBlock({
   hasScore,
   showPredictionScore,
   prediction,
-  countdown,
+  showLockTimer,
 }: {
   match: Match
   hasScore: boolean
   showPredictionScore: boolean
   prediction?: Prediction
-  countdown: string | null
+  showLockTimer: boolean
 }) {
   if (match.status === 'live') {
     return (
@@ -233,8 +232,8 @@ function CenterBlock({
       <time dateTime={match.kickoff_at} className="type-kickoff">
         {formatKickoffTimeIst(match.kickoff_at)}
       </time>
-      {countdown && (
-        <span className="type-caption mt-1 font-medium">in {countdown}</span>
+      {showLockTimer && (
+        <LockCountdown kickoffAt={match.kickoff_at} variant="chip" className="mt-1.5" />
       )}
     </div>
   )

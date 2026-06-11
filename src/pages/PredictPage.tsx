@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { MatchCard } from '../components/MatchCard'
 import { PredictionModal } from '../components/PredictionModal'
 import { useMatches } from '../hooks/useMatches'
+import { LockCountdown } from '../components/LockCountdown'
 import {
   getNextPredictableMatch,
   PREDICTION_LOCK_BUFFER_MINUTES,
@@ -30,6 +31,15 @@ export function PredictPage() {
 
   return (
     <div>
+      {nextMatch && !loading && (
+        <LockCountdown
+          kickoffAt={nextMatch.kickoff_at}
+          variant="hero"
+          saved={hasPrediction}
+          className="mb-4"
+        />
+      )}
+
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

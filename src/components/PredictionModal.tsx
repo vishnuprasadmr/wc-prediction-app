@@ -9,6 +9,7 @@ import { TeamFlag } from './TeamFlag'
 import { playSound } from '../lib/sounds'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { LockCountdown } from './LockCountdown'
 import { TruncatedText } from './TruncatedText'
 
 interface PredictionModalProps {
@@ -100,6 +101,9 @@ export function PredictionModal({
               <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-muted" />
 
               <h2 className="type-section-title text-center">Your Prediction</h2>
+              <div className="mt-3">
+                <LockCountdown kickoffAt={match.kickoff_at} variant="banner" />
+              </div>
               <div className="mt-4 flex items-start justify-center gap-3 sm:gap-4">
                 <div className="flex min-w-0 max-w-[34%] flex-col items-center gap-1.5">
                   <TeamFlag team={match.home_team} emoji={match.home_flag} size="lg" />

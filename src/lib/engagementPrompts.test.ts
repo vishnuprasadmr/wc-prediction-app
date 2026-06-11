@@ -79,8 +79,8 @@ describe('engagementPrompts', () => {
       expect(prompt).toBeNull()
     })
 
-    it('marks urgent prompts inside three hours of lock', () => {
-      vi.setSystemTime(new Date('2026-06-15T16:00:00.000Z'))
+    it('marks urgent prompts inside fifteen minutes of lock', () => {
+      vi.setSystemTime(new Date('2026-06-15T17:35:00.000Z'))
       const match = makeMatch({
         id: 'urgent-1',
         kickoff_at: '2026-06-15T18:00:00.000Z',
@@ -95,6 +95,25 @@ describe('engagementPrompts', () => {
       expect(prompt?.kind).toBe('predict')
       if (prompt?.kind === 'predict') {
         expect(prompt.urgent).toBe(true)
+      }
+    })
+
+    it('does not mark urgent when more than fifteen minutes remain', () => {
+      vi.setSystemTime(new Date('2026-06-15T16:00:00.000Z'))
+      const match = makeMatch({
+        id: 'calm-1',
+        kickoff_at: '2026-06-15T18:00:00.000Z',
+      })
+
+      const prompt = resolveEngagementPrompt({
+        matches: [match],
+        predictions: {},
+        pathname: '/',
+      })
+
+      expect(prompt?.kind).toBe('predict')
+      if (prompt?.kind === 'predict') {
+        expect(prompt.urgent).toBe(false)
       }
     })
 
@@ -210,7 +229,7 @@ describe('engagementPrompts', () => {
         urgent: true,
       })
 
-      expect(message.title).toBe('Predict before the lock!')
+      expect(message.title).toBe('15 minutes until lock!')
     })
 
     it('builds leaderboard copy with points', () => {

@@ -5,8 +5,12 @@ import {
   getPredictPromptMessage,
 } from '../lib/engagementPrompts'
 import { useEngagementPrompt } from '../hooks/useEngagementPrompt'
+import { usePredictionLockAlert } from '../hooks/usePredictionLockAlert'
+import { LockCountdown } from './LockCountdown'
 
 export function EngagementPrompt() {
+  usePredictionLockAlert()
+
   const {
     prompt,
     dismiss,
@@ -66,6 +70,12 @@ export function EngagementPrompt() {
                   </button>
                 </div>
                 <p className="type-caption mt-1 text-pretty">{message.body}</p>
+
+                {prompt.kind === 'predict' && (
+                  <div className="mt-2">
+                    <LockCountdown kickoffAt={prompt.match.kickoff_at} variant="chip" />
+                  </div>
+                )}
 
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <button

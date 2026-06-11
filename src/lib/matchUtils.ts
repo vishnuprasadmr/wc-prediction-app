@@ -4,6 +4,9 @@ import { formatKickoffIst, formatKickoffTimeIst } from './timezone'
 /** Predictions lock this many minutes before kickoff (e.g. 12:30 kickoff → locked at 12:15) */
 export const PREDICTION_LOCK_BUFFER_MINUTES = 15
 
+/** In-app + push alert when this many minutes remain before the lock */
+export const LOCK_WARNING_MINUTES = 15
+
 export function getPredictionLockAt(kickoffAt: string): Date {
   return new Date(
     new Date(kickoffAt).getTime() - PREDICTION_LOCK_BUFFER_MINUTES * 60 * 1000,
@@ -17,6 +20,53 @@ export function isMatchLocked(match: Match): boolean {
 
 export function formatPredictionLockTimeIst(kickoffAt: string): string {
   return formatKickoffTimeIst(getPredictionLockAt(kickoffAt).toISOString())
+}
+
+export function getMsUntilPredictionLock(kickoffAt: string): number {
+  return getPredictionLockAt(kickoffAt).getTime() - Date.now()
+}
+
+export function isLockWarningWindow(kickoffAt: string): boolean {
+  const ms = getMsUntilPredictionLock(kickoffAt)
+  return ms > 0 && ms <= LOCK_WARNING_MINUTES * 60 * 1000
+}
+
+/** Live countdown until predictions lock; includes seconds when under one hour. */
+export function formatLockCountdown(kickoffAt: string, now = Date.now()): string | null {
+  const ms = getPredictionLockAt(kickoffAt).getTime() - now
+  if (ms <= 0) return null
+
+  const totalSeconds = Math.floor(ms / 1000)
+  const days = Math.floor(totalSeconds / 86_400)
+  const hours = Math.floor((totalSeconds % 86_400) / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+
+  if (days > 0) return `${days}d ${hours}h`
+  if (hours > 0) return `${hours}h ${minutes}m`
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
+}
+
+/** Tick every second — `H:MM:SS` under 24h, `Dd Hh Mm` beyond. */
+export function formatLockCountdownLive(kickoffAt: string, now = Date.now()): string | null {
+  const ms = getPredictionLockAt(kickoffAt).getTime() - now
+  if (ms <= 0) return null
+
+  const totalSeconds = Math.floor(ms / 1000)
+  const days = Math.floor(totalSeconds / 86_400)
+  const hours = Math.floor((totalSeconds % 86_400) / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+
+  if (days > 0) {
+    return `${days}d ${hours}h ${minutes}m`
+  }
+
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+  }
+
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }
 
 /** Earliest scheduled match that still accepts predictions */

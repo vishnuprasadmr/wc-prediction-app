@@ -2,7 +2,9 @@ import type { Match, Prediction } from './types'
 import {
   getNextPredictableMatch,
   formatPredictionLockTimeIst,
-  PREDICTION_LOCK_BUFFER_MINUTES,
+  formatLockCountdown,
+  isLockWarningWindow,
+  LOCK_WARNING_MINUTES,
 } from './matchUtils'
 import { formatKickoffTimeIst, toIstDateKey } from './timezone'
 
@@ -99,24 +101,21 @@ export function resolveEngagementPrompt(input: {
   const dismissed = getDismissedKeys()
 
   const nextMatch = getNextPredictableMatch(matches)
+  const lockWarning = nextMatch ? isLockWarningWindow(nextMatch.kickoff_at) : false
   if (
     nextMatch &&
     !predictions[nextMatch.id] &&
-    pathname !== '/predict'
+    (pathname !== '/predict' || lockWarning)
   ) {
     const key = `predict:${nextMatch.id}`
     if (!dismissed.has(key)) {
-      const msToLock =
-        new Date(nextMatch.kickoff_at).getTime() -
-        PREDICTION_LOCK_BUFFER_MINUTES * 60 * 1000 -
-        Date.now()
       return {
         kind: 'predict',
         key,
         match: nextMatch,
         dayLabel: getIstDayLabel(nextMatch.kickoff_at),
         lockTime: formatPredictionLockTimeIst(nextMatch.kickoff_at),
-        urgent: msToLock > 0 && msToLock < 3 * 60 * 60 * 1000,
+        urgent: lockWarning,
       }
     }
   }
@@ -143,10 +142,12 @@ export function getPredictPromptMessage(prompt: PredictPrompt): { title: string;
   const { home_team, away_team } = prompt.match
   const kickoffTime = formatKickoffTimeIst(prompt.match.kickoff_at)
 
+  const lockCountdown = formatLockCountdown(prompt.match.kickoff_at)
+
   if (prompt.urgent) {
     return {
-      title: 'Predict before the lock!',
-      body: `${prompt.dayLabel}: ${home_team} vs ${away_team} kicks off at ${kickoffTime} IST. You haven't predicted yet — lock closes at ${prompt.lockTime}.`,
+      title: `${LOCK_WARNING_MINUTES} minutes until lock!`,
+      body: `${home_team} vs ${away_team} — ${lockCountdown ? `lock in ${lockCountdown}` : `lock closes at ${prompt.lockTime}`} IST. Make your pick now!`,
     }
   }
 
@@ -183,10 +184,11 @@ export async function maybeShowSystemNotification(
   title: string,
   body: string,
   tag: string,
+  options?: { whenVisible?: boolean },
 ): Promise<void> {
   if (typeof window === 'undefined' || !('Notification' in window)) return
   if (Notification.permission !== 'granted') return
-  if (!document.hidden) return
+  if (!document.hidden && !options?.whenVisible) return
 
   try {
     const reg = await navigator.serviceWorker?.getRegistration()
