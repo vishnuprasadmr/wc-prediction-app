@@ -244,7 +244,7 @@ def sync_scores(dry_run: bool = False, match_number: int | None = None) -> int:
             else "—"
         )
         prefix = "[dry-run] " if dry_run else ""
-        print(f"{prefix}Match {num}: {home_team} vs {away_team} → {score_str} ({status})")
+        print(f"{prefix}Match {num}: {home_team} vs {away_team} -> {score_str} ({status})")
 
         if update_match(supabase_url, service_key, db_row["id"], payload, dry_run):
             updated += 1

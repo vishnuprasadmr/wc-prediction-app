@@ -91,6 +91,34 @@ export function getMatchFilterStatus(match: Match): 'upcoming' | 'live' | 'finis
   return 'upcoming'
 }
 
+/** Matches currently live in DB or in the post-kickoff score-sync window. */
+export function getLiveMatches(matches: Match[]): Match[] {
+  return matches.filter((m) => getMatchFilterStatus(m) === 'live' && m.status !== 'finished')
+}
+
+/** True when FIFA score sync should run (live match or recently kicked off). */
+export function isInScoreSyncWindow(match: Match, now = Date.now()): boolean {
+  const kickoff = new Date(match.kickoff_at).getTime()
+  const started = kickoff <= now + PREDICTION_LOCK_BUFFER_MINUTES * 60 * 1000
+  const recent = kickoff >= now - 4 * 60 * 60 * 1000
+  const notDone = match.status !== 'finished'
+  return (match.status === 'live' || (started && notDone)) && recent
+}
+
+export function shouldPollLiveScores(matches: Match[]): boolean {
+  return matches.some((m) => isInScoreSyncWindow(m))
+}
+
+/** Poll FIFA when any match may be live (includes DB-not-yet-synced kickoffs). */
+export function shouldFetchFifaLive(matches: Match[], now = Date.now()): boolean {
+  return matches.some((m) => {
+    const kickoff = new Date(m.kickoff_at).getTime()
+    const inWindow = kickoff <= now + 3 * 60 * 60 * 1000 && kickoff >= now - 6 * 60 * 60 * 1000
+    return m.status === 'live' || (inWindow && m.status !== 'finished')
+  })
+}
+
+
 export function formatKickoff(iso: string): string {
   return formatKickoffIst(iso)
 }

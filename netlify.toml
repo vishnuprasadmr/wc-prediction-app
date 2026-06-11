@@ -28,6 +28,13 @@
   [headers.values]
     Content-Type = "application/manifest+json"
 
+# FIFA live scores proxy (browser cannot call api.fifa.com directly)
+[[redirects]]
+  from = "/api/fifa/*"
+  to = "https://api.fifa.com/api/v3/:splat"
+  status = 200
+  force = true
+
 # SPA fallback — existing files in dist/ are served first (force = false)
 [[redirects]]
   from = "/*"

@@ -1,0 +1,2 @@
+# Netlify: proxy FIFA API for live scores (avoids browser CORS)
+/api/fifa/*  https://api.fifa.com/api/v3/:splat  200

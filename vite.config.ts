@@ -3,6 +3,15 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  server: {
+    proxy: {
+      '/api/fifa': {
+        target: 'https://api.fifa.com/api/v3',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/fifa/, ''),
+      },
+    },
+  },
   test: {
     environment: 'jsdom',
     globals: true,

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
+import { LiveScoreboard } from '../components/LiveScoreboard'
 import { MatchCard } from '../components/MatchCard'
 import { PredictionModal } from '../components/PredictionModal'
 import { useMatches } from '../hooks/useMatches'
@@ -12,7 +13,7 @@ import {
 import type { Match } from '../lib/types'
 
 export function PredictPage() {
-  const { matches, predictions, loading, refetch } = useMatches()
+  const { matches, predictions, loading, refetch, liveScoreSyncing } = useMatches()
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null)
 
   const nextMatch = useMemo(() => getNextPredictableMatch(matches), [matches])
@@ -31,6 +32,8 @@ export function PredictPage() {
 
   return (
     <div>
+      <LiveScoreboard matches={matches} syncing={liveScoreSyncing} />
+
       {nextMatch && !loading && (
         <LockCountdown
           kickoffAt={nextMatch.kickoff_at}

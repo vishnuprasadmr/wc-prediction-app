@@ -12,7 +12,10 @@ import {
   getMatchFilterStatus,
   getNextPredictableMatch,
   getPredictionLockAt,
+  getLiveMatches,
+  isInScoreSyncWindow,
   isMatchLocked,
+  shouldPollLiveScores,
   statusLabel,
 } from './matchUtils'
 import { makeMatch, resetFixtureCounters } from '../test/fixtures'
@@ -57,6 +60,26 @@ describe('matchUtils', () => {
     it('returns true for finished matches', () => {
       const match = makeMatch({ status: 'finished' })
       expect(isMatchLocked(match)).toBe(true)
+    })
+  })
+
+  describe('live scores', () => {
+    it('getLiveMatches returns non-finished live filter matches', () => {
+      const live = makeMatch({ status: 'live', home_score: 1, away_score: 0 })
+      const finished = makeMatch({ id: 'done', status: 'finished', home_score: 2, away_score: 1 })
+      expect(getLiveMatches([live, finished])).toHaveLength(1)
+      expect(getLiveMatches([live, finished])[0].id).toBe(live.id)
+    })
+
+    it('shouldPollLiveScores when a match is live', () => {
+      const live = makeMatch({ status: 'live', kickoff_at: '2026-06-15T12:00:00.000Z' })
+      expect(shouldPollLiveScores([live])).toBe(true)
+    })
+
+    it('isInScoreSyncWindow after kickoff', () => {
+      vi.setSystemTime(new Date('2026-06-15T14:30:00.000Z'))
+      const match = makeMatch({ kickoff_at: '2026-06-15T14:00:00.000Z', status: 'scheduled' })
+      expect(isInScoreSyncWindow(match)).toBe(true)
     })
   })
 

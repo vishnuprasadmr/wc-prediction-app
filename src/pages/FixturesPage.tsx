@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { LiveScoreboard } from '../components/LiveScoreboard'
 import { MatchCard } from '../components/MatchCard'
 import { useMatches } from '../hooks/useMatches'
 import { getMatchFilterStatus } from '../lib/matchUtils'
@@ -15,7 +16,7 @@ const filters: { key: Filter; label: string }[] = [
 ]
 
 export function FixturesPage() {
-  const { matches, predictions, loading, error } = useMatches()
+  const { matches, predictions, loading, error, liveScoreSyncing } = useMatches()
   const [filter, setFilter] = useState<Filter>('all')
 
   const filtered = useMemo(() => {
@@ -49,6 +50,8 @@ export function FixturesPage() {
 
   return (
     <div>
+      <LiveScoreboard matches={matches} syncing={liveScoreSyncing} />
+
       <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
         {filters.map(({ key, label }) => (
           <button

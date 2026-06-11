@@ -8,6 +8,8 @@ import {
   type ReactNode,
 } from 'react'
 import { useAuth } from './AuthContext'
+import { useFifaLiveOverlay } from '../hooks/useFifaLiveOverlay'
+import { useLiveScorePolling } from '../hooks/useLiveScorePolling'
 import { supabase } from '../lib/supabase'
 import type { Match, Prediction } from '../lib/types'
 
@@ -17,6 +19,7 @@ interface MatchesContextValue {
   loading: boolean
   error: string | null
   refetch: () => Promise<void>
+  liveScoreSyncing: boolean
 }
 
 const MatchesContext = createContext<MatchesContextValue | null>(null)
@@ -67,6 +70,9 @@ export function MatchesProvider({ children }: { children: ReactNode }) {
     setLoading(false)
   }, [userId])
 
+  const { syncing: liveScoreSyncing } = useLiveScorePolling(matches, fetchData)
+  const { displayMatches } = useFifaLiveOverlay(matches)
+
   useEffect(() => {
     setLoading(true)
     void fetchData()
@@ -88,8 +94,15 @@ export function MatchesProvider({ children }: { children: ReactNode }) {
   }, [fetchData, userId])
 
   const value = useMemo(
-    () => ({ matches, predictions, loading, error, refetch: fetchData }),
-    [matches, predictions, loading, error, fetchData],
+    () => ({
+      matches: displayMatches,
+      predictions,
+      loading,
+      error,
+      refetch: fetchData,
+      liveScoreSyncing,
+    }),
+    [displayMatches, predictions, loading, error, fetchData, liveScoreSyncing],
   )
 
   return <MatchesContext.Provider value={value}>{children}</MatchesContext.Provider>
