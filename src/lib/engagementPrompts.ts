@@ -1,12 +1,12 @@
 import type { Match, Prediction } from './types'
 import {
-  getNextPredictableMatch,
+  getPredictableMatches,
   formatPredictionLockTimeIst,
   formatLockCountdown,
   isLockWarningWindow,
   LOCK_WARNING_MINUTES,
 } from './matchUtils'
-import { formatKickoffTimeIst, toIstDateKey } from './timezone'
+import { addIstDays, formatKickoffTimeIst, toIstDateKey } from './timezone'
 
 const STORAGE_KEY = 'wc-dismissed-engagement-prompts'
 
@@ -60,12 +60,6 @@ export function clearEngagementDismissal(key: string): void {
   }
 }
 
-function addIstDays(dateKey: string, days: number): string {
-  const [y, m, d] = dateKey.split('-').map(Number)
-  const utc = new Date(Date.UTC(y, m - 1, d + days, 12, 0))
-  return toIstDateKey(utc.toISOString())
-}
-
 export function getIstDayLabel(kickoffAt: string): string {
   const today = toIstDateKey(new Date().toISOString())
   const kickoffDay = toIstDateKey(kickoffAt)
@@ -100,11 +94,10 @@ export function resolveEngagementPrompt(input: {
   const { matches, predictions, pathname } = input
   const dismissed = getDismissedKeys()
 
-  const nextMatch = getNextPredictableMatch(matches)
+  const nextMatch = getPredictableMatches(matches).find((m) => !predictions[m.id]) ?? null
   const lockWarning = nextMatch ? isLockWarningWindow(nextMatch.kickoff_at) : false
   if (
     nextMatch &&
-    !predictions[nextMatch.id] &&
     (pathname !== '/predict' || lockWarning)
   ) {
     const key = `predict:${nextMatch.id}`

@@ -6,39 +6,49 @@ import { PredictionModal } from '../components/PredictionModal'
 import { useMatches } from '../hooks/useMatches'
 import { LockCountdown } from '../components/LockCountdown'
 import {
-  getNextPredictableMatch,
+  getPredictableMatches,
   PREDICTION_LOCK_BUFFER_MINUTES,
   formatPredictionLockTimeIst,
 } from '../lib/matchUtils'
+import { formatIstDateHeader, toIstDateKey } from '../lib/timezone'
 import type { Match } from '../lib/types'
 
 export function PredictPage() {
   const { matches, predictions, loading, refetch, liveScoreSyncing } = useMatches()
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null)
 
-  const nextMatch = useMemo(() => getNextPredictableMatch(matches), [matches])
+  const openMatches = useMemo(() => getPredictableMatches(matches), [matches])
 
-  const hasPrediction = nextMatch ? Boolean(predictions[nextMatch.id]) : false
+  const focusMatch = useMemo(() => {
+    const unpicked = openMatches.filter((m) => !predictions[m.id])
+    return unpicked[0] ?? openMatches[0] ?? null
+  }, [openMatches, predictions])
 
-  const queuedCount = useMemo(() => {
-    if (!nextMatch) return 0
-    const nextKickoff = new Date(nextMatch.kickoff_at).getTime()
-    return matches.filter(
-      (m) =>
-        m.status === 'scheduled' &&
-        new Date(m.kickoff_at).getTime() > nextKickoff,
-    ).length
-  }, [matches, nextMatch])
+  const pickedCount = useMemo(
+    () => openMatches.filter((m) => predictions[m.id]).length,
+    [openMatches, predictions],
+  )
+
+  const grouped = useMemo(() => {
+    const map = new Map<string, Match[]>()
+    for (const m of openMatches) {
+      const key = toIstDateKey(m.kickoff_at)
+      const list = map.get(key) ?? []
+      list.push(m)
+      map.set(key, list)
+    }
+    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b))
+  }, [openMatches])
 
   return (
     <div>
       <LiveScoreboard matches={matches} syncing={liveScoreSyncing} />
 
-      {nextMatch && !loading && (
+      {focusMatch && !loading && (
         <LockCountdown
-          kickoffAt={nextMatch.kickoff_at}
+          kickoffAt={focusMatch.kickoff_at}
           variant="hero"
-          saved={hasPrediction}
+          saved={Boolean(predictions[focusMatch.id])}
           className="mb-4"
         />
       )}
@@ -49,40 +59,42 @@ export function PredictPage() {
         className="mb-4 rounded-2xl border border-default bg-card p-4 shadow-card"
       >
         <p className="type-body-sm text-subtle text-pretty">
-          {nextMatch ? (
+          {openMatches.length > 0 ? (
             <>
-              <span className="font-semibold text-simelabs">Next match</span>
+              <span className="font-semibold text-simelabs">Open picks</span>
               <span className="text-muted/50"> — </span>
-              {hasPrediction ? 'Prediction saved' : 'Make your pick before the lock'}
+              {pickedCount === openMatches.length
+                ? 'All open matches predicted'
+                : `${pickedCount} of ${openMatches.length} predicted`}
             </>
           ) : (
             'No open matches right now'
           )}
         </p>
-        {nextMatch && (
+        {openMatches.length > 0 && (
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
             <motion.div
               initial={{ width: 0 }}
-              animate={{ width: hasPrediction ? '100%' : '0%' }}
+              animate={{
+                width: `${openMatches.length ? (pickedCount / openMatches.length) * 100 : 0}%`,
+              }}
               className="h-full rounded-full bg-gradient-to-r from-simelabs to-simelabs-light"
             />
           </div>
         )}
-        {nextMatch && (
+        {openMatches.length > 0 && (
           <p className="type-caption mt-2 text-pretty">
-            Picks lock at{' '}
-            <span className="whitespace-nowrap font-medium text-subtle">
-              {formatPredictionLockTimeIst(nextMatch.kickoff_at)} IST
-            </span>
-            <span className="block sm:inline">
-              <span className="hidden sm:inline"> </span>
-              ({PREDICTION_LOCK_BUFFER_MINUTES} min before kickoff)
-            </span>
-            {queuedCount > 0 && (
-              <span className="mt-0.5 block sm:mt-0 sm:inline">
-                <span className="hidden sm:inline text-muted/50"> · </span>
-                {queuedCount} more match{queuedCount === 1 ? '' : 'es'} after this
-              </span>
+            Today &amp; tomorrow&apos;s matches stay open in daytime — including midnight kickoffs.
+            Picks still lock {PREDICTION_LOCK_BUFFER_MINUTES} min before kickoff
+            {focusMatch && (
+              <>
+                {' '}
+                (next:{' '}
+                <span className="whitespace-nowrap font-medium text-subtle">
+                  {formatPredictionLockTimeIst(focusMatch.kickoff_at)} IST
+                </span>
+                )
+              </>
             )}
           </p>
         )}
@@ -94,18 +106,34 @@ export function PredictPage() {
             <div key={i} className="h-32 animate-pulse rounded-2xl bg-card" />
           ))}
         </div>
-      ) : !nextMatch ? (
+      ) : openMatches.length === 0 ? (
         <div className="rounded-2xl border border-default bg-card p-8 text-center">
           <p className="text-4xl">✅</p>
           <p className="mt-2 font-medium">All caught up!</p>
-          <p className="mt-1 text-sm text-muted">No open matches to predict right now.</p>
+          <p className="mt-1 text-sm text-muted">
+            More matches open the day before they kick off (IST).
+          </p>
         </div>
       ) : (
-        <MatchCard
-          match={nextMatch}
-          prediction={predictions[nextMatch.id]}
-          onPredict={setSelectedMatch}
-        />
+        <div className="space-y-6">
+          {grouped.map(([dateKey, dayMatches]) => (
+            <section key={dateKey}>
+              <h3 className="type-caption mb-2 font-semibold uppercase tracking-wide text-muted">
+                {formatIstDateHeader(dateKey)}
+              </h3>
+              <div className="space-y-3">
+                {dayMatches.map((match) => (
+                  <MatchCard
+                    key={match.id}
+                    match={match}
+                    prediction={predictions[match.id]}
+                    onPredict={setSelectedMatch}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
       )}
 
       <PredictionModal

@@ -29,6 +29,26 @@ export function formatKickoffTimeIst(iso: string): string {
   }).format(new Date(iso))
 }
 
+/** Add calendar days to an IST date key (YYYY-MM-DD). */
+export function addIstDays(dateKey: string, days: number): string {
+  const [y, m, d] = dateKey.split('-').map(Number)
+  const utc = new Date(Date.UTC(y, m - 1, d + days, 12, 0))
+  return toIstDateKey(utc.toISOString())
+}
+
+/** Today and tomorrow as IST calendar dates — used for the open prediction window. */
+export function getIstTodayAndTomorrow(now = Date.now()): { today: string; tomorrow: string } {
+  const today = toIstDateKey(new Date(now).toISOString())
+  return { today, tomorrow: addIstDays(today, 1) }
+}
+
+/** True when kickoff falls on today or tomorrow in IST (midnight games stay open all day). */
+export function isInOpenPredictionWindow(kickoffAt: string, now = Date.now()): boolean {
+  const { today, tomorrow } = getIstTodayAndTomorrow(now)
+  const kickoffDay = toIstDateKey(kickoffAt)
+  return kickoffDay === today || kickoffDay === tomorrow
+}
+
 /** Format date header for fixture groups in IST */
 export function formatIstDateHeader(dateKey: string): string {
   const [y, m, d] = dateKey.split('-').map(Number)

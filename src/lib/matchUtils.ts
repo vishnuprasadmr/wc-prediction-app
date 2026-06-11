@@ -1,5 +1,9 @@
 import type { Match, MatchStatus } from './types'
-import { formatKickoffIst, formatKickoffTimeIst } from './timezone'
+import {
+  formatKickoffIst,
+  formatKickoffTimeIst,
+  isInOpenPredictionWindow,
+} from './timezone'
 
 /** Predictions lock this many minutes before kickoff (e.g. 12:30 kickoff → locked at 12:15) */
 export const PREDICTION_LOCK_BUFFER_MINUTES = 15
@@ -69,19 +73,27 @@ export function formatLockCountdownLive(kickoffAt: string, now = Date.now()): st
   return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }
 
-/** Earliest scheduled match that still accepts predictions */
-export function getNextPredictableMatch(matches: Match[]): Match | null {
-  return (
-    matches
-      .filter((m) => !isMatchLocked(m) && m.status === 'scheduled')
-      .sort((a, b) => new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime())[0] ??
-    null
-  )
+/** Scheduled, not locked, and kicking off today or tomorrow (IST). */
+export function isMatchPredictable(match: Match, now = Date.now()): boolean {
+  if (match.status !== 'scheduled') return false
+  if (isMatchLocked(match)) return false
+  return isInOpenPredictionWindow(match.kickoff_at, now)
 }
 
-export function canPredictMatch(match: Match, matches: Match[]): boolean {
-  const next = getNextPredictableMatch(matches)
-  return next?.id === match.id
+/** All matches open for prediction right now (today + tomorrow IST). */
+export function getPredictableMatches(matches: Match[], now = Date.now()): Match[] {
+  return matches
+    .filter((m) => isMatchPredictable(m, now))
+    .sort((a, b) => new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime())
+}
+
+/** Earliest match in the open prediction window (alerts, hero countdown). */
+export function getNextPredictableMatch(matches: Match[], now = Date.now()): Match | null {
+  return getPredictableMatches(matches, now)[0] ?? null
+}
+
+export function canPredictMatch(match: Match, _matches?: Match[], now = Date.now()): boolean {
+  return isMatchPredictable(match, now)
 }
 
 export function getMatchFilterStatus(match: Match): 'upcoming' | 'live' | 'finished' {

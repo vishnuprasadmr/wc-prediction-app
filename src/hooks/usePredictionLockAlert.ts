@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useMatches } from './useMatches'
 import {
-  getNextPredictableMatch,
+  getPredictableMatches,
   getMsUntilPredictionLock,
   LOCK_WARNING_MINUTES,
   formatPredictionLockTimeIst,
@@ -45,24 +45,25 @@ export function usePredictionLockAlert() {
       checkingRef.current = true
 
       try {
-        const next = getNextPredictableMatch(matches)
-        if (!next || predictions[next.id]) return
-
-        const ms = getMsUntilPredictionLock(next.kickoff_at)
         const warnMs = LOCK_WARNING_MINUTES * 60 * 1000
-        if (ms <= 0 || ms > warnMs) return
-        if (wasWarningSent(next.id)) return
+        const open = getPredictableMatches(matches).filter((m) => !predictions[m.id])
 
-        markWarningSent(next.id)
-        const lockTime = formatPredictionLockTimeIst(next.kickoff_at)
-        const kickoff = formatKickoffTimeIst(next.kickoff_at)
+        for (const match of open) {
+          const ms = getMsUntilPredictionLock(match.kickoff_at)
+          if (ms <= 0 || ms > warnMs) continue
+          if (wasWarningSent(match.id)) continue
 
-        void maybeShowSystemNotification(
-          '15 minutes until lock!',
-          `${next.home_team} vs ${next.away_team} — picks close at ${lockTime} IST (kickoff ${kickoff}).`,
-          `lock-warning:${next.id}`,
-          { whenVisible: true },
-        )
+          markWarningSent(match.id)
+          const lockTime = formatPredictionLockTimeIst(match.kickoff_at)
+          const kickoff = formatKickoffTimeIst(match.kickoff_at)
+
+          void maybeShowSystemNotification(
+            '15 minutes until lock!',
+            `${match.home_team} vs ${match.away_team} — picks close at ${lockTime} IST (kickoff ${kickoff}).`,
+            `lock-warning:${match.id}`,
+            { whenVisible: true },
+          )
+        }
       } finally {
         checkingRef.current = false
       }

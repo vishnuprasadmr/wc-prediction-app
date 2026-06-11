@@ -11,6 +11,7 @@ import {
   LOCK_WARNING_MINUTES,
   getMatchFilterStatus,
   getNextPredictableMatch,
+  getPredictableMatches,
   getPredictionLockAt,
   getLiveMatches,
   isInScoreSyncWindow,
@@ -83,25 +84,48 @@ describe('matchUtils', () => {
     })
   })
 
+  describe('getPredictableMatches', () => {
+    // 2026-06-15T12:00:00Z = 17:30 IST on 15 June
+    it('includes today and tomorrow IST kickoffs', () => {
+      const todayMatch = makeMatch({
+        id: 'today',
+        kickoff_at: '2026-06-15T18:00:00.000Z', // 23:30 IST 15 June
+      })
+      const tomorrowMidnight = makeMatch({
+        id: 'midnight',
+        kickoff_at: '2026-06-15T19:00:00.000Z', // 00:30 IST 16 June
+      })
+      const dayAfter = makeMatch({
+        id: 'later',
+        kickoff_at: '2026-06-17T14:00:00.000Z',
+      })
+
+      const open = getPredictableMatches([todayMatch, tomorrowMidnight, dayAfter])
+      expect(open.map((m) => m.id)).toEqual(['today', 'midnight'])
+    })
+
+    it('excludes locked and finished matches', () => {
+      const finished = makeMatch({ status: 'finished' })
+      const locked = makeMatch({ kickoff_at: '2026-06-15T12:10:00.000Z' })
+      expect(getPredictableMatches([finished, locked])).toEqual([])
+    })
+  })
+
   describe('getNextPredictableMatch', () => {
-    it('returns the earliest unlocked scheduled match', () => {
+    it('returns the earliest open-window match', () => {
       const later = makeMatch({
         id: 'later',
-        kickoff_at: '2026-06-16T14:00:00.000Z',
+        kickoff_at: '2026-06-15T19:00:00.000Z',
       })
       const sooner = makeMatch({
         id: 'sooner',
         kickoff_at: '2026-06-15T18:00:00.000Z',
       })
-      const locked = makeMatch({
-        id: 'locked',
-        kickoff_at: '2026-06-15T12:10:00.000Z',
-      })
 
-      expect(getNextPredictableMatch([later, locked, sooner])?.id).toBe('sooner')
+      expect(getNextPredictableMatch([later, sooner])?.id).toBe('sooner')
     })
 
-    it('returns null when every match is locked or not scheduled', () => {
+    it('returns null when no matches are in the open window', () => {
       const finished = makeMatch({ status: 'finished' })
       const locked = makeMatch({ kickoff_at: '2026-06-15T12:10:00.000Z' })
       expect(getNextPredictableMatch([finished, locked])).toBeNull()
@@ -109,13 +133,14 @@ describe('matchUtils', () => {
   })
 
   describe('canPredictMatch', () => {
-    it('allows only the next predictable match', () => {
-      const next = makeMatch({ kickoff_at: '2026-06-15T18:00:00.000Z' })
-      const later = makeMatch({ kickoff_at: '2026-06-16T14:00:00.000Z' })
-      const matches = [next, later]
+    it('allows every today and tomorrow IST match', () => {
+      const today = makeMatch({ kickoff_at: '2026-06-15T18:00:00.000Z' })
+      const tomorrow = makeMatch({ kickoff_at: '2026-06-15T19:00:00.000Z' })
+      const nextWeek = makeMatch({ kickoff_at: '2026-06-22T14:00:00.000Z' })
 
-      expect(canPredictMatch(next, matches)).toBe(true)
-      expect(canPredictMatch(later, matches)).toBe(false)
+      expect(canPredictMatch(today)).toBe(true)
+      expect(canPredictMatch(tomorrow)).toBe(true)
+      expect(canPredictMatch(nextWeek)).toBe(false)
     })
   })
 

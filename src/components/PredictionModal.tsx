@@ -48,7 +48,7 @@ export function PredictionModal({
   const handleSave = async () => {
     if (!match || !user) return
     if (allMatches.length > 0 && !canPredictMatch(match, allMatches)) {
-      setError('You can only predict the next upcoming match.')
+      setError('This match is not open for prediction (today & tomorrow IST only, until 15 min before kickoff).')
       return
     }
     playSound('save')
