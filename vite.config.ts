@@ -22,8 +22,16 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
+      includeAssets: [
+        'favicon.svg',
+        'apple-touch-icon.png',
+        'pwa-192x192.png',
+        'pwa-512x512.png',
+        'notification-badge.png',
+        'sw-notifications.js',
+      ],
       manifest: {
+        id: '/',
         name: 'Simelabs WC Predictions',
         short_name: 'WC Predict',
         description: 'Simelabs World Cup 2026 prediction league',
@@ -32,26 +40,53 @@ export default defineConfig({
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
+        scope: '/',
         icons: [
           {
-            src: 'pwa-192x192.svg',
+            src: 'pwa-192x192.png',
             sizes: '192x192',
-            type: 'image/svg+xml',
+            type: 'image/png',
+            purpose: 'any',
           },
           {
-            src: 'pwa-512x512.svg',
+            src: 'pwa-512x512.png',
             sizes: '512x512',
-            type: 'image/svg+xml',
+            type: 'image/png',
+            purpose: 'any',
           },
           {
-            src: 'pwa-512x512.svg',
+            src: 'pwa-512x512.png',
             sizes: '512x512',
-            type: 'image/svg+xml',
+            type: 'image/png',
             purpose: 'maskable',
           },
         ],
+        shortcuts: [
+          {
+            name: 'Predict now',
+            short_name: 'Predict',
+            url: '/predict',
+            description: 'Open matches waiting for your pick',
+          },
+          {
+            name: 'League glance',
+            short_name: 'Glance',
+            url: '/widget',
+            description: 'Rank and next lock time',
+          },
+          {
+            name: 'Point table',
+            short_name: 'Table',
+            url: '/leaderboard',
+          },
+        ],
+      },
+      devOptions: {
+        enabled: true,
+        type: 'module',
       },
       workbox: {
+        importScripts: ['sw-notifications.js'],
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,

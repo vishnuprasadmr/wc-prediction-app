@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { PenaltyShootout } from '../components/PenaltyShootout'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { LiveScoreboard } from '../components/LiveScoreboard'
@@ -30,6 +31,7 @@ export function FixturesPage() {
   const { matches, predictions, loading, error, liveScoreSyncing, refetch } = useMatches()
   const [filter, setFilter] = useState<Filter>('next')
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null)
+  const [penaltyMatch, setPenaltyMatch] = useState<Match | null>(null)
 
   const openMatches = useMemo(() => getPredictableMatches(matches), [matches])
   const unpickedCount = useMemo(
@@ -200,6 +202,7 @@ export function FixturesPage() {
                               }
                             : undefined
                         }
+                        onPenaltyGame={predictions[match.id] ? setPenaltyMatch : undefined}
                       />
                     </div>
                   )
@@ -220,6 +223,12 @@ export function FixturesPage() {
           dismissSpotlight()
           void refetch()
         }}
+      />
+
+      <PenaltyShootout
+        match={penaltyMatch!}
+        open={Boolean(penaltyMatch)}
+        onClose={() => setPenaltyMatch(null)}
       />
     </div>
   )

@@ -1,6 +1,5 @@
 import type { PredictionWithMatch } from '../lib/types'
 import { explainPoints } from '../lib/pointsBreakdown'
-import { TruncatedText } from './TruncatedText'
 
 export function PredictionBreakdownList({ predictions }: { predictions: PredictionWithMatch[] }) {
   const finished = predictions
@@ -26,10 +25,9 @@ export function PredictionBreakdownList({ predictions }: { predictions: Predicti
         return (
           <div key={p.id} className="rounded-xl bg-card p-3 text-sm">
             <div className="flex items-start justify-between gap-2">
-              <TruncatedText
-                text={`${p.match.home_team} vs ${p.match.away_team}`}
-                className="min-w-0 flex-1 font-medium"
-              />
+              <p className="min-w-0 flex-1 text-balance font-medium leading-snug">
+                {p.match.home_team} vs {p.match.away_team}
+              </p>
               <span className="shrink-0 font-mono text-xs text-muted">
                 FT {actualHome}-{actualAway}
               </span>

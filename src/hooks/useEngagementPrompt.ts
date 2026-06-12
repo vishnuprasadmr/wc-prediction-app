@@ -6,10 +6,10 @@ import {
   dismissEngagementPrompt,
   getLeaderboardPromptMessage,
   getPredictPromptMessage,
-  maybeShowSystemNotification,
   resolveEngagementPrompt,
   type EngagementPrompt,
 } from '../lib/engagementPrompts'
+import { showGameNotification } from '../lib/notificationTheme'
 
 export function useEngagementPrompt() {
   const { user } = useAuth()
@@ -40,7 +40,13 @@ export function useEngagementPrompt() {
         ? getPredictPromptMessage(prompt)
         : getLeaderboardPromptMessage(prompt)
 
-    void maybeShowSystemNotification(message.title, message.body, prompt.key)
+    void showGameNotification({
+      title: message.title,
+      body: message.body,
+      tag: prompt.key,
+      kind: prompt.kind === 'predict' ? 'predict' : 'leaderboard',
+      url: prompt.kind === 'predict' ? '/predict' : '/leaderboard',
+    })
     notifiedRef.current = prompt.key
   }, [prompt])
 

@@ -8,7 +8,7 @@ import {
   formatPredictionLockTimeIst,
 } from '../lib/matchUtils'
 import { formatKickoffTimeIst } from '../lib/timezone'
-import { maybeShowSystemNotification } from '../lib/engagementPrompts'
+import { showGameNotification } from '../lib/notificationTheme'
 
 const STORAGE_PREFIX = 'wc-lock-warning:'
 
@@ -57,12 +57,14 @@ export function usePredictionLockAlert() {
           const lockTime = formatPredictionLockTimeIst(match.kickoff_at)
           const kickoff = formatKickoffTimeIst(match.kickoff_at)
 
-          void maybeShowSystemNotification(
-            '15 minutes until lock!',
-            `${match.home_team} vs ${match.away_team} — picks close at ${lockTime} IST (kickoff ${kickoff}).`,
-            `lock-warning:${match.id}`,
-            { whenVisible: true },
-          )
+          void showGameNotification({
+            title: `${LOCK_WARNING_MINUTES} minutes until lock!`,
+            body: `${match.home_team} vs ${match.away_team} — picks close at ${lockTime} IST (kickoff ${kickoff}).`,
+            tag: `lock-warning:${match.id}`,
+            kind: 'lock',
+            url: '/predict',
+            whenVisible: true,
+          })
         }
       } finally {
         checkingRef.current = false

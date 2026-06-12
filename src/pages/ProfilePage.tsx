@@ -9,12 +9,12 @@ import { useUserPredictions } from '../hooks/usePredictions'
 import { ScoringRulesSheet } from '../components/ScoringRulesSheet'
 import { ThemePreferenceRow } from '../components/ThemePreferenceRow'
 import { useState } from 'react'
-import { TruncatedText } from '../components/TruncatedText'
 import { SeasonPicksCard } from '../components/SeasonPicksCard'
 import { useSeasonQuestionnaire } from '../hooks/useSeasonQuestionnaire'
 import { ProfileAvatar } from '../components/ProfileAvatar'
 import { TeamFlag } from '../components/TeamFlag'
 import { BadgesRow } from '../components/BadgesRow'
+import { usePwaInstall } from '../hooks/usePwaInstall'
 import { computeBadges } from '../lib/badges'
 import { PredictionBreakdownList } from '../components/PredictionBreakdownList'
 import { SeasonTrackerCard } from '../components/SeasonTrackerCard'
@@ -22,9 +22,6 @@ import { ShareStandingsButton } from '../components/ShareStandingsButton'
 import { NotificationSettings } from '../components/NotificationSettings'
 import { DepartmentSelect } from '../components/DepartmentSelect'
 import { GloryOptIn } from '../components/GloryOptIn'
-import { fireCelebration } from '../lib/confetti'
-import { isExactScorePoints } from '../lib/scoring'
-import { useEffect, useRef } from 'react'
 
 export function ProfilePage() {
   const { user, profile, signOut, refreshProfile } = useAuth()
@@ -34,8 +31,6 @@ export function ProfilePage() {
   const [showRules, setShowRules] = useState(false)
   const { row: seasonRow, loading: seasonLoading } = useSeasonQuestionnaire()
   const heartTeam = seasonRow?.answers?.heart_team
-  const celebratedRef = useRef<Set<string>>(new Set())
-
   const rankingsAvailable = useMemo(() => hasFinishedMatches(matches), [matches])
 
   const myEntry = useMemo(
@@ -44,7 +39,7 @@ export function ProfilePage() {
   )
 
   const badges = useMemo(() => computeBadges(predictions), [predictions])
-
+  const { canInstallNatively, install, instructions, isStandalone } = usePwaInstall()
   const totalPoints = rankingsAvailable ? (myEntry?.total_points ?? 0) : 0
   const rank = rankingsAvailable ? (myEntry?.rank ?? 0) : 0
   const exactScores = rankingsAvailable ? (myEntry?.exact_scores ?? 0) : 0
@@ -56,18 +51,6 @@ export function ProfilePage() {
       ),
     [predictions],
   )
-
-  useEffect(() => {
-    if (!lastFinished?.match?.id || lastFinished.points_earned === null) return
-    const key = lastFinished.match.id
-    if (celebratedRef.current.has(key)) return
-    if (
-      isExactScorePoints(lastFinished.points_earned, lastFinished.first_bonus ?? 0)
-    ) {
-      celebratedRef.current.add(key)
-      fireCelebration('exact')
-    }
-  }, [lastFinished])
 
   return (
     <div className="space-y-6">
@@ -134,6 +117,14 @@ export function ProfilePage() {
 
       <NotificationSettings />
 
+      <Link
+        to="/widget"
+        className="flex w-full items-center justify-between rounded-xl bg-card p-4 transition hover:bg-muted"
+      >
+        <span>📱 Home screen glance</span>
+        <span className="text-sm text-simelabs">→</span>
+      </Link>
+
       <ThemePreferenceRow />
 
       <div className="space-y-2">
@@ -157,13 +148,22 @@ export function ProfilePage() {
 
         <div className="rounded-xl bg-card p-4">
           <p className="type-label mb-1">📲 Install on your phone</p>
-          <p className="type-caption text-pretty">
-            iOS: Share → Add to Home Screen.
-            <span className="mt-0.5 block sm:inline">
-              <span className="hidden sm:inline"> </span>
-              Android: Use the install banner or browser menu.
-            </span>
-          </p>
+          {isStandalone ? (
+            <p className="type-caption text-simelabs">Installed — you&apos;re using the app.</p>
+          ) : (
+            <>
+              <p className="type-caption text-pretty">{instructions}</p>
+              {canInstallNatively && (
+                <button
+                  type="button"
+                  onClick={() => void install()}
+                  className="mt-3 w-full rounded-xl bg-simelabs py-2.5 text-sm font-semibold text-simelabs-foreground transition hover:bg-simelabs-dark"
+                >
+                  Install app
+                </button>
+              )}
+            </>
+          )}
         </div>
       </div>
 
@@ -182,12 +182,11 @@ export function ProfilePage() {
             {predictions.slice(0, 10).map((p) => (
               <div
                 key={p.id}
-                className="flex items-center justify-between rounded-xl bg-card p-3 text-sm"
+                className="flex items-start justify-between gap-2 rounded-xl bg-card p-3 text-sm"
               >
-                <TruncatedText
-                  text={`${p.match?.home_team ?? 'Home'} vs ${p.match?.away_team ?? 'Away'}`}
-                  className="min-w-0 flex-1 text-sm"
-                />
+                <p className="min-w-0 flex-1 text-balance text-sm leading-snug">
+                  {p.match?.home_team ?? 'Home'} vs {p.match?.away_team ?? 'Away'}
+                </p>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="font-mono font-medium">
                     {p.home_pred}-{p.away_pred}

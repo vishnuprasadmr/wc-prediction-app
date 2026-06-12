@@ -13,10 +13,11 @@ import { formatKickoffTimeIst } from '../lib/timezone'
 import { formatVenueLabel, getMatchVenueCity } from '../lib/venues'
 import { isExactScorePoints } from '../lib/scoring'
 import { playSound } from '../lib/sounds'
-import { TeamFlag } from './TeamFlag'
-import { TruncatedText } from './TruncatedText'
+import { TeamLabel } from './TeamLabel'
+import { MatchComments } from './MatchComments'
 import { MatchPickDistribution } from './MatchPickDistribution'
 import { MatchReactions } from './MatchReactions'
+import { MatchResultTimeline } from './MatchResultTimeline'
 
 interface MatchCardProps {
   match: Match
@@ -26,6 +27,7 @@ interface MatchCardProps {
   showPoints?: boolean
   /** Pulsing highlight for “next pick” on the Predict page */
   spotlight?: boolean
+  onPenaltyGame?: (match: Match) => void
 }
 
 export function MatchCard({
@@ -35,6 +37,7 @@ export function MatchCard({
   onPredict,
   showPoints,
   spotlight = false,
+  onPenaltyGame,
 }: MatchCardProps) {
   const locked = isMatchLocked(match)
   const filterStatus = getMatchFilterStatus(match)
@@ -81,16 +84,17 @@ export function MatchCard({
       }`}
     >
       <div className="px-4 py-4 sm:px-5">
-        <div className="flex items-center justify-between gap-3">
-          <TeamSide name={match.home_team} emoji={match.home_flag} side="home" />
+        <div className="flex items-start justify-between gap-2 sm:gap-3">
+          <TeamLabel team={match.home_team} emoji={match.home_flag} />
           <CenterBlock
             match={match}
             hasScore={hasScore}
             showPredictionScore={showPredictionScore}
             prediction={prediction}
             showLockTimer={filterStatus === 'upcoming' && !locked}
+            className="self-center"
           />
-          <TeamSide name={match.away_team} emoji={match.away_flag} side="away" />
+          <TeamLabel team={match.away_team} emoji={match.away_flag} />
         </div>
 
         <p className="type-caption mt-3 text-center text-pretty">
@@ -133,11 +137,28 @@ export function MatchCard({
 
         {match.status === 'finished' && (
           <>
+            {prediction && showPoints && (
+              <MatchResultTimeline match={match} prediction={prediction} />
+            )}
             <MatchPickDistribution matchId={match.id} finished />
             <MatchReactions matchId={match.id} finished />
+            <MatchComments matchId={match.id} finished />
           </>
         )}
       </div>
+
+      {prediction && match.status === 'scheduled' && onPenaltyGame && (
+        <button
+          type="button"
+          onClick={() => {
+            playSound('select')
+            onPenaltyGame(match)
+          }}
+          className="w-full border-t border-default py-2 text-center text-xs font-semibold text-muted transition hover:bg-muted hover:text-simelabs"
+        >
+          🎮 Penalty shootout (just for fun)
+        </button>
+      )}
 
       {onPredict && !locked && (
         <button
@@ -179,59 +200,24 @@ export function MatchCard({
   )
 }
 
-function TeamSide({
-  name,
-  emoji,
-  side,
-}: {
-  name: string
-  emoji: string
-  side: 'home' | 'away'
-}) {
-  return (
-    <div
-      className={`flex min-w-0 flex-1 items-center gap-2.5 ${
-        side === 'home' ? 'justify-end text-right' : 'justify-start text-left'
-      }`}
-    >
-      {side === 'home' && (
-        <>
-          <TruncatedText
-            text={name}
-            className="text-sm font-semibold leading-snug text-theme sm:text-base"
-          />
-          <TeamFlag team={name} emoji={emoji} />
-        </>
-      )}
-      {side === 'away' && (
-        <>
-          <TeamFlag team={name} emoji={emoji} />
-          <TruncatedText
-            text={name}
-            className="text-sm font-semibold leading-snug text-theme sm:text-base"
-          />
-        </>
-      )}
-    </div>
-  )
-}
-
 function CenterBlock({
   match,
   hasScore,
   showPredictionScore,
   prediction,
   showLockTimer,
+  className = '',
 }: {
   match: Match
   hasScore: boolean
   showPredictionScore: boolean
   prediction?: Prediction
   showLockTimer: boolean
+  className?: string
 }) {
   if (match.status === 'live') {
     return (
-      <div className="flex shrink-0 flex-col items-center px-1">
+      <div className={`flex shrink-0 flex-col items-center px-1 ${className}`}>
         <span className="type-overline mb-0.5 flex items-center gap-1 !tracking-wide text-red-500">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
           Live
@@ -245,7 +231,7 @@ function CenterBlock({
 
   if (hasScore || match.status === 'finished') {
     return (
-      <div className="flex shrink-0 flex-col items-center px-1">
+      <div className={`flex shrink-0 flex-col items-center px-1 ${className}`}>
         <span className="type-overline mb-0.5 !text-muted">
           {statusLabel(match.status) || 'FT'}
         </span>
@@ -258,7 +244,7 @@ function CenterBlock({
 
   if (showPredictionScore && prediction) {
     return (
-      <div className="flex shrink-0 flex-col items-center px-1">
+      <div className={`flex shrink-0 flex-col items-center px-1 ${className}`}>
         <span className="type-overline mb-0.5 !text-simelabs">Your pick</span>
         <span className="type-score">
           {prediction.home_pred} – {prediction.away_pred}
@@ -268,7 +254,7 @@ function CenterBlock({
   }
 
   return (
-    <div className="flex shrink-0 flex-col items-center px-2">
+    <div className={`flex shrink-0 flex-col items-center px-1 sm:px-2 ${className}`}>
       <time dateTime={match.kickoff_at} className="type-kickoff">
         {formatKickoffTimeIst(match.kickoff_at)}
       </time>

@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import { ProtectedRoute, AdminRoute } from './components/ProtectedRoute'
 import { LoginPage } from './pages/LoginPage'
@@ -8,6 +8,7 @@ import { PredictPage } from './pages/PredictPage'
 import { LeaderboardPage } from './pages/LeaderboardPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { AdminPage } from './pages/AdminPage'
+import { WidgetPage } from './pages/WidgetPage'
 
 export default function App() {
   return (
@@ -17,22 +18,25 @@ export default function App() {
       <Route
         element={
           <ProtectedRoute>
-            <Layout />
+            <Outlet />
           </ProtectedRoute>
         }
       >
-        <Route index element={<FixturesPage />} />
-        <Route path="predict" element={<PredictPage />} />
-        <Route path="leaderboard" element={<LeaderboardPage />} />
-        <Route path="profile" element={<ProfilePage />} />
-        <Route
-          path="admin"
-          element={
-            <AdminRoute>
-              <AdminPage />
-            </AdminRoute>
-          }
-        />
+        <Route path="widget" element={<WidgetPage />} />
+        <Route element={<Layout />}>
+          <Route index element={<FixturesPage />} />
+          <Route path="predict" element={<PredictPage />} />
+          <Route path="leaderboard" element={<LeaderboardPage />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route
+            path="admin"
+            element={
+              <AdminRoute>
+                <AdminPage />
+              </AdminRoute>
+            }
+          />
+        </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

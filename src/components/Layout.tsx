@@ -1,22 +1,56 @@
 import { Outlet } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { BottomNav } from './BottomNav'
+import { GameNotificationHost } from './GameNotificationHost'
 import { InstallPrompt } from './InstallPrompt'
 import { ThemeToggle } from './ThemeToggle'
 import { EngagementPrompt } from './EngagementPrompt'
+import { useMemo } from 'react'
+import { BadgeUnlockModal } from './BadgeUnlockModal'
+import { OracleMomentOverlay } from './OracleMomentOverlay'
 import { MatchesProvider } from '../contexts/MatchesContext'
 import { QuestionnaireGate } from './QuestionnaireGate'
+import { useBadgeUnlock } from '../hooks/useBadgeUnlock'
 import { useMatchResultNotifications } from '../hooks/useMatchResultNotifications'
+import { useOracleMoment } from '../hooks/useOracleMoment'
+import { useLeaderboard } from '../hooks/useLeaderboard'
+import { useUserPredictions } from '../hooks/usePredictions'
+import { useAuth } from '../contexts/AuthContext'
+import { computeBadges } from '../lib/badges'
 
 function EngagementHooks() {
   useMatchResultNotifications()
-  return null
+  const { moment, dismiss } = useOracleMoment()
+  const { user, profile } = useAuth()
+  const { entries } = useLeaderboard()
+  const { predictions, loading: predictionsLoading } = useUserPredictions(user?.id)
+  const badges = useMemo(() => computeBadges(predictions), [predictions])
+  const { unlocking, dismissUnlock } = useBadgeUnlock(badges, {
+    ready: Boolean(user?.id) && !predictionsLoading,
+    userId: user?.id,
+  })
+  const myEntry = entries.find((e) => e.user_id === profile?.id)
+
+  return (
+    <>
+      <OracleMomentOverlay
+        moment={moment}
+        onDismiss={dismiss}
+        displayName={profile?.display_name}
+        rank={myEntry?.rank}
+        totalPoints={myEntry?.total_points}
+        exactScores={myEntry?.exact_scores}
+      />
+      <BadgeUnlockModal badge={unlocking} onDismiss={dismissUnlock} />
+    </>
+  )
 }
 
 export function Layout() {
   return (
     <MatchesProvider>
     <EngagementHooks />
+    <GameNotificationHost />
     <QuestionnaireGate>
     <div className="page-shell safe-top pb-[calc(4.25rem+env(safe-area-inset-bottom))]">
       <header className="page-content sticky top-0 z-40 border-b border-default bg-elevated/95 backdrop-blur-md">

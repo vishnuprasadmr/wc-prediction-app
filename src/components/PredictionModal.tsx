@@ -5,12 +5,11 @@ import confetti from 'canvas-confetti'
 import type { Match } from '../lib/types'
 import { canPredictMatch } from '../lib/matchUtils'
 import { ScoreStepper } from './ScoreStepper'
-import { TeamFlag } from './TeamFlag'
+import { TeamLabel } from './TeamLabel'
 import { playSound } from '../lib/sounds'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { LockCountdown } from './LockCountdown'
-import { TruncatedText } from './TruncatedText'
 
 interface PredictionModalProps {
   match: Match | null
@@ -104,22 +103,20 @@ export function PredictionModal({
               <div className="mt-3">
                 <LockCountdown kickoffAt={match.kickoff_at} variant="banner" />
               </div>
-              <div className="mt-4 flex items-start justify-center gap-3 sm:gap-4">
-                <div className="flex min-w-0 max-w-[34%] flex-col items-center gap-1.5">
-                  <TeamFlag team={match.home_team} emoji={match.home_flag} size="lg" />
-                  <TruncatedText
-                    text={match.home_team}
-                    className="type-caption w-full text-center font-medium text-subtle"
-                  />
-                </div>
-                <span className="type-caption shrink-0 pt-8 font-medium text-muted">vs</span>
-                <div className="flex min-w-0 max-w-[34%] flex-col items-center gap-1.5">
-                  <TeamFlag team={match.away_team} emoji={match.away_flag} size="lg" />
-                  <TruncatedText
-                    text={match.away_team}
-                    className="type-caption w-full text-center font-medium text-subtle"
-                  />
-                </div>
+              <div className="mt-4 flex items-start justify-center gap-2 sm:gap-4">
+                <TeamLabel
+                  team={match.home_team}
+                  emoji={match.home_flag}
+                  flagSize="lg"
+                  nameClassName="!text-xs font-medium text-subtle"
+                />
+                <span className="type-caption shrink-0 self-center font-medium text-muted">vs</span>
+                <TeamLabel
+                  team={match.away_team}
+                  emoji={match.away_flag}
+                  flagSize="lg"
+                  nameClassName="!text-xs font-medium text-subtle"
+                />
               </div>
 
               <div className="mt-8 flex items-center justify-center gap-8">

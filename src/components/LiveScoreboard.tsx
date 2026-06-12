@@ -1,8 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Match } from '../lib/types'
 import { formatStageLabel, getLiveMatches } from '../lib/matchUtils'
-import { TeamFlag } from './TeamFlag'
-import { TruncatedText } from './TruncatedText'
+import { TeamLabel } from './TeamLabel'
 
 interface LiveScoreboardProps {
   matches: Match[]
@@ -24,13 +23,10 @@ function LiveMatchRow({ match }: { match: Match }) {
       exit={{ opacity: 0, y: -8 }}
       className="rounded-xl border border-red-500/25 bg-red-500/5 px-3 py-3"
     >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
-          <TruncatedText text={match.home_team} className="text-sm font-semibold" />
-          <TeamFlag team={match.home_team} emoji={match.home_flag} size="sm" />
-        </div>
+      <div className="flex items-start justify-between gap-2">
+        <TeamLabel team={match.home_team} emoji={match.home_flag} flagSize="sm" />
 
-        <div className="flex shrink-0 flex-col items-center px-1">
+        <div className="flex shrink-0 flex-col items-center self-center px-1">
           <span className="type-overline mb-0.5 flex items-center gap-1 !text-[10px] !tracking-wide text-red-500">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
             LIVE
@@ -45,10 +41,7 @@ function LiveMatchRow({ match }: { match: Match }) {
           </motion.span>
         </div>
 
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <TeamFlag team={match.away_team} emoji={match.away_flag} size="sm" />
-          <TruncatedText text={match.away_team} className="text-sm font-semibold" />
-        </div>
+        <TeamLabel team={match.away_team} emoji={match.away_flag} flagSize="sm" />
       </div>
       <p className="type-caption mt-1.5 text-center text-muted">
         {formatStageLabel(match.stage, match.group_name)}

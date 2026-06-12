@@ -197,30 +197,3 @@ export function getLeaderboardPromptMessage(prompt: LeaderboardPrompt): {
   }
 }
 
-export async function maybeShowSystemNotification(
-  title: string,
-  body: string,
-  tag: string,
-  options?: { whenVisible?: boolean },
-): Promise<void> {
-  if (typeof window === 'undefined' || !('Notification' in window)) return
-  if (Notification.permission !== 'granted') return
-  if (!document.hidden && !options?.whenVisible) return
-
-  try {
-    const reg = await navigator.serviceWorker?.getRegistration()
-    if (reg) {
-      await reg.showNotification(title, {
-        body,
-        tag,
-        icon: '/favicon.svg',
-        badge: '/favicon.svg',
-      })
-      return
-    }
-  } catch {
-    /* fall through */
-  }
-
-  new Notification(title, { body, tag, icon: '/favicon.svg' })
-}

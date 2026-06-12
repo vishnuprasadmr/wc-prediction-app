@@ -3,6 +3,7 @@ import { join } from 'path'
 
 const distDir = 'dist'
 const indexPath = join(distDir, 'index.html')
+const manifestPath = join(distDir, 'manifest.webmanifest')
 
 if (!existsSync(indexPath)) {
   console.error('verify-build: dist/index.html not found — run npm run build')
@@ -20,6 +21,22 @@ if (html.includes('/src/main.tsx') || html.includes('/src/main.ts')) {
 
 if (!html.includes('/assets/')) {
   console.error('verify-build: dist/index.html has no /assets/ bundle — Vite build may have failed.')
+  process.exit(1)
+}
+
+if (!existsSync(manifestPath)) {
+  console.error('verify-build: dist/manifest.webmanifest missing — PWA build may have failed.')
+  process.exit(1)
+}
+
+const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
+const pngIcons = (manifest.icons ?? []).filter(
+  (icon) => icon.type === 'image/png' && (icon.sizes === '192x192' || icon.sizes === '512x512'),
+)
+if (pngIcons.length < 2) {
+  console.error(
+    'verify-build: manifest needs PNG icons at 192x192 and 512x512 for Chrome installability.',
+  )
   process.exit(1)
 }
 

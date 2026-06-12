@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { LiveScoreboard } from '../components/LiveScoreboard'
 import { MatchCard } from '../components/MatchCard'
+import { PenaltyShootout } from '../components/PenaltyShootout'
 import { PredictionModal } from '../components/PredictionModal'
 import { useNextMatchFocus } from '../hooks/useNextMatchFocus'
 import { useMatches } from '../hooks/useMatches'
@@ -17,6 +18,7 @@ import type { Match } from '../lib/types'
 export function PredictPage() {
   const { matches, predictions, loading, refetch, liveScoreSyncing } = useMatches()
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null)
+  const [penaltyMatch, setPenaltyMatch] = useState<Match | null>(null)
 
   const openMatches = useMemo(() => getPredictableMatches(matches), [matches])
 
@@ -164,6 +166,7 @@ export function PredictPage() {
                           dismissSpotlight()
                           setSelectedMatch(m)
                         }}
+                        onPenaltyGame={predictions[match.id] ? setPenaltyMatch : undefined}
                         spotlight={showSpotlight}
                       />
                     </div>
@@ -185,6 +188,12 @@ export function PredictPage() {
           dismissSpotlight()
           void refetch()
         }}
+      />
+
+      <PenaltyShootout
+        match={penaltyMatch!}
+        open={Boolean(penaltyMatch)}
+        onClose={() => setPenaltyMatch(null)}
       />
     </div>
   )

@@ -11,6 +11,9 @@ export const PREDICTION_LOCK_BUFFER_MINUTES = 15
 /** In-app + push alert when this many minutes remain before the lock */
 export const LOCK_WARNING_MINUTES = 15
 
+/** Tab pulse + haptic when lock is this close */
+export const LOCK_URGENT_MINUTES = 5
+
 export function getPredictionLockAt(kickoffAt: string): Date {
   return new Date(
     new Date(kickoffAt).getTime() - PREDICTION_LOCK_BUFFER_MINUTES * 60 * 1000,
