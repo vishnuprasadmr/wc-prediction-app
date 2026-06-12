@@ -5,6 +5,7 @@ import {
   leaderboardRankKey,
   setStoredLeaderboardRank,
 } from '../lib/leaderboardRankMemory'
+import { fireCelebration } from '../lib/confetti'
 import { primeAudio, playSound } from '../lib/sounds'
 import type { LeaderboardEntry } from '../lib/types'
 
@@ -58,6 +59,8 @@ export function useLeaderboardReveal(
       mood = 'up'
       primeAudio()
       playSound('standingsHappy')
+      if (myRank <= 3) fireCelebration('podium')
+      else fireCelebration('rankUp')
     } else if (myRank > previousRank) {
       mood = 'down'
       primeAudio()

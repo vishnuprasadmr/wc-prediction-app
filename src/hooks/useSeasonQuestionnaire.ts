@@ -27,7 +27,9 @@ export function useSeasonQuestionnaire() {
       return
     }
 
-    setLoading(true)
+    if (!profile?.questionnaire_completed_at && row === null) {
+      setLoading(true)
+    }
     const { data, error } = await supabase
       .from('season_predictions')
       .select('user_id, answers, points_earned, submitted_at')
@@ -43,7 +45,7 @@ export function useSeasonQuestionnaire() {
       setRow(data as SeasonPredictionRow | null)
     }
     setLoading(false)
-  }, [user])
+  }, [user, profile?.questionnaire_completed_at, row])
 
   useEffect(() => {
     void fetchRow()
@@ -62,6 +64,10 @@ export function useSeasonQuestionnaire() {
   const hasSubmitted = Boolean(profile?.questionnaire_completed_at ?? row?.submitted_at)
 
   const needsQuestionnaire = !unavailable && !loading && !hasSubmitted && !isLocked
+
+  /** Only block the shell on the very first questionnaire check */
+  const gateBlocking =
+    loading && !profile?.questionnaire_completed_at && row === null && !unavailable
 
   const submit = async (answers: SeasonAnswers) => {
     if (!user || !isSeasonAnswersComplete(answers)) {
@@ -105,6 +111,7 @@ export function useSeasonQuestionnaire() {
   return {
     row,
     loading,
+    gateBlocking,
     unavailable,
     isLocked,
     hasSubmitted,

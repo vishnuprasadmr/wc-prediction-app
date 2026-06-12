@@ -13,7 +13,9 @@ import {
   getNextPredictableMatch,
   getPredictableMatches,
   getPredictionLockAt,
+  getActionableMatches,
   getLiveMatches,
+  getNextFocusMatch,
   isInScoreSyncWindow,
   isMatchLocked,
   shouldPollLiveScores,
@@ -227,6 +229,23 @@ describe('matchUtils', () => {
       expect(statusLabel('finished')).toBe('FT')
       expect(statusLabel('postponed')).toBe('PPD')
       expect(statusLabel('scheduled')).toBe('')
+    })
+  })
+
+  describe('getActionableMatches', () => {
+    it('excludes finished matches', () => {
+      const finished = makeMatch({ status: 'finished', kickoff_at: '2026-06-14T14:00:00.000Z' })
+      const upcoming = makeMatch({ kickoff_at: '2026-06-16T14:00:00.000Z' })
+      expect(getActionableMatches([finished, upcoming]).map((m) => m.id)).toEqual([upcoming.id])
+    })
+  })
+
+  describe('getNextFocusMatch', () => {
+    it('prefers unpicked predictable matches', () => {
+      const picked = makeMatch({ kickoff_at: '2026-06-15T18:00:00.000Z' })
+      const unpicked = makeMatch({ kickoff_at: '2026-06-16T14:00:00.000Z' })
+      const focus = getNextFocusMatch([picked, unpicked], { [picked.id]: { id: 'p1' } })
+      expect(focus?.id).toBe(unpicked.id)
     })
   })
 })

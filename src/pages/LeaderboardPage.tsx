@@ -1,6 +1,11 @@
 import { useMemo, useState } from 'react'
+import { DailyRecapCard } from '../components/DailyRecapCard'
+import { GloryWall } from '../components/GloryWall'
+import { HeadToHeadCard } from '../components/HeadToHeadCard'
 import { LeaderboardTable } from '../components/LeaderboardTable'
 import { ScoringRulesSheet } from '../components/ScoringRulesSheet'
+import { SeasonAwardsCard } from '../components/SeasonAwardsCard'
+import { DEPARTMENTS } from '../lib/departments'
 import { useLeaderboard } from '../hooks/useLeaderboard'
 import { useLeaderboardReveal } from '../hooks/useLeaderboardReveal'
 import { useMatches } from '../hooks/useMatches'
@@ -18,6 +23,7 @@ const stages = [
 
 export function LeaderboardPage() {
   const [stage, setStage] = useState('all')
+  const [department, setDepartment] = useState<string>('all')
   const [showRules, setShowRules] = useState(false)
   const { matches } = useMatches()
 
@@ -29,7 +35,15 @@ export function LeaderboardPage() {
   )
 
   const effectiveStage = rankingsAvailable ? stage : 'all'
-  const { entries, heartTeams, loading } = useLeaderboard(effectiveStage)
+  const { entries: rawEntries, heartTeams, loading } = useLeaderboard(effectiveStage)
+
+  const entries = useMemo(() => {
+    if (department === 'all') return rawEntries
+    return rawEntries
+      .filter((e) => e.department === department)
+      .map((e, i) => ({ ...e, rank: i + 1 }))
+  }, [rawEntries, department])
+
   const { reveal: rankReveal } = useLeaderboardReveal(
     entries,
     loading,
@@ -38,8 +52,10 @@ export function LeaderboardPage() {
   )
 
   return (
-    <div>
-      <div className="mb-4 flex items-center justify-between gap-3">
+    <div className="space-y-4">
+      <DailyRecapCard />
+
+      <div className="flex items-center justify-between gap-3">
         <div>
           <p className="type-overline !text-[10px]">Simelabs WC 26</p>
           <h2 className="type-section-title">
@@ -54,8 +70,23 @@ export function LeaderboardPage() {
         </button>
       </div>
 
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        <select
+          value={department}
+          onChange={(e) => setDepartment(e.target.value)}
+          className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium outline-none"
+        >
+          <option value="all">All depts</option>
+          {DEPARTMENTS.map((d) => (
+            <option key={d} value={d}>
+              {d}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {tournamentStarted && (
-        <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+        <div className="flex gap-2 overflow-x-auto pb-1">
           {stages.map(({ key, label }) => (
             <button
               key={key}
@@ -79,6 +110,11 @@ export function LeaderboardPage() {
         rankingsAvailable={rankingsAvailable}
         rankReveal={rankReveal}
       />
+
+      <HeadToHeadCard entries={entries} heartTeams={heartTeams} />
+      <GloryWall />
+      <SeasonAwardsCard />
+
       <ScoringRulesSheet open={showRules} onClose={() => setShowRules(false)} />
     </div>
   )

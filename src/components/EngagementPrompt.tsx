@@ -69,7 +69,13 @@ export function EngagementPrompt() {
                     ✕
                   </button>
                 </div>
-                <p className="type-caption mt-1 text-pretty">{message.body}</p>
+                <div className="type-caption mt-1 space-y-0.5 leading-relaxed text-muted">
+                  {message.bodyLines.map((line) => (
+                    <p key={line} className="text-pretty">
+                      {line}
+                    </p>
+                  ))}
+                </div>
 
                 {prompt.kind === 'predict' && (
                   <div className="mt-2">

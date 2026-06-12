@@ -50,7 +50,11 @@ export function isInOpenPredictionWindow(kickoffAt: string, now = Date.now()): b
 }
 
 /** Format date header for fixture groups in IST */
-export function formatIstDateHeader(dateKey: string): string {
+export function formatIstDateHeader(dateKey: string, now = Date.now()): string {
+  const { today, tomorrow } = getIstTodayAndTomorrow(now)
+  if (dateKey === today) return 'Today'
+  if (dateKey === tomorrow) return 'Tomorrow'
+
   const [y, m, d] = dateKey.split('-').map(Number)
   const utcNoon = new Date(Date.UTC(y, m - 1, d, 6, 30)) // noon IST ≈ 06:30 UTC
   return new Intl.DateTimeFormat('en-IN', {

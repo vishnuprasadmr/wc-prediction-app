@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { formatKickoff } from '../lib/matchUtils'
 import type { Match, MatchStatus } from '../lib/types'
 import { AdminSeasonPanel } from '../components/AdminSeasonPanel'
+import { AdminStatsPanel } from '../components/AdminStatsPanel'
 
 export function AdminPage() {
   const { matches, loading, refetch } = useMatches()
@@ -88,6 +89,7 @@ export function AdminPage() {
         className="mb-4 w-full rounded-xl border border-default bg-card px-4 py-2.5 text-sm text-theme outline-none focus:border-simelabs"
       />
 
+      <AdminStatsPanel onSynced={() => void refetch()} />
       <AdminSeasonPanel />
 
       {message && (

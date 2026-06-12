@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
@@ -32,6 +33,7 @@ export function MatchesProvider({ children }: { children: ReactNode }) {
   const [predictions, setPredictions] = useState<Record<string, Prediction>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const hasLoadedRef = useRef(false)
 
   const fetchData = useCallback(async () => {
     setError(null)
@@ -67,6 +69,7 @@ export function MatchesProvider({ children }: { children: ReactNode }) {
       setPredictions({})
     }
 
+    hasLoadedRef.current = true
     setLoading(false)
   }, [userId])
 
@@ -74,7 +77,9 @@ export function MatchesProvider({ children }: { children: ReactNode }) {
   const { displayMatches } = useFifaLiveOverlay(matches)
 
   useEffect(() => {
-    setLoading(true)
+    if (!hasLoadedRef.current) {
+      setLoading(true)
+    }
     void fetchData()
 
     const channelName = `matches-sync-${userId ?? 'anon'}`

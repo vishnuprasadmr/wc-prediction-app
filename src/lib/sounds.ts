@@ -13,6 +13,7 @@ export type SoundId =
   | 'save'
   | 'standingsHappy'
   | 'standingsSad'
+  | 'splashAnthem'
 
 const STORAGE_KEY = 'wc-sounds-enabled'
 
@@ -240,6 +241,40 @@ function playStandingsSad(ctx: AudioContext, when: number) {
   tone(ctx, { freq: 330, freqEnd: 247, duration: 0.28, type: 'triangle', gain: 0.16, when: when + 0.12 })
 }
 
+/** Stadium swell + whistle when the welcome screen opens */
+function playSplashAnthem(ctx: AudioContext, when: number) {
+  const t0 = ctx.currentTime + when
+  const duration = 0.85
+  const bufferSize = Math.max(1, Math.floor(ctx.sampleRate * duration))
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate)
+  const data = buffer.getChannelData(0)
+  for (let i = 0; i < bufferSize; i += 1) {
+    const env = Math.min(1, i / (bufferSize * 0.35)) * (1 - i / bufferSize)
+    data[i] = (Math.random() * 2 - 1) * env
+  }
+  const crowd = ctx.createBufferSource()
+  crowd.buffer = buffer
+  const crowdFilter = ctx.createBiquadFilter()
+  crowdFilter.type = 'lowpass'
+  crowdFilter.frequency.setValueAtTime(420, t0)
+  crowdFilter.frequency.exponentialRampToValueAtTime(1800, t0 + duration)
+  const crowdAmp = ctx.createGain()
+  crowdAmp.gain.setValueAtTime(0.0001, t0)
+  crowdAmp.gain.linearRampToValueAtTime(0.12, t0 + 0.25)
+  crowdAmp.gain.exponentialRampToValueAtTime(0.0001, t0 + duration)
+  crowd.connect(crowdFilter)
+  crowdFilter.connect(crowdAmp)
+  crowdAmp.connect(getMaster(ctx))
+  crowd.start(t0)
+  crowd.stop(t0 + duration + 0.05)
+
+  tone(ctx, { freq: 196, duration: 0.35, type: 'sine', gain: 0.1, when: when + 0.35 })
+  tone(ctx, { freq: 247, duration: 0.35, type: 'sine', gain: 0.12, when: when + 0.48 })
+  tone(ctx, { freq: 294, duration: 0.4, type: 'triangle', gain: 0.14, when: when + 0.62 })
+  tone(ctx, { freq: 392, duration: 0.55, type: 'sine', gain: 0.16, when: when + 0.78 })
+  tone(ctx, { freq: 1760, freqEnd: 2100, duration: 0.22, type: 'sine', gain: 0.1, when: when + 1.05 })
+}
+
 const PLAYERS: Record<SoundId, Player> = {
   kick: playKick,
   impact: playImpact,
@@ -250,6 +285,7 @@ const PLAYERS: Record<SoundId, Player> = {
   save: playSave,
   standingsHappy: playStandingsHappy,
   standingsSad: playStandingsSad,
+  splashAnthem: playSplashAnthem,
 }
 
 /**

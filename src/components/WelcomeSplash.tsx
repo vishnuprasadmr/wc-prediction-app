@@ -1,6 +1,6 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
-import { playSound } from '../lib/sounds'
+import { playSound, primeAudio } from '../lib/sounds'
 import { markSplashSeen } from '../lib/splash'
 
 interface WelcomeSplashProps {
@@ -88,6 +88,27 @@ export function WelcomeSplash({ onComplete }: WelcomeSplashProps) {
   const [phase, setPhase] = useState<Phase>('idle')
   const [kickFrom, setKickFrom] = useState<Point>({ x: 50, y: 88 })
   const [impact, setImpact] = useState<Point>({ x: 50, y: 28 })
+  const anthemPlayedRef = useRef(false)
+
+  const playAnthemOnce = useCallback(() => {
+    if (anthemPlayedRef.current || reduceMotion) return
+    anthemPlayedRef.current = true
+    playSound('splashAnthem')
+  }, [reduceMotion])
+
+  useEffect(() => {
+    if (reduceMotion) return undefined
+    const id = window.setTimeout(() => playAnthemOnce(), 1500)
+    const onInteract = () => {
+      primeAudio()
+      playAnthemOnce()
+    }
+    window.addEventListener('pointerdown', onInteract, { once: true, passive: true })
+    return () => {
+      window.clearTimeout(id)
+      window.removeEventListener('pointerdown', onInteract)
+    }
+  }, [reduceMotion, playAnthemOnce])
 
   const finish = useCallback(
     (e: React.MouseEvent) => {
@@ -100,6 +121,7 @@ export function WelcomeSplash({ onComplete }: WelcomeSplashProps) {
         y: 22 + Math.min(8, (88 - origin.y) * 0.08),
       })
       markSplashSeen()
+      playAnthemOnce()
 
       if (reduceMotion) {
         onComplete()

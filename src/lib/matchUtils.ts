@@ -102,6 +102,31 @@ export function getMatchFilterStatus(match: Match): 'upcoming' | 'live' | 'finis
   return 'upcoming'
 }
 
+/** Home / “Next” feed — everything still to play, kickoff order. */
+export function getActionableMatches(matches: Match[]): Match[] {
+  return matches
+    .filter((m) => m.status !== 'finished')
+    .sort((a, b) => new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime())
+}
+
+/** Best scroll/highlight target: unpicked open pick → live → next kickoff. */
+export function getNextFocusMatch(
+  matches: Match[],
+  predictions: Record<string, unknown>,
+  now = Date.now(),
+): Match | null {
+  const predictable = getPredictableMatches(matches, now)
+  const unpicked = predictable.find((m) => !predictions[m.id])
+  if (unpicked) return unpicked
+
+  const live = getLiveMatches(matches).sort(
+    (a, b) => new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime(),
+  )[0]
+  if (live) return live
+
+  return getActionableMatches(matches)[0] ?? null
+}
+
 /** Matches with official live status from FIFA / Supabase (not merely prediction-locked). */
 export function getLiveMatches(matches: Match[]): Match[] {
   return matches.filter((m) => m.status === 'live')

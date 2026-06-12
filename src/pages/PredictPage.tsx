@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { LiveScoreboard } from '../components/LiveScoreboard'
 import { MatchCard } from '../components/MatchCard'
 import { PredictionModal } from '../components/PredictionModal'
+import { useNextMatchFocus } from '../hooks/useNextMatchFocus'
 import { useMatches } from '../hooks/useMatches'
 import { LockCountdown } from '../components/LockCountdown'
 import {
@@ -19,10 +20,15 @@ export function PredictPage() {
 
   const openMatches = useMemo(() => getPredictableMatches(matches), [matches])
 
-  const focusMatch = useMemo(() => {
-    const unpicked = openMatches.filter((m) => !predictions[m.id])
-    return unpicked[0] ?? openMatches[0] ?? null
-  }, [openMatches, predictions])
+  const nextUnpicked = useMemo(
+    () => openMatches.find((m) => !predictions[m.id]) ?? null,
+    [openMatches, predictions],
+  )
+
+  const focusMatch = useMemo(
+    () => nextUnpicked ?? openMatches[0] ?? null,
+    [nextUnpicked, openMatches],
+  )
 
   const pickedCount = useMemo(
     () => openMatches.filter((m) => predictions[m.id]).length,
@@ -39,6 +45,14 @@ export function PredictPage() {
     }
     return [...map.entries()].sort(([a], [b]) => a.localeCompare(b))
   }, [openMatches])
+
+  const { spotlightActive, dismissSpotlight } = useNextMatchFocus({
+    surface: 'predict',
+    pathname: '/predict',
+    loading,
+    focusMatch: nextUnpicked,
+    scrollTargetId: 'predict-match',
+  })
 
   return (
     <div>
@@ -83,24 +97,25 @@ export function PredictPage() {
           </div>
         )}
         {openMatches.length > 0 && (
-          <p className="type-caption mt-2 text-pretty">
-            Today &amp; tomorrow&apos;s matches stay open in daytime — including midnight kickoffs.
-            Picks still lock {PREDICTION_LOCK_BUFFER_MINUTES} min before kickoff
-            {focusMatch && (
-              <>
-                {' '}
-                (next:{' '}
-                <span className="whitespace-nowrap font-medium text-subtle">
-                  {formatPredictionLockTimeIst(focusMatch.kickoff_at)} IST
-                </span>
-                )
-              </>
-            )}
-          </p>
+          <div className="type-caption mt-2 space-y-1 leading-relaxed text-muted">
+            <p>Today &amp; tomorrow stay open all day in IST — including midnight kickoffs.</p>
+            <p>
+              Picks lock {PREDICTION_LOCK_BUFFER_MINUTES} min before kickoff
+              {focusMatch && (
+                <>
+                  {' '}
+                  · next lock{' '}
+                  <span className="whitespace-nowrap font-medium text-subtle">
+                    {formatPredictionLockTimeIst(focusMatch.kickoff_at)} IST
+                  </span>
+                </>
+              )}
+            </p>
+          </div>
         )}
       </motion.div>
 
-      {loading ? (
+      {loading && matches.length === 0 ? (
         <div className="space-y-3">
           {[...Array(2)].map((_, i) => (
             <div key={i} className="h-32 animate-pulse rounded-2xl bg-card" />
@@ -122,14 +137,38 @@ export function PredictPage() {
                 {formatIstDateHeader(dateKey)}
               </h3>
               <div className="space-y-3">
-                {dayMatches.map((match) => (
-                  <MatchCard
-                    key={match.id}
-                    match={match}
-                    prediction={predictions[match.id]}
-                    onPredict={setSelectedMatch}
-                  />
-                ))}
+                {dayMatches.map((match) => {
+                  const isNext = nextUnpicked?.id === match.id
+                  const showSpotlight = spotlightActive && isNext
+
+                  return (
+                    <div
+                      key={match.id}
+                      id={`predict-match-${match.id}`}
+                      className="scroll-mt-24"
+                    >
+                      {showSpotlight && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="type-overline mb-2 flex items-center gap-1.5 !text-[10px]"
+                        >
+                          <span className="inline-flex h-1.5 w-1.5 animate-pulse rounded-full bg-simelabs" />
+                          Next up — pick this match
+                        </motion.p>
+                      )}
+                      <MatchCard
+                        match={match}
+                        prediction={predictions[match.id]}
+                        onPredict={(m) => {
+                          dismissSpotlight()
+                          setSelectedMatch(m)
+                        }}
+                        spotlight={showSpotlight}
+                      />
+                    </div>
+                  )
+                })}
               </div>
             </section>
           ))}
@@ -142,7 +181,10 @@ export function PredictPage() {
         initialHome={selectedMatch ? predictions[selectedMatch.id]?.home_pred ?? 0 : 0}
         initialAway={selectedMatch ? predictions[selectedMatch.id]?.away_pred ?? 0 : 0}
         onClose={() => setSelectedMatch(null)}
-        onSaved={refetch}
+        onSaved={() => {
+          dismissSpotlight()
+          void refetch()
+        }}
       />
     </div>
   )

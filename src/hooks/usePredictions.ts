@@ -2,14 +2,22 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import type { PredictionWithMatch } from '../lib/types'
 
+const predictionsCache = new Map<string, PredictionWithMatch[]>()
+
 export function useUserPredictions(userId?: string) {
-  const [predictions, setPredictions] = useState<PredictionWithMatch[]>([])
-  const [loading, setLoading] = useState(true)
+  const cached = userId ? predictionsCache.get(userId) : undefined
+
+  const [predictions, setPredictions] = useState<PredictionWithMatch[]>(() => cached ?? [])
+  const [loading, setLoading] = useState(() => !cached)
 
   const fetchPredictions = useCallback(async () => {
     if (!userId) {
       setLoading(false)
       return
+    }
+
+    if (!predictionsCache.has(userId)) {
+      setLoading(true)
     }
 
     const { data, error } = await supabase
@@ -19,13 +27,15 @@ export function useUserPredictions(userId?: string) {
       .order('created_at', { ascending: false })
 
     if (!error && data) {
-      setPredictions(data as unknown as PredictionWithMatch[])
+      const next = data as unknown as PredictionWithMatch[]
+      setPredictions(next)
+      predictionsCache.set(userId, next)
     }
     setLoading(false)
   }, [userId])
 
   useEffect(() => {
-    fetchPredictions()
+    void fetchPredictions()
   }, [fetchPredictions])
 
   return { predictions, loading, refetch: fetchPredictions }

@@ -15,6 +15,8 @@ export interface Profile {
   is_admin: boolean
   employee_id?: string | null
   avatar_url?: string | null
+  department?: string | null
+  glory_opt_in?: boolean
   created_at: string
   questionnaire_completed_at?: string | null
 }
@@ -53,6 +55,7 @@ export interface LeaderboardEntry {
   user_id: string
   display_name: string
   avatar_url?: string | null
+  department?: string | null
   total_points: number
   exact_scores: number
   early_bonuses?: number

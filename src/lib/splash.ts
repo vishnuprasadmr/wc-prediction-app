@@ -1,16 +1,28 @@
-const SPLASH_KEY = 'wc-splash-seen'
+const SPLASH_AT_KEY = 'wc-splash-at'
 
-export function hasSeenSplash(): boolean {
+/** Show splash again after this idle period (4 hours). */
+export const SPLASH_COOLDOWN_MS = 4 * 60 * 60 * 1000
+
+export function shouldShowSplash(now = Date.now()): boolean {
   try {
-    return sessionStorage.getItem(SPLASH_KEY) === '1'
+    const at = localStorage.getItem(SPLASH_AT_KEY)
+    if (!at) return true
+    const last = Number(at)
+    if (!Number.isFinite(last)) return true
+    return now - last >= SPLASH_COOLDOWN_MS
   } catch {
-    return false
+    return true
   }
 }
 
-export function markSplashSeen(): void {
+/** @deprecated use shouldShowSplash */
+export function hasSeenSplash(): boolean {
+  return !shouldShowSplash()
+}
+
+export function markSplashSeen(now = Date.now()): void {
   try {
-    sessionStorage.setItem(SPLASH_KEY, '1')
+    localStorage.setItem(SPLASH_AT_KEY, String(now))
   } catch {
     /* private browsing */
   }

@@ -15,6 +15,8 @@ import { isExactScorePoints } from '../lib/scoring'
 import { playSound } from '../lib/sounds'
 import { TeamFlag } from './TeamFlag'
 import { TruncatedText } from './TruncatedText'
+import { MatchPickDistribution } from './MatchPickDistribution'
+import { MatchReactions } from './MatchReactions'
 
 interface MatchCardProps {
   match: Match
@@ -22,9 +24,18 @@ interface MatchCardProps {
   index?: number
   onPredict?: (match: Match) => void
   showPoints?: boolean
+  /** Pulsing highlight for “next pick” on the Predict page */
+  spotlight?: boolean
 }
 
-export function MatchCard({ match, prediction, index = 0, onPredict, showPoints }: MatchCardProps) {
+export function MatchCard({
+  match,
+  prediction,
+  index = 0,
+  onPredict,
+  showPoints,
+  spotlight = false,
+}: MatchCardProps) {
   const locked = isMatchLocked(match)
   const filterStatus = getMatchFilterStatus(match)
   const venueCity = getMatchVenueCity(match)
@@ -40,11 +51,33 @@ export function MatchCard({ match, prediction, index = 0, onPredict, showPoints 
   return (
     <motion.article
       initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, type: 'spring', stiffness: 320, damping: 28 }}
+      animate={{
+        opacity: 1,
+        y: 0,
+        ...(spotlight
+          ? {
+              boxShadow: [
+                '0 0 18px rgb(38 203 153 / 0.28)',
+                '0 0 40px rgb(38 203 153 / 0.55)',
+                '0 0 18px rgb(38 203 153 / 0.28)',
+              ],
+            }
+          : {}),
+      }}
+      transition={{
+        opacity: { delay: index * 0.05, type: 'spring', stiffness: 320, damping: 28 },
+        y: { delay: index * 0.05, type: 'spring', stiffness: 320, damping: 28 },
+        boxShadow: spotlight
+          ? { duration: 2.2, repeat: Infinity, ease: 'easeInOut' }
+          : undefined,
+      }}
       whileHover={{ y: -2 }}
-      className={`overflow-hidden rounded-2xl border border-default bg-card shadow-card transition-shadow hover:shadow-md ${
-        match.status === 'live' ? 'ring-2 ring-red-500/60' : ''
+      className={`overflow-hidden rounded-2xl border bg-card shadow-card transition-shadow hover:shadow-md ${
+        spotlight
+          ? 'border-simelabs/50 ring-2 ring-simelabs/40'
+          : match.status === 'live'
+            ? 'border-default ring-2 ring-red-500/60'
+            : 'border-default'
       }`}
     >
       <div className="px-4 py-4 sm:px-5">
@@ -96,6 +129,13 @@ export function MatchCard({ match, prediction, index = 0, onPredict, showPoints 
               </>
             )}
           </div>
+        )}
+
+        {match.status === 'finished' && (
+          <>
+            <MatchPickDistribution matchId={match.id} finished />
+            <MatchReactions matchId={match.id} finished />
+          </>
         )}
       </div>
 

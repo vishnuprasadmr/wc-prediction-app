@@ -120,7 +120,7 @@ export function LeaderboardTable({
 }: LeaderboardTableProps) {
   const { user } = useAuth()
 
-  if (loading) {
+  if (loading && entries.length === 0) {
     return (
       <div className="space-y-3">
         <div className="h-48 animate-pulse rounded-2xl bg-card" />

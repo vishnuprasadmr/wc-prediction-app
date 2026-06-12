@@ -131,45 +131,69 @@ export function resolveEngagementPrompt(input: {
   return null
 }
 
-export function getPredictPromptMessage(prompt: PredictPrompt): { title: string; body: string } {
+export function getPredictPromptMessage(prompt: PredictPrompt): {
+  title: string
+  body: string
+  bodyLines: string[]
+} {
   const { home_team, away_team } = prompt.match
   const kickoffTime = formatKickoffTimeIst(prompt.match.kickoff_at)
 
   const lockCountdown = formatLockCountdown(prompt.match.kickoff_at)
 
   if (prompt.urgent) {
+    const lockBit = lockCountdown
+      ? `Lock in ${lockCountdown}`
+      : `Lock closes at ${prompt.lockTime} IST`
     return {
       title: `${LOCK_WARNING_MINUTES} minutes until lock!`,
-      body: `${home_team} vs ${away_team} — ${lockCountdown ? `lock in ${lockCountdown}` : `lock closes at ${prompt.lockTime}`} IST. Make your pick now!`,
+      body: `${home_team} vs ${away_team}. ${lockBit}. Make your pick now!`,
+      bodyLines: [`${home_team} vs ${away_team}`, `${lockBit}. Make your pick now!`],
     }
   }
 
   if (prompt.dayLabel === 'Today') {
     return {
       title: "Today's match — did you predict?",
-      body: `${home_team} vs ${away_team} is on today at ${kickoffTime} IST. Make your pick before ${prompt.lockTime}.`,
+      body: `${home_team} vs ${away_team} · ${kickoffTime} IST. Pick before ${prompt.lockTime} IST.`,
+      bodyLines: [
+        `${home_team} vs ${away_team}`,
+        `Kickoff ${kickoffTime} IST · pick before ${prompt.lockTime} IST`,
+      ],
     }
   }
 
   return {
     title: 'Next match is coming up',
-    body: `${prompt.dayLabel}: ${home_team} vs ${away_team}. Did you predict yet? Lock closes at ${prompt.lockTime} IST.`,
+    body: `${prompt.dayLabel}: ${home_team} vs ${away_team}. Lock closes at ${prompt.lockTime} IST.`,
+    bodyLines: [
+      `${prompt.dayLabel} · ${home_team} vs ${away_team}`,
+      `Did you predict yet? Lock closes at ${prompt.lockTime} IST`,
+    ],
   }
 }
 
-export function getLeaderboardPromptMessage(prompt: LeaderboardPrompt): { title: string; body: string } {
+export function getLeaderboardPromptMessage(prompt: LeaderboardPrompt): {
+  title: string
+  body: string
+  bodyLines: string[]
+} {
   const { home_team, away_team, home_score, away_score } = prompt.match
   const score =
     home_score !== null && away_score !== null ? `${home_score}-${away_score}` : 'FT'
 
   const pointsLine =
     prompt.points !== null
-      ? `You scored ${prompt.points} pts (your pick: ${prompt.userPrediction}).`
-      : `Your pick was ${prompt.userPrediction}.`
+      ? `You scored ${prompt.points} pts (your pick: ${prompt.userPrediction})`
+      : `Your pick was ${prompt.userPrediction}`
 
   return {
     title: 'Full time! Check the table',
-    body: `${home_team} ${score} ${away_team}. ${pointsLine} See where you stand on the leaderboard.`,
+    body: `${home_team} ${score} ${away_team}. ${pointsLine}. See where you stand on the leaderboard.`,
+    bodyLines: [
+      `${home_team} ${score} ${away_team}`,
+      `${pointsLine}. See where you stand on the table.`,
+    ],
   }
 }
 

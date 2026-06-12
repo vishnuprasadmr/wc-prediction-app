@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  addIstDays,
   APP_TIMEZONE,
   formatIstDateHeader,
   formatKickoffIst,
@@ -26,5 +27,13 @@ describe('timezone', () => {
 
   it('formats fixture group headers', () => {
     expect(formatIstDateHeader('2026-06-15')).toMatch(/June/)
+  })
+
+  it('uses Today and Tomorrow instead of weekday names', () => {
+    const now = new Date('2026-06-15T12:00:00.000Z').getTime()
+    const today = toIstDateKey(new Date(now).toISOString())
+    const tomorrow = addIstDays(today, 1)
+    expect(formatIstDateHeader(today, now)).toBe('Today')
+    expect(formatIstDateHeader(tomorrow, now)).toBe('Tomorrow')
   })
 })

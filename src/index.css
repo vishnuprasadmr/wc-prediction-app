@@ -30,6 +30,9 @@
   --color-accent-neon: 38 203 153;
   --shadow-card: 0 1px 3px 0 rgb(38 203 153 / 0.1);
   --glow-accent: rgb(38 203 153 / 0.2);
+  --scrollbar-track: #e8f7f1;
+  --scrollbar-thumb: rgb(38 203 153 / 0.38);
+  --scrollbar-thumb-hover: rgb(38 203 153 / 0.62);
   --font-sans: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-heading: 'Plus Jakarta Sans', Inter, system-ui, sans-serif;
 }
@@ -53,6 +56,9 @@
   --color-accent-neon: 38 203 153;
   --shadow-card: 0 0 20px rgb(38 203 153 / 0.05);
   --glow-accent: rgb(38 203 153 / 0.18);
+  --scrollbar-track: #0d0d0d;
+  --scrollbar-thumb: rgb(38 203 153 / 0.28);
+  --scrollbar-thumb-hover: rgb(38 203 153 / 0.5);
 }
 
 @layer base {
@@ -67,6 +73,8 @@
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
     transition: background-color 0.4s ease, color 0.4s ease;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
   }
 
   body {
@@ -116,6 +124,33 @@
   textarea,
   select {
     @apply text-base;
+  }
+
+  /* Themed scrollbars — Simelabs pitch green, slim & rounded */
+  *::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+    border-radius: 9999px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 9999px;
+    border: 2px solid var(--scrollbar-track);
+    box-shadow: 0 0 8px rgb(var(--color-accent) / 0.15);
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+    box-shadow: 0 0 10px rgb(var(--color-accent) / 0.28);
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: var(--scrollbar-track);
   }
 }
 
@@ -385,5 +420,14 @@
 
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Hide scrollbar but keep scroll (horizontal chip rows, etc.) */
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
   }
 }

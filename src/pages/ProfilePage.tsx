@@ -14,15 +14,27 @@ import { SeasonPicksCard } from '../components/SeasonPicksCard'
 import { useSeasonQuestionnaire } from '../hooks/useSeasonQuestionnaire'
 import { ProfileAvatar } from '../components/ProfileAvatar'
 import { TeamFlag } from '../components/TeamFlag'
+import { BadgesRow } from '../components/BadgesRow'
+import { computeBadges } from '../lib/badges'
+import { PredictionBreakdownList } from '../components/PredictionBreakdownList'
+import { SeasonTrackerCard } from '../components/SeasonTrackerCard'
+import { ShareStandingsButton } from '../components/ShareStandingsButton'
+import { NotificationSettings } from '../components/NotificationSettings'
+import { DepartmentSelect } from '../components/DepartmentSelect'
+import { GloryOptIn } from '../components/GloryOptIn'
+import { fireCelebration } from '../lib/confetti'
+import { isExactScorePoints } from '../lib/scoring'
+import { useEffect, useRef } from 'react'
 
 export function ProfilePage() {
-  const { user, profile, signOut } = useAuth()
+  const { user, profile, signOut, refreshProfile } = useAuth()
   const { matches } = useMatches()
   const { entries } = useLeaderboard()
   const { predictions, loading } = useUserPredictions(user?.id)
   const [showRules, setShowRules] = useState(false)
   const { row: seasonRow, loading: seasonLoading } = useSeasonQuestionnaire()
   const heartTeam = seasonRow?.answers?.heart_team
+  const celebratedRef = useRef<Set<string>>(new Set())
 
   const rankingsAvailable = useMemo(() => hasFinishedMatches(matches), [matches])
 
@@ -31,9 +43,31 @@ export function ProfilePage() {
     [entries, user?.id],
   )
 
+  const badges = useMemo(() => computeBadges(predictions), [predictions])
+
   const totalPoints = rankingsAvailable ? (myEntry?.total_points ?? 0) : 0
-  const rank = rankingsAvailable ? String(myEntry?.rank ?? '—') : '—'
+  const rank = rankingsAvailable ? (myEntry?.rank ?? 0) : 0
   const exactScores = rankingsAvailable ? (myEntry?.exact_scores ?? 0) : 0
+
+  const lastFinished = useMemo(
+    () =>
+      predictions.find(
+        (p) => p.match?.status === 'finished' && p.points_earned !== null,
+      ),
+    [predictions],
+  )
+
+  useEffect(() => {
+    if (!lastFinished?.match?.id || lastFinished.points_earned === null) return
+    const key = lastFinished.match.id
+    if (celebratedRef.current.has(key)) return
+    if (
+      isExactScorePoints(lastFinished.points_earned, lastFinished.first_bonus ?? 0)
+    ) {
+      celebratedRef.current.add(key)
+      fireCelebration('exact')
+    }
+  }, [lastFinished])
 
   return (
     <div className="space-y-6">
@@ -61,17 +95,44 @@ export function ProfilePage() {
         )}
 
         <div className="mt-6 grid grid-cols-3 gap-4">
-          <Stat label="Rank" value={String(rank)} />
+          <Stat label="Rank" value={rankingsAvailable ? String(rank) : '—'} />
           <Stat label="Points" value={String(totalPoints)} highlight />
           <Stat label="Exact" value={String(exactScores)} />
         </div>
       </motion.div>
+
+      <div>
+        <h3 className="type-section-title mb-2">Badges</h3>
+        <BadgesRow badges={badges} />
+      </div>
+
+      {rankingsAvailable && rank > 0 && (
+        <ShareStandingsButton
+          displayName={profile?.display_name ?? 'Player'}
+          rank={rank}
+          totalPoints={totalPoints}
+          exactScores={exactScores}
+          lastPrediction={lastFinished}
+        />
+      )}
 
       <SeasonPicksCard
         answers={seasonRow?.answers}
         pointsEarned={seasonRow?.points_earned}
         loading={seasonLoading}
       />
+
+      <SeasonTrackerCard />
+
+      <PredictionBreakdownList predictions={predictions} />
+
+      <DepartmentSelect value={profile?.department} onSaved={() => void refreshProfile()} />
+      <GloryOptIn
+        value={profile?.glory_opt_in ?? false}
+        onSaved={() => void refreshProfile()}
+      />
+
+      <NotificationSettings />
 
       <ThemePreferenceRow />
 
@@ -108,7 +169,7 @@ export function ProfilePage() {
 
       <div>
         <h3 className="type-section-title mb-3">Your Predictions</h3>
-        {loading ? (
+        {loading && predictions.length === 0 ? (
           <div className="space-y-2">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="h-14 animate-pulse rounded-xl bg-card" />

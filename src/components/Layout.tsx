@@ -6,10 +6,17 @@ import { ThemeToggle } from './ThemeToggle'
 import { EngagementPrompt } from './EngagementPrompt'
 import { MatchesProvider } from '../contexts/MatchesContext'
 import { QuestionnaireGate } from './QuestionnaireGate'
+import { useMatchResultNotifications } from '../hooks/useMatchResultNotifications'
+
+function EngagementHooks() {
+  useMatchResultNotifications()
+  return null
+}
 
 export function Layout() {
   return (
     <MatchesProvider>
+    <EngagementHooks />
     <QuestionnaireGate>
     <div className="page-shell safe-top pb-[calc(4.25rem+env(safe-area-inset-bottom))]">
       <header className="page-content sticky top-0 z-40 border-b border-default bg-elevated/95 backdrop-blur-md">
