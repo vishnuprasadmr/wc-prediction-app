@@ -27,7 +27,7 @@ export function SeasonPicksCard({
         <p className="type-label">Season specials</p>
         <p className="type-caption mt-1 text-pretty">
           {isLocked
-            ? 'Pre-tournament picks are locked — first kickoff has passed.'
+            ? 'Pre-tournament picks are locked — group stage has ended (Round of 32 started).'
             : 'Golden Boot, winner, dark horse & more — required before match predictions.'}
         </p>
         {!isLocked && onComplete && (

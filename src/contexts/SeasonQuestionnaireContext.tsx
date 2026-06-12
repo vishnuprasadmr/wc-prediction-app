@@ -11,6 +11,7 @@ import {
 import { AnimatePresence } from 'framer-motion'
 import { SeasonQuestionnaire } from '../components/SeasonQuestionnaire'
 import { useAuth } from './AuthContext'
+import { useMatches } from '../hooks/useMatches'
 import { useSeasonQuestionnaire } from '../hooks/useSeasonQuestionnaire'
 import { pushGameNotification } from '../lib/gameNotificationBus'
 
@@ -40,6 +41,7 @@ export function useSeasonQuestionnaireContextOptional(): SeasonQuestionnaireCont
 
 export function SeasonQuestionnaireProvider({ children }: { children: ReactNode }) {
   const { profile } = useAuth()
+  const { matches } = useMatches()
   const {
     ready,
     gateBlocking,
@@ -79,7 +81,7 @@ export function SeasonQuestionnaireProvider({ children }: { children: ReactNode 
     pushGameNotification({
       kind: 'predict',
       title: 'Complete your season picks',
-      body: 'Golden Boot, winner, dark horse & more — required before match predictions lock in.',
+      body: 'Golden Boot, winner, dark horse & more — open through group stage. Required before match predictions.',
       url: '/profile',
       action: 'open-season-questionnaire',
     })
@@ -119,6 +121,7 @@ export function SeasonQuestionnaireProvider({ children }: { children: ReactNode 
         {showQuestionnaire && (
           <SeasonQuestionnaire
             key="season-questionnaire"
+            matches={matches}
             onSubmit={submit}
             onComplete={handleComplete}
             onSkip={() => void handleSkip()}

@@ -5,6 +5,7 @@ import { ensureUserProfile, formatSupabaseError } from '../lib/ensureProfile'
 import { supabase } from '../lib/supabase'
 import type { SeasonAnswers } from '../lib/seasonQuestions'
 import { isSeasonAnswersComplete } from '../lib/seasonQuestions'
+import { isSeasonQuestionnaireLocked } from '../lib/seasonQuestionnaireLock'
 
 export interface SeasonPredictionRow {
   user_id: string
@@ -60,15 +61,7 @@ export function useSeasonQuestionnaire() {
     void fetchRow()
   }, [fetchRow])
 
-  const firstKickoff = matches.length
-    ? matches.reduce((earliest, m) => {
-        const t = new Date(m.kickoff_at).getTime()
-        return t < earliest ? t : earliest
-      }, Infinity)
-    : null
-
-  const isLocked =
-    firstKickoff !== null && !Number.isNaN(firstKickoff) && Date.now() >= firstKickoff
+  const isLocked = isSeasonQuestionnaireLocked(matches)
 
   const rowComplete = isRowComplete(row)
   const hasSubmitted = rowComplete && Boolean(profile?.questionnaire_completed_at ?? row?.submitted_at)

@@ -12,10 +12,14 @@ import {
 import { playSound } from '../lib/sounds'
 import { TeamFlag } from './TeamFlag'
 
+import { formatSeasonQuestionnaireLockHint } from '../lib/seasonQuestionnaireLock'
+import type { Match } from '../lib/types'
+
 interface SeasonQuestionnaireProps {
   onComplete: () => void
   onSubmit: (answers: SeasonAnswers) => Promise<void>
   onSkip: () => void
+  matches?: Match[]
 }
 
 function PitchProgress({ step, total }: { step: number; total: number }) {
@@ -201,7 +205,12 @@ function QuestionStep({
   )
 }
 
-export function SeasonQuestionnaire({ onComplete, onSubmit, onSkip }: SeasonQuestionnaireProps) {
+export function SeasonQuestionnaire({
+  onComplete,
+  onSubmit,
+  onSkip,
+  matches = [],
+}: SeasonQuestionnaireProps) {
   const reduceMotion = useReducedMotion()
   const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState<SeasonAnswers>({})
@@ -351,8 +360,8 @@ export function SeasonQuestionnaire({ onComplete, onSubmit, onSkip }: SeasonQues
         >
           Skip for now — complete later from Profile
         </button>
-        <p className="type-caption mt-2 text-center">
-          Locks at first kickoff · Match predictions need season picks first
+        <p className="type-caption mt-2 text-center text-pretty">
+          {formatSeasonQuestionnaireLockHint(matches)} · Match predictions need season picks first
         </p>
       </footer>
     </div>

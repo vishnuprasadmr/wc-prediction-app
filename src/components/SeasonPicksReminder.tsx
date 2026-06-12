@@ -1,9 +1,12 @@
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSeasonQuestionnaireContext } from '../contexts/SeasonQuestionnaireContext'
+import { useMatches } from '../hooks/useMatches'
+import { formatSeasonQuestionnaireLockHint } from '../lib/seasonQuestionnaireLock'
 import { MAX_SEASON_BONUS } from '../lib/seasonQuestions'
 
 export function SeasonPicksReminder() {
+  const { matches } = useMatches()
   const { needsSeasonPicks, openQuestionnaire } = useSeasonQuestionnaireContext()
 
   return (
@@ -24,7 +27,7 @@ export function SeasonPicksReminder() {
                 Complete Golden Boot, winner &amp; more before match predictions
               </p>
               <p className="type-caption mt-1 text-pretty text-muted">
-                Up to {MAX_SEASON_BONUS} bonus pts · Locks at first kickoff
+                Up to {MAX_SEASON_BONUS} bonus pts · {formatSeasonQuestionnaireLockHint(matches)}
               </p>
             </div>
             <div className="flex shrink-0 gap-2">
