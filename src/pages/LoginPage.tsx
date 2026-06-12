@@ -5,10 +5,10 @@ import { useAuth } from '../contexts/AuthContext'
 import { GoogleSignInButton } from '../components/GoogleSignInButton'
 import { AuthLoadingScreen } from '../components/AuthLoadingScreen'
 import { isSimelabsEmployee } from '../lib/employeeId'
-import { consumeAuthError, isOAuthCallback } from '../lib/authOAuth'
+import { consumeAuthError } from '../lib/authOAuth'
 
 export function LoginPage() {
-  const { signInGoogle, session, profile, loading } = useAuth()
+  const { signInGoogle, session, profile, loading, oauthSettling } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const [googleLoading, setGoogleLoading] = useState(false)
 
@@ -17,10 +17,10 @@ export function LoginPage() {
     if (oauthError) setError(oauthError)
   }, [])
 
-  if (loading || isOAuthCallback()) {
+  if (loading || oauthSettling) {
     return (
       <AuthLoadingScreen
-        message={isOAuthCallback() ? 'Signing you in...' : 'Loading...'}
+        message={oauthSettling ? 'Signing you in...' : 'Loading...'}
       />
     )
   }
@@ -58,7 +58,7 @@ export function LoginPage() {
             Simelabs WC 2026 Prediction League
           </p>
           <p className="type-caption mt-2 text-pretty text-muted">
-            Sign in with your Google work account
+            Sign in with your Google account
           </p>
         </div>
 

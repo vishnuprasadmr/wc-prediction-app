@@ -2,27 +2,40 @@ import type { User } from '@supabase/supabase-js'
 
 export const AUTH_ERROR_KEY = 'wc-auth-error'
 
-/** Optional: restrict OAuth sign-in to this email domain (e.g. simelabs.com) */
-export const ALLOWED_EMAIL_DOMAIN = (
-  import.meta.env.VITE_ALLOWED_EMAIL_DOMAIN as string | undefined
-)?.toLowerCase()
-
-export function isAllowedWorkEmail(email: string | undefined): boolean {
-  if (!email) return false
-  if (!ALLOWED_EMAIL_DOMAIN) return true
-  return email.trim().toLowerCase().endsWith(`@${ALLOWED_EMAIL_DOMAIN}`)
-}
-
+/** True while Supabase is completing a successful OAuth redirect (tokens in URL). */
 export function isOAuthCallback(): boolean {
   const hash = window.location.hash
   const search = window.location.search
   return (
     hash.includes('access_token=') ||
-    hash.includes('error=') ||
-    hash.includes('error_description=') ||
+    hash.includes('refresh_token=') ||
     search.includes('code=')
   )
 }
+
+export function clearOAuthUrl(): void {
+  window.history.replaceState({}, '', window.location.pathname)
+}
+
+export function humanizeOAuthError(raw: string): string {
+  const code = raw.trim().toLowerCase().replace(/\s+/g, '_')
+  if (code === 'access_denied' || code.includes('access_denied')) {
+    return 'Sign-in was cancelled. You can try again when you’re ready.'
+  }
+  if (code === 'interaction_required' || code === 'login_required') {
+    return 'Sign-in was not completed. Please use the Sign in with Google button.'
+  }
+  if (code === 'server_error' || code.includes('server_error')) {
+    return 'Sign-in failed on the server. Please try again with Google.'
+  }
+  if (code === 'invalid_request') {
+    return 'Sign-in request was invalid. Please use the Sign in with Google button.'
+  }
+  return raw
+}
+
+export const GOOGLE_ONLY_MESSAGE =
+  'Sign-in is only supported with Google. Please use the Sign in with Google button.'
 
 export function consumeAuthError(): string | null {
   const redirect = consumeOAuthRedirectError()
@@ -44,10 +57,10 @@ export function consumeOAuthRedirectError(): string | null {
 
   if (!raw) return null
 
-  const cleanUrl = window.location.pathname + window.location.hash.split('?')[0]
-  window.history.replaceState({}, '', cleanUrl)
+  // Strip OAuth hash/query params — hash errors use `&` (e.g. #error=access_denied&sb=)
+  clearOAuthUrl()
 
-  return decodeURIComponent(raw.replace(/\+/g, ' '))
+  return humanizeOAuthError(decodeURIComponent(raw.replace(/\+/g, ' ')))
 }
 
 export function setAuthError(message: string) {

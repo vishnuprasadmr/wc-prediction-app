@@ -95,18 +95,23 @@ export function mergeMatchesWithFifaLive(
     const live = liveMap.get(match.api_fixture_id)
     if (!live) return match
 
-    const hasScore =
-      live.home_score !== null &&
-      live.away_score !== null &&
-      (live.status === 'live' || live.status === 'finished')
+    const fifaAheadOfDb =
+      live.status === 'finished' ||
+      live.status === 'live' ||
+      (live.home_score !== null && live.away_score !== null)
 
-    if (!hasScore && live.status === 'scheduled') return match
+    if (!fifaAheadOfDb) return match
 
     return {
       ...match,
       home_score: live.home_score ?? match.home_score,
       away_score: live.away_score ?? match.away_score,
-      status: live.status !== 'scheduled' ? live.status : match.status,
+      status:
+        live.status !== 'scheduled'
+          ? live.status
+          : live.home_score !== null && live.away_score !== null
+            ? 'finished'
+            : match.status,
       score_source: 'api' as const,
     }
   })

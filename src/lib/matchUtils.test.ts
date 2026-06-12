@@ -150,10 +150,11 @@ describe('matchUtils', () => {
       expect(getMatchFilterStatus(makeMatch({ status: 'live' }))).toBe('live')
     })
 
-    it('treats locked scheduled matches as live', () => {
+    it('keeps locked scheduled matches in upcoming until FIFA marks them live', () => {
       vi.setSystemTime(new Date('2026-06-15T13:50:00.000Z'))
       const match = makeMatch({ kickoff_at: '2026-06-15T14:00:00.000Z' })
-      expect(getMatchFilterStatus(match)).toBe('live')
+      expect(getMatchFilterStatus(match)).toBe('upcoming')
+      expect(getLiveMatches([match])).toHaveLength(0)
     })
 
     it('treats open scheduled matches as upcoming', () => {

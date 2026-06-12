@@ -99,13 +99,12 @@ export function canPredictMatch(match: Match, _matches?: Match[], now = Date.now
 export function getMatchFilterStatus(match: Match): 'upcoming' | 'live' | 'finished' {
   if (match.status === 'finished') return 'finished'
   if (match.status === 'live') return 'live'
-  if (isMatchLocked(match)) return 'live'
   return 'upcoming'
 }
 
-/** Matches currently live in DB or in the post-kickoff score-sync window. */
+/** Matches with official live status from FIFA / Supabase (not merely prediction-locked). */
 export function getLiveMatches(matches: Match[]): Match[] {
-  return matches.filter((m) => getMatchFilterStatus(m) === 'live' && m.status !== 'finished')
+  return matches.filter((m) => m.status === 'live')
 }
 
 /** True when FIFA score sync should run (live match or recently kicked off). */
@@ -121,12 +120,15 @@ export function shouldPollLiveScores(matches: Match[]): boolean {
   return matches.some((m) => isInScoreSyncWindow(m))
 }
 
-/** Poll FIFA when any match may be live (includes DB-not-yet-synced kickoffs). */
+/** Poll FIFA around kickoff until results land in the DB (up to 24h after start). */
 export function shouldFetchFifaLive(matches: Match[], now = Date.now()): boolean {
   return matches.some((m) => {
+    if (m.status === 'finished') return false
+    if (m.status === 'live') return true
     const kickoff = new Date(m.kickoff_at).getTime()
-    const inWindow = kickoff <= now + 3 * 60 * 60 * 1000 && kickoff >= now - 6 * 60 * 60 * 1000
-    return m.status === 'live' || (inWindow && m.status !== 'finished')
+    const beforeStart = kickoff <= now + 3 * 60 * 60 * 1000
+    const awaitingResult = kickoff >= now - 24 * 60 * 60 * 1000
+    return beforeStart && awaitingResult
   })
 }
 

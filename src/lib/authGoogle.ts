@@ -2,10 +2,9 @@ import { appAuthRedirect } from './appOrigin'
 import { LEAGUE_ID, supabase } from './supabase'
 import type { User } from '@supabase/supabase-js'
 import {
-  ALLOWED_EMAIL_DOMAIN,
   displayNameFromUser,
+  GOOGLE_ONLY_MESSAGE,
   hasOAuthCompleteLock,
-  isAllowedWorkEmail,
   AUTH_ERROR_KEY,
   setAuthError,
   setOAuthCompleteLock,
@@ -21,10 +20,6 @@ const PENDING_EMPLOYEE_ID_KEY = 'wc-google-employee-id'
 const PENDING_NAME_KEY = 'wc-google-display-name'
 const REGISTER_FLOW_KEY = 'wc-google-register-flow'
 
-const GOOGLE_HD = (
-  import.meta.env.VITE_GOOGLE_HD as string | undefined
-)?.toLowerCase() ?? ALLOWED_EMAIL_DOMAIN
-
 function pendingStore() {
   return localStorage
 }
@@ -34,6 +29,30 @@ export function isGoogleUser(user: User): boolean {
     user.app_metadata?.provider === 'google' ||
     Boolean(user.identities?.some((id) => id.provider === 'google'))
   )
+}
+
+function authProviderLabel(user: User): string {
+  const provider =
+    user.app_metadata?.provider ?? user.identities?.find((id) => id.provider)?.provider
+  if (provider === 'email') return 'email'
+  if (provider === 'google') return 'google'
+  return provider ?? 'another method'
+}
+
+/** Reject non-Google sign-in — any Google account (personal or work) is allowed. */
+export async function enforceGoogleOnlyAuth(user: User): Promise<boolean> {
+  if (!isGoogleUser(user)) {
+    const label = authProviderLabel(user)
+    setAuthError(
+      label === 'email'
+        ? 'Email sign-in is not supported. Please use the Sign in with Google button.'
+        : GOOGLE_ONLY_MESSAGE,
+    )
+    await supabase.auth.signOut()
+    return false
+  }
+
+  return true
 }
 
 /** Start register flow — Google first, SML ID collected after OAuth */
@@ -57,7 +76,6 @@ export async function signInWithGoogle(redirectPath: '/login' | '/register' = '/
     options: {
       redirectTo: appAuthRedirect(redirectPath),
       queryParams: {
-        ...(GOOGLE_HD ? { hd: GOOGLE_HD } : {}),
         prompt: 'select_account',
       },
     },
@@ -138,23 +156,13 @@ async function createGoogleProfile(
 }
 
 export async function completeGoogleAuth(user: User): Promise<void> {
-  if (!isGoogleUser(user)) return
+  if (!(await enforceGoogleOnlyAuth(user))) return
   if (hasOAuthCompleteLock('google', user.id)) return
 
   const store = pendingStore()
   const fromRegister = store.getItem(REGISTER_FLOW_KEY) === '1'
   const pendingEmployeeId = store.getItem(PENDING_EMPLOYEE_ID_KEY)
   const pendingName = store.getItem(PENDING_NAME_KEY)
-
-  if (!isAllowedWorkEmail(user.email)) {
-    setAuthError(
-      ALLOWED_EMAIL_DOMAIN
-        ? `Use your @${ALLOWED_EMAIL_DOMAIN} Google account.`
-        : 'This Google account is not allowed.',
-    )
-    await supabase.auth.signOut()
-    return
-  }
 
   if (fromRegister) {
     if (!pendingEmployeeId) {

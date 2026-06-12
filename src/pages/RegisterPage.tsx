@@ -6,7 +6,8 @@ import { GoogleSignInButton } from '../components/GoogleSignInButton'
 import { AuthLoadingScreen } from '../components/AuthLoadingScreen'
 import { ProfileAvatar } from '../components/ProfileAvatar'
 import { EMPLOYEE_ID_PLACEHOLDER, isSimelabsEmployee, validateEmployeeId } from '../lib/employeeId'
-import { consumeAuthError, displayNameFromUser, isOAuthCallback } from '../lib/authOAuth'
+import { isGoogleUser } from '../lib/authGoogle'
+import { consumeAuthError, displayNameFromUser } from '../lib/authOAuth'
 import { resolveUserAvatarUrl } from '../lib/avatarUrl'
 
 export function RegisterPage() {
@@ -17,6 +18,8 @@ export function RegisterPage() {
     profile,
     user,
     loading,
+    oauthSettling,
+    signOut,
   } = useAuth()
   const [displayName, setDisplayName] = useState('')
   const [employeeId, setEmployeeId] = useState('')
@@ -49,11 +52,36 @@ export function RegisterPage() {
     displayName.trim().length > 0 &&
     employeeIdCheck?.valid === true
 
-  if (loading || isOAuthCallback()) {
+  if (loading || oauthSettling) {
     return (
       <AuthLoadingScreen
-        message={isOAuthCallback() ? 'Connecting your Google account...' : 'Loading...'}
+        message={oauthSettling ? 'Connecting your Google account...' : 'Loading...'}
       />
+    )
+  }
+
+  if (session && user && !isGoogleUser(user)) {
+    return (
+      <div className="page-shell flex min-h-dvh flex-col items-center justify-center px-4 safe-top safe-bottom">
+        <div className="page-content w-full max-w-sm text-center">
+          <p className="type-display">Google sign-in only</p>
+          <p className="type-body-sm mt-2 text-muted text-pretty">
+            Sign-in is Google only. Use any Google account, then add your SML employee ID.
+          </p>
+          {error && (
+            <p className="mt-4 text-sm text-red-400" role="alert">
+              {error}
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={() => void signOut().then(() => setError(null))}
+            className="btn-primary mt-6 w-full"
+          >
+            Back to sign in
+          </button>
+        </div>
+      </div>
     )
   }
 

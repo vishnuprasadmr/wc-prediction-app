@@ -10,19 +10,29 @@ import {
 import type { Session, User } from '@supabase/supabase-js'
 import {
   completeGoogleAuth,
+  enforceGoogleOnlyAuth,
   signInWithGoogle,
   startGoogleRegistration,
 } from '../lib/authGoogle'
-import { consumeOAuthRedirectError, setAuthError } from '../lib/authOAuth'
+import {
+  clearOAuthUrl,
+  consumeOAuthRedirectError,
+  isOAuthCallback,
+  setAuthError,
+} from '../lib/authOAuth'
 import { completeEmployeeProfile, ensureUserProfile, syncProfileAvatar } from '../lib/ensureProfile'
 import type { Profile } from '../lib/types'
 import { supabase } from '../lib/supabase'
+
+const OAUTH_SETTLE_TIMEOUT_MS = 10_000
 
 interface AuthContextValue {
   session: Session | null
   user: User | null
   profile: Profile | null
   loading: boolean
+  /** True while processing an OAuth redirect (tokens in URL) */
+  oauthSettling: boolean
   signInGoogle: () => Promise<void>
   signUpGoogle: () => Promise<void>
   completeEmployeeProfile: (displayName: string, employeeId: string) => Promise<void>
@@ -36,6 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [oauthSettling, setOauthSettling] = useState(() => isOAuthCallback())
 
   const fetchProfile = useCallback(async (authUser: User) => {
     try {
@@ -75,25 +86,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [session?.user, fetchProfile])
 
   useEffect(() => {
+    let cancelled = false
+
     const oauthRedirectError = consumeOAuthRedirectError()
-    if (oauthRedirectError) setAuthError(oauthRedirectError)
+    if (oauthRedirectError) {
+      setAuthError(oauthRedirectError)
+      setOauthSettling(false)
+    }
+
+    const settleTimeout = window.setTimeout(() => {
+      if (!cancelled) setOauthSettling(false)
+    }, OAUTH_SETTLE_TIMEOUT_MS)
+
+    void (async () => {
+      try {
+        const { data: { session: existing } } = await supabase.auth.getSession()
+        if (cancelled) return
+
+        if (!existing && isOAuthCallback()) {
+          clearOAuthUrl()
+          setAuthError(
+            'Sign-in could not be completed. Please use Sign in with Google.',
+          )
+          setOauthSettling(false)
+        }
+      } catch {
+        if (!cancelled) setOauthSettling(false)
+      }
+    })()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, s) => {
       setSession(s)
+      setOauthSettling(false)
 
-      if (s?.user) {
-        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-          await completeGoogleAuth(s.user)
+      try {
+        if (s?.user) {
+          const allowed = await enforceGoogleOnlyAuth(s.user)
+          if (!allowed) {
+            setProfile(null)
+            return
+          }
+
+          if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+            await completeGoogleAuth(s.user)
+          }
+          await fetchProfile(s.user)
+        } else {
+          setProfile(null)
         }
-        await fetchProfile(s.user)
-      } else {
-        setProfile(null)
+      } finally {
+        setLoading(false)
       }
-
-      setLoading(false)
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      cancelled = true
+      window.clearTimeout(settleTimeout)
+      subscription.unsubscribe()
+    }
   }, [fetchProfile])
 
   const signInGoogle = useCallback(async () => {
@@ -125,13 +175,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: session?.user ?? null,
       profile,
       loading,
+      oauthSettling,
       signInGoogle,
       signUpGoogle,
       completeEmployeeProfile: completeEmployeeProfileFn,
       signOut,
       refreshProfile,
     }),
-    [session, profile, loading, signInGoogle, signUpGoogle, completeEmployeeProfileFn, signOut, refreshProfile],
+    [
+      session,
+      profile,
+      loading,
+      oauthSettling,
+      signInGoogle,
+      signUpGoogle,
+      completeEmployeeProfileFn,
+      signOut,
+      refreshProfile,
+    ],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
