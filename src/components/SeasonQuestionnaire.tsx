@@ -15,6 +15,7 @@ import { TeamFlag } from './TeamFlag'
 interface SeasonQuestionnaireProps {
   onComplete: () => void
   onSubmit: (answers: SeasonAnswers) => Promise<void>
+  onSkip: () => void
 }
 
 function PitchProgress({ step, total }: { step: number; total: number }) {
@@ -200,7 +201,7 @@ function QuestionStep({
   )
 }
 
-export function SeasonQuestionnaire({ onComplete, onSubmit }: SeasonQuestionnaireProps) {
+export function SeasonQuestionnaire({ onComplete, onSubmit, onSkip }: SeasonQuestionnaireProps) {
   const reduceMotion = useReducedMotion()
   const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState<SeasonAnswers>({})
@@ -342,8 +343,16 @@ export function SeasonQuestionnaire({ onComplete, onSubmit }: SeasonQuestionnair
             {submitting ? 'Saving…' : isLast ? 'Kick off my picks ⚽' : 'Next'}
           </button>
         </div>
-        <p className="type-caption mt-3 text-center">
-          Locks at first kickoff · Settled after the Final
+        <button
+          type="button"
+          onClick={onSkip}
+          disabled={submitting}
+          className="type-caption mt-3 w-full text-center font-medium text-muted transition hover:text-theme disabled:opacity-50"
+        >
+          Skip for now — complete later from Profile
+        </button>
+        <p className="type-caption mt-2 text-center">
+          Locks at first kickoff · Match predictions need season picks first
         </p>
       </footer>
     </div>

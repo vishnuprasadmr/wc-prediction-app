@@ -19,6 +19,7 @@ export interface Profile {
   glory_opt_in?: boolean
   created_at: string
   questionnaire_completed_at?: string | null
+  questionnaire_skipped_at?: string | null
 }
 
 export interface Match {

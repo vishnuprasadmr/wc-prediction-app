@@ -6,20 +6,39 @@ interface SeasonPicksCardProps {
   answers: SeasonAnswers | null | undefined
   pointsEarned?: number | null
   loading?: boolean
+  onComplete?: () => void
+  isLocked?: boolean
 }
 
-export function SeasonPicksCard({ answers, pointsEarned, loading }: SeasonPicksCardProps) {
+export function SeasonPicksCard({
+  answers,
+  pointsEarned,
+  loading,
+  onComplete,
+  isLocked = false,
+}: SeasonPicksCardProps) {
   if (loading) {
     return <div className="h-32 animate-pulse rounded-2xl bg-card" />
   }
 
   if (!answers || Object.keys(answers).length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-default bg-card/50 p-4">
+      <div className="rounded-2xl border border-dashed border-amber-500/30 bg-card/50 p-4">
         <p className="type-label">Season specials</p>
         <p className="type-caption mt-1 text-pretty">
-          No pre-tournament picks yet. Complete the questionnaire before kickoff.
+          {isLocked
+            ? 'Pre-tournament picks are locked — first kickoff has passed.'
+            : 'Golden Boot, winner, dark horse & more — required before match predictions.'}
         </p>
+        {!isLocked && onComplete && (
+          <button
+            type="button"
+            onClick={onComplete}
+            className="mt-3 w-full rounded-xl bg-simelabs py-2.5 text-sm font-semibold text-simelabs-foreground transition hover:bg-simelabs-dark"
+          >
+            Complete season picks
+          </button>
+        )}
       </div>
     )
   }

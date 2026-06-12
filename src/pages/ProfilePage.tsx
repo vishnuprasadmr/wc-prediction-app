@@ -10,6 +10,7 @@ import { ScoringRulesSheet } from '../components/ScoringRulesSheet'
 import { ThemePreferenceRow } from '../components/ThemePreferenceRow'
 import { useState } from 'react'
 import { SeasonPicksCard } from '../components/SeasonPicksCard'
+import { useSeasonQuestionnaireContext } from '../contexts/SeasonQuestionnaireContext'
 import { useSeasonQuestionnaire } from '../hooks/useSeasonQuestionnaire'
 import { ProfileAvatar } from '../components/ProfileAvatar'
 import { TeamFlag } from '../components/TeamFlag'
@@ -29,6 +30,7 @@ export function ProfilePage() {
   const { entries } = useLeaderboard()
   const { predictions, loading } = useUserPredictions(user?.id)
   const [showRules, setShowRules] = useState(false)
+  const { openQuestionnaire, isLocked: seasonLocked } = useSeasonQuestionnaireContext()
   const { row: seasonRow, loading: seasonLoading } = useSeasonQuestionnaire()
   const heartTeam = seasonRow?.answers?.heart_team
   const rankingsAvailable = useMemo(() => hasFinishedMatches(matches), [matches])
@@ -103,6 +105,8 @@ export function ProfilePage() {
         answers={seasonRow?.answers}
         pointsEarned={seasonRow?.points_earned}
         loading={seasonLoading}
+        onComplete={openQuestionnaire}
+        isLocked={seasonLocked}
       />
 
       <SeasonTrackerCard />

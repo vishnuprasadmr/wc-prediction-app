@@ -7,6 +7,7 @@ import {
   type GameNotification,
   type GameNotificationKind,
 } from '../lib/gameNotificationBus'
+import { useSeasonQuestionnaireContextOptional } from '../contexts/SeasonQuestionnaireContext'
 import { NOTIFICATION_THEME } from '../lib/notificationTheme'
 import { playSound, primeAudio } from '../lib/sounds'
 
@@ -97,6 +98,7 @@ function ToastCard({
 
 export function GameNotificationHost() {
   const navigate = useNavigate()
+  const season = useSeasonQuestionnaireContextOptional()
   const [items, setItems] = useState<GameNotification[]>([])
   const prevCountRef = useRef(0)
 
@@ -112,6 +114,10 @@ export function GameNotificationHost() {
 
   const open = (item: GameNotification) => {
     dismissGameNotification(item.id)
+    if (item.action === 'open-season-questionnaire') {
+      season?.openQuestionnaire()
+      return
+    }
     if (item.url) navigate(item.url)
   }
 

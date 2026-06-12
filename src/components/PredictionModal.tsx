@@ -9,6 +9,7 @@ import { TeamLabel } from './TeamLabel'
 import { playSound } from '../lib/sounds'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { useSeasonQuestionnaireContextOptional } from '../contexts/SeasonQuestionnaireContext'
 import { LockCountdown } from './LockCountdown'
 
 interface PredictionModalProps {
@@ -29,6 +30,7 @@ export function PredictionModal({
   onSaved,
 }: PredictionModalProps) {
   const { user } = useAuth()
+  const season = useSeasonQuestionnaireContextOptional()
   const [home, setHome] = useState(initialHome)
   const [away, setAway] = useState(initialAway)
   const [saving, setSaving] = useState(false)
@@ -46,6 +48,11 @@ export function PredictionModal({
 
   const handleSave = async () => {
     if (!match || !user) return
+    if (season && !season.canPredictMatches) {
+      setError('Complete your season picks (Golden Boot, winner, etc.) before match predictions.')
+      season.openQuestionnaire()
+      return
+    }
     if (allMatches.length > 0 && !canPredictMatch(match, allMatches)) {
       setError('This match is not open for prediction (today & tomorrow IST only, until 15 min before kickoff).')
       return
@@ -124,6 +131,12 @@ export function PredictionModal({
                 <span className="type-score font-light text-muted">–</span>
                 <ScoreStepper value={away} onChange={setAway} label={match.away_team} />
               </div>
+
+              {season && !season.canPredictMatches && (
+                <p className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-center text-sm text-amber-200">
+                  Complete season picks first (Golden Boot, winner, etc.)
+                </p>
+              )}
 
               {error && <p className="mt-4 text-center text-sm text-red-400">{error}</p>}
 

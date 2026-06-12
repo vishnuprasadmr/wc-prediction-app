@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useMatches } from './useMatches'
 import { ensureUserProfile, formatSupabaseError } from '../lib/ensureProfile'
@@ -13,23 +13,30 @@ export interface SeasonPredictionRow {
   submitted_at: string | null
 }
 
+function isRowComplete(row: SeasonPredictionRow | null): boolean {
+  if (!row?.answers) return false
+  return isSeasonAnswersComplete(row.answers)
+}
+
 export function useSeasonQuestionnaire() {
   const { user, profile, refreshProfile } = useAuth()
   const { matches } = useMatches()
   const [row, setRow] = useState<SeasonPredictionRow | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [ready, setReady] = useState(false)
   const [unavailable, setUnavailable] = useState(false)
+  const fetchedForUser = useRef<string | null>(null)
 
   const fetchRow = useCallback(async () => {
     if (!user) {
       setRow(null)
-      setLoading(false)
+      setReady(true)
+      fetchedForUser.current = null
       return
     }
 
-    if (!profile?.questionnaire_completed_at && row === null) {
-      setLoading(true)
-    }
+    const isFirstFetch = fetchedForUser.current !== user.id
+    if (isFirstFetch) setReady(false)
+
     const { data, error } = await supabase
       .from('season_predictions')
       .select('user_id, answers, points_earned, submitted_at')
@@ -44,8 +51,10 @@ export function useSeasonQuestionnaire() {
     } else {
       setRow(data as SeasonPredictionRow | null)
     }
-    setLoading(false)
-  }, [user, profile?.questionnaire_completed_at, row])
+
+    fetchedForUser.current = user.id
+    setReady(true)
+  }, [user])
 
   useEffect(() => {
     void fetchRow()
@@ -61,13 +70,15 @@ export function useSeasonQuestionnaire() {
   const isLocked =
     firstKickoff !== null && !Number.isNaN(firstKickoff) && Date.now() >= firstKickoff
 
-  const hasSubmitted = Boolean(profile?.questionnaire_completed_at ?? row?.submitted_at)
+  const rowComplete = isRowComplete(row)
+  const hasSubmitted = rowComplete && Boolean(profile?.questionnaire_completed_at ?? row?.submitted_at)
 
-  const needsQuestionnaire = !unavailable && !loading && !hasSubmitted && !isLocked
+  const needsSeasonPicks = !unavailable && ready && !hasSubmitted && !isLocked
 
-  /** Only block the shell on the very first questionnaire check */
-  const gateBlocking =
-    loading && !profile?.questionnaire_completed_at && row === null && !unavailable
+  const shouldAutoShowQuestionnaire =
+    needsSeasonPicks && !profile?.questionnaire_skipped_at
+
+  const gateBlocking = Boolean(user) && !ready && !unavailable
 
   const submit = async (answers: SeasonAnswers) => {
     if (!user || !isSeasonAnswersComplete(answers)) {
@@ -97,7 +108,10 @@ export function useSeasonQuestionnaire() {
 
     const { error: profileError } = await supabase
       .from('profiles')
-      .update({ questionnaire_completed_at: now })
+      .update({
+        questionnaire_completed_at: now,
+        questionnaire_skipped_at: null,
+      })
       .eq('id', user.id)
 
     if (profileError) {
@@ -108,15 +122,33 @@ export function useSeasonQuestionnaire() {
     await fetchRow()
   }
 
+  const skipForNow = async () => {
+    if (!user) return
+
+    const now = new Date().toISOString()
+    const { error } = await supabase
+      .from('profiles')
+      .update({ questionnaire_skipped_at: now })
+      .eq('id', user.id)
+
+    if (error) {
+      throw formatSupabaseError(error, 'Could not save your choice')
+    }
+
+    await refreshProfile()
+  }
+
   return {
     row,
-    loading,
+    ready,
     gateBlocking,
     unavailable,
     isLocked,
     hasSubmitted,
-    needsQuestionnaire,
+    needsSeasonPicks,
+    shouldAutoShowQuestionnaire,
     submit,
+    skipForNow,
     refetch: fetchRow,
   }
 }

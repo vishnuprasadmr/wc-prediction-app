@@ -10,6 +10,7 @@ import { BadgeUnlockModal } from './BadgeUnlockModal'
 import { OracleMomentOverlay } from './OracleMomentOverlay'
 import { MatchesProvider } from '../contexts/MatchesContext'
 import { QuestionnaireGate } from './QuestionnaireGate'
+import { SeasonPicksReminder } from './SeasonPicksReminder'
 import { useBadgeUnlock } from '../hooks/useBadgeUnlock'
 import { useMatchResultNotifications } from '../hooks/useMatchResultNotifications'
 import { useOracleMoment } from '../hooks/useOracleMoment'
@@ -49,9 +50,9 @@ function EngagementHooks() {
 export function Layout() {
   return (
     <MatchesProvider>
+    <QuestionnaireGate>
     <EngagementHooks />
     <GameNotificationHost />
-    <QuestionnaireGate>
     <div className="page-shell safe-top pb-[calc(4.25rem+env(safe-area-inset-bottom))]">
       <header className="page-content sticky top-0 z-40 border-b border-default bg-elevated/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-lg items-center justify-between px-4 py-3">
@@ -81,6 +82,7 @@ export function Layout() {
         transition={{ duration: 0.35, ease: 'easeOut' }}
         className="page-content mx-auto max-w-lg px-4 py-4"
       >
+        <SeasonPicksReminder />
         <Outlet />
       </motion.main>
 

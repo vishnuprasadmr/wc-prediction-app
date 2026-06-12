@@ -4,6 +4,7 @@ import { LiveScoreboard } from '../components/LiveScoreboard'
 import { MatchCard } from '../components/MatchCard'
 import { PenaltyShootout } from '../components/PenaltyShootout'
 import { PredictionModal } from '../components/PredictionModal'
+import { useGuardedPredict } from '../hooks/useGuardedPredict'
 import { useNextMatchFocus } from '../hooks/useNextMatchFocus'
 import { useMatches } from '../hooks/useMatches'
 import { LockCountdown } from '../components/LockCountdown'
@@ -54,6 +55,11 @@ export function PredictPage() {
     loading,
     focusMatch: nextUnpicked,
     scrollTargetId: 'predict-match',
+  })
+
+  const guardedPredict = useGuardedPredict((m) => {
+    dismissSpotlight()
+    setSelectedMatch(m)
   })
 
   return (
@@ -162,10 +168,7 @@ export function PredictPage() {
                       <MatchCard
                         match={match}
                         prediction={predictions[match.id]}
-                        onPredict={(m) => {
-                          dismissSpotlight()
-                          setSelectedMatch(m)
-                        }}
+                        onPredict={guardedPredict}
                         onPenaltyGame={predictions[match.id] ? setPenaltyMatch : undefined}
                         spotlight={showSpotlight}
                       />

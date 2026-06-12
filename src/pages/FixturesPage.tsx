@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { LiveScoreboard } from '../components/LiveScoreboard'
 import { MatchCard } from '../components/MatchCard'
 import { PredictionModal } from '../components/PredictionModal'
+import { useGuardedPredict } from '../hooks/useGuardedPredict'
 import { useNextMatchFocus } from '../hooks/useNextMatchFocus'
 import { useMatches } from '../hooks/useMatches'
 import {
@@ -55,6 +56,11 @@ export function FixturesPage() {
     loading,
     focusMatch: filter === 'next' ? focusMatch : null,
     scrollTargetId: 'fixture-match',
+  })
+
+  const guardedPredict = useGuardedPredict((m) => {
+    dismissSpotlight()
+    setSelectedMatch(m)
   })
 
   const filtered = useMemo(() => {
@@ -194,14 +200,7 @@ export function FixturesPage() {
                         index={i}
                         showPoints
                         spotlight={showSpotlight}
-                        onPredict={
-                          canPredict
-                            ? (m) => {
-                                dismissSpotlight()
-                                setSelectedMatch(m)
-                              }
-                            : undefined
-                        }
+                        onPredict={canPredict ? guardedPredict : undefined}
                         onPenaltyGame={predictions[match.id] ? setPenaltyMatch : undefined}
                       />
                     </div>
