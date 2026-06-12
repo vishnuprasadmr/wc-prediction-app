@@ -18,6 +18,7 @@ import { MatchComments } from './MatchComments'
 import { MatchPickDistribution } from './MatchPickDistribution'
 import { MatchReactions } from './MatchReactions'
 import { MatchResultTimeline } from './MatchResultTimeline'
+import { ShareMatchButton } from './ShareMatchButton'
 
 interface MatchCardProps {
   match: Match
@@ -130,6 +131,7 @@ export function MatchCard({
                     early
                   </span>
                 )}
+                <ShareMatchButton match={match} prediction={prediction} />
               </>
             )}
           </div>

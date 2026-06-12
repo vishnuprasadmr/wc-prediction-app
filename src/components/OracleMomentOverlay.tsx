@@ -3,7 +3,9 @@ import { AnimatePresence, motion } from 'framer-motion'
 import type { OracleMomentData } from '../hooks/useOracleMoment'
 import { fireCelebration } from '../lib/confetti'
 import { primeAudio, playSound } from '../lib/sounds'
-import { buildStandingsShareText, shareStandings } from '../lib/shareStandings'
+import { useAuth } from '../contexts/AuthContext'
+import { resolveUserAvatarUrl } from '../lib/avatarUrl'
+import { shareStandingsWithImage } from '../lib/shareStandings'
 import { TeamLabel } from './TeamLabel'
 
 interface OracleMomentOverlayProps {
@@ -23,6 +25,9 @@ export function OracleMomentOverlay({
   exactScores = 0,
   displayName = 'Player',
 }: OracleMomentOverlayProps) {
+  const { user, profile } = useAuth()
+  const avatarUrl = profile?.avatar_url ?? resolveUserAvatarUrl(user)
+
   useEffect(() => {
     if (!moment) return
     primeAudio()
@@ -33,8 +38,10 @@ export function OracleMomentOverlay({
   const handleShare = async () => {
     if (!moment) return
     const m = moment.match
-    const base = buildStandingsShareText({
+    await shareStandingsWithImage({
+      variant: 'oracle',
       displayName,
+      avatarUrl,
       rank,
       totalPoints,
       exactScores,
@@ -43,11 +50,11 @@ export function OracleMomentOverlay({
         away: m.away_team,
         score: `${m.home_score ?? 0}-${m.away_score ?? 0}`,
         points: moment.prediction.points_earned,
+        homePred: moment.prediction.home_pred,
+        awayPred: moment.prediction.away_pred,
+        firstBonus: moment.prediction.first_bonus ?? 0,
       },
     })
-    await shareStandings(
-      `🎯 ORACLE MOMENT!\n${m.home_team} ${m.home_score}-${m.away_score} ${m.away_team}\nExact pick: ${moment.prediction.home_pred}-${moment.prediction.away_pred} (+${moment.prediction.points_earned} pts)\n\n${base}`,
-    )
   }
 
   return (
