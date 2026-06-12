@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { LeaderboardTable } from '../components/LeaderboardTable'
 import { ScoringRulesSheet } from '../components/ScoringRulesSheet'
 import { useLeaderboard } from '../hooks/useLeaderboard'
+import { useLeaderboardReveal } from '../hooks/useLeaderboardReveal'
 import { useMatches } from '../hooks/useMatches'
 import { hasFinishedMatches } from '../lib/leaderboardUtils'
 
@@ -28,14 +29,23 @@ export function LeaderboardPage() {
   )
 
   const effectiveStage = rankingsAvailable ? stage : 'all'
-  const { entries, loading } = useLeaderboard(effectiveStage)
+  const { entries, heartTeams, loading } = useLeaderboard(effectiveStage)
+  const { reveal: rankReveal } = useLeaderboardReveal(
+    entries,
+    loading,
+    rankingsAvailable,
+    effectiveStage,
+  )
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="type-section-title">
-          {rankingsAvailable ? 'Point Table' : 'League Players'}
-        </h2>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <p className="type-overline !text-[10px]">Simelabs WC 26</p>
+          <h2 className="type-section-title">
+            {rankingsAvailable ? 'Point Table' : 'League Players'}
+          </h2>
+        </div>
         <button
           onClick={() => setShowRules(true)}
           className="shrink-0 text-sm font-medium text-simelabs hover:underline"
@@ -64,8 +74,10 @@ export function LeaderboardPage() {
 
       <LeaderboardTable
         entries={entries}
+        heartTeams={heartTeams}
         loading={loading}
         rankingsAvailable={rankingsAvailable}
+        rankReveal={rankReveal}
       />
       <ScoringRulesSheet open={showRules} onClose={() => setShowRules(false)} />
     </div>

@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { primeAudio } from '../lib/sounds'
 
 type IconProps = { className?: string }
 
@@ -68,6 +69,9 @@ export function BottomNav() {
             end={to === '/'}
             aria-label={ariaLabel}
             title={label}
+            onClick={() => {
+              if (to === '/leaderboard') primeAudio()
+            }}
             className="relative flex min-h-[46px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 py-1 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-simelabs/50"
           >
             {({ isActive }) => (

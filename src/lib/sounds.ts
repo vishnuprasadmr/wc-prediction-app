@@ -3,7 +3,16 @@
  * Uses a master bus + silent unlock so taps work after the welcome screen.
  */
 
-export type SoundId = 'kick' | 'impact' | 'goalUp' | 'goalDown' | 'swipe' | 'select' | 'save'
+export type SoundId =
+  | 'kick'
+  | 'impact'
+  | 'goalUp'
+  | 'goalDown'
+  | 'swipe'
+  | 'select'
+  | 'save'
+  | 'standingsHappy'
+  | 'standingsSad'
 
 const STORAGE_KEY = 'wc-sounds-enabled'
 
@@ -217,6 +226,20 @@ function playSave(ctx: AudioContext, when: number) {
   tone(ctx, { freq: 659, duration: 0.18, type: 'triangle', gain: 0.18, when: when + 0.2 })
 }
 
+/** Ascending fanfare when you climb the table */
+function playStandingsHappy(ctx: AudioContext, when: number) {
+  tone(ctx, { freq: 523, duration: 0.1, type: 'sine', gain: 0.22, when })
+  tone(ctx, { freq: 659, duration: 0.1, type: 'sine', gain: 0.24, when: when + 0.09 })
+  tone(ctx, { freq: 784, duration: 0.12, type: 'triangle', gain: 0.26, when: when + 0.18 })
+  tone(ctx, { freq: 1047, duration: 0.2, type: 'sine', gain: 0.2, when: when + 0.28 })
+}
+
+/** Soft descending tone when you drop places */
+function playStandingsSad(ctx: AudioContext, when: number) {
+  tone(ctx, { freq: 392, freqEnd: 294, duration: 0.22, type: 'sine', gain: 0.2, when })
+  tone(ctx, { freq: 330, freqEnd: 247, duration: 0.28, type: 'triangle', gain: 0.16, when: when + 0.12 })
+}
+
 const PLAYERS: Record<SoundId, Player> = {
   kick: playKick,
   impact: playImpact,
@@ -225,6 +248,8 @@ const PLAYERS: Record<SoundId, Player> = {
   swipe: playSwipe,
   select: playSelect,
   save: playSave,
+  standingsHappy: playStandingsHappy,
+  standingsSad: playStandingsSad,
 }
 
 /**

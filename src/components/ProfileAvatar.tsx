@@ -1,11 +1,12 @@
 import { useState } from 'react'
 
-type ProfileAvatarSize = 'sm' | 'md' | 'lg'
+export type ProfileAvatarSize = 'sm' | 'md' | 'lg' | 'xl'
 
 const sizeClasses: Record<ProfileAvatarSize, string> = {
   sm: 'h-10 w-10 text-sm',
   md: 'h-12 w-12 text-base',
   lg: 'h-16 w-16 text-2xl',
+  xl: 'h-20 w-20 text-3xl',
 }
 
 interface ProfileAvatarProps {
