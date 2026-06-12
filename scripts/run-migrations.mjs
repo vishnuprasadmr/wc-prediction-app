@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const password = process.env.SUPABASE_DB_PASSWORD
-const projectRef = 'jobgrjaweuiifmpnpgjd'
+const projectRef = process.env.SUPABASE_PROJECT_REF ?? 'YOUR_PROJECT_REF'
 
 if (!password) {
   console.error('Set SUPABASE_DB_PASSWORD')
@@ -18,7 +18,8 @@ const regions = [
   'ca-central-1', 'sa-east-1',
 ]
 const hosts = [
-  '2406:da14:1d62:b401:f008:c48a:be82:d266', // IPv6 for db.jobgrjaweuiifmpnpgjd.supabase.co
+  // IPv6 for db.<project-ref>.supabase.co (optional)
+  `2406:da14:1d62:b401:f008:c48a:be82:d266`,
   `db.${projectRef}.supabase.co`,
   ...regions.flatMap((r) => [
     `aws-0-${r}.pooler.supabase.com`,

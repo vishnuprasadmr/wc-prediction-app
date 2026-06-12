@@ -17,7 +17,7 @@ DB trigger `match_score_changed` recalculates points → leaderboard updates aut
 
 ```bash
 supabase login
-supabase link --project-ref jobgrjaweuiifmpnpgjd
+supabase link --project-ref YOUR_PROJECT_REF
 supabase functions deploy sync-scores
 ```
 
@@ -25,14 +25,14 @@ supabase functions deploy sync-scores
 
 ```bash
 # Sync one match (after it finishes)
-curl -X POST https://jobgrjaweuiifmpnpgjd.supabase.co/functions/v1/sync-scores \
-  -H "Authorization: Bearer YOUR_SERVICE_ROLE_KEY" \
+curl -X POST https://YOUR_PROJECT_REF.supabase.co/functions/v1/sync-scores \
+  -H "apikey: YOUR_SERVICE_ROLE_KEY" \
   -H "Content-Type: application/json" \
   -d '{"matchNumber": 1}'
 
 # Sync all matches that have kicked off but aren't finished
-curl -X POST .../sync-scores \
-  -H "Authorization: Bearer YOUR_SERVICE_ROLE_KEY" \
+curl -X POST https://YOUR_PROJECT_REF.supabase.co/functions/v1/sync-scores \
+  -H "apikey: YOUR_SERVICE_ROLE_KEY" \
   -H "Content-Type: application/json" \
   -d '{"dueOnly": true}'
 ```
@@ -64,7 +64,7 @@ pip install -r scripts/score-sync/requirements.txt
 Add to `scripts/score-sync/.env`:
 
 ```env
-SUPABASE_URL=https://jobgrjaweuiifmpnpgjd.supabase.co
+SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 

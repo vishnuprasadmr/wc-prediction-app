@@ -9,7 +9,7 @@ create extension if not exists pg_cron with schema pg_catalog;
 create extension if not exists pg_net with schema extensions;
 
 -- 2. Store URL + anon key in Vault (run once; replace YOUR_ANON_KEY)
--- select vault.create_secret('https://jobgrjaweuiifmpnpgjd.supabase.co', 'project_url');
+-- select vault.create_secret('https://YOUR_PROJECT_REF.supabase.co', 'project_url');
 -- select vault.create_secret('YOUR_ANON_KEY', 'publishable_key');
 
 -- 3. Schedule the job (every 15 minutes)
