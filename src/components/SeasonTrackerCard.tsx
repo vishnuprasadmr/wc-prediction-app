@@ -21,7 +21,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 export function SeasonTrackerCard() {
   const { matches } = useMatches()
-  const { row, loading } = useSeasonQuestionnaire()
+  const { row, ready } = useSeasonQuestionnaire()
   const [officialWinner, setOfficialWinner] = useState<string | null>(null)
 
   useEffect(() => {
@@ -35,7 +35,7 @@ export function SeasonTrackerCard() {
     })()
   }, [])
 
-  if (loading || !row?.answers) return null
+  if (!ready || !row?.answers) return null
 
   const picks = trackSeasonPicks(row.answers, matches, officialWinner)
   if (picks.length === 0) return null

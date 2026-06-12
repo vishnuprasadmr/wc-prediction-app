@@ -31,7 +31,7 @@ export function ProfilePage() {
   const { predictions, loading } = useUserPredictions(user?.id)
   const [showRules, setShowRules] = useState(false)
   const { openQuestionnaire, isLocked: seasonLocked } = useSeasonQuestionnaireContext()
-  const { row: seasonRow, loading: seasonLoading } = useSeasonQuestionnaire()
+  const { row: seasonRow, ready: seasonReady } = useSeasonQuestionnaire()
   const heartTeam = seasonRow?.answers?.heart_team
   const rankingsAvailable = useMemo(() => hasFinishedMatches(matches), [matches])
 
@@ -104,7 +104,7 @@ export function ProfilePage() {
       <SeasonPicksCard
         answers={seasonRow?.answers}
         pointsEarned={seasonRow?.points_earned}
-        loading={seasonLoading}
+        loading={!seasonReady}
         onComplete={openQuestionnaire}
         isLocked={seasonLocked}
       />
