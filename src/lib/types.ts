@@ -56,6 +56,7 @@ export interface LeaderboardEntry {
   user_id: string
   display_name: string
   avatar_url?: string | null
+  employee_id?: string | null
   department?: string | null
   total_points: number
   exact_scores: number

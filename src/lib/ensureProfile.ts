@@ -30,17 +30,21 @@ export async function syncProfileAvatar(
   return next
 }
 
-export async function completeEmployeeProfile(
+export async function completeUserProfile(
   user: User,
   displayName: string,
-  employeeId: string,
+  employeeId?: string | null,
 ): Promise<void> {
   const trimmedName = displayName.trim()
   if (!trimmedName) {
     throw new Error('Display name is required.')
   }
 
-  const normalizedEmployeeId = await assertEmployeeIdAvailableForUser(employeeId, user.id)
+  let normalizedEmployeeId: string | null = null
+  const trimmedId = employeeId?.trim()
+  if (trimmedId) {
+    normalizedEmployeeId = await assertEmployeeIdAvailableForUser(trimmedId, user.id)
+  }
 
   const avatarUrl = resolveUserAvatarUrl(user)
 
@@ -57,7 +61,7 @@ export async function completeEmployeeProfile(
     if (profileError.code === '23505') {
       throw new Error('This employee ID is already registered.')
     }
-    throw new Error(profileError.message || 'Could not save your employee profile.')
+    throw new Error(profileError.message || 'Could not save your profile.')
   }
 
   const { error: metaError } = await supabase.auth.updateUser({
@@ -75,6 +79,9 @@ export async function completeEmployeeProfile(
   clearPendingGoogleRegistration()
   setOAuthCompleteLock('google', user.id)
 }
+
+/** @deprecated Use completeUserProfile */
+export const completeEmployeeProfile = completeUserProfile
 
 export async function ensureUserProfile(user: User): Promise<void> {
   const { data: existing, error: checkError } = await supabase
@@ -156,7 +163,7 @@ export function formatSupabaseError(err: unknown, fallback: string): Error {
 
     if (code === '23503' && message.includes('season_predictions')) {
       return new Error(
-        'Your league profile is missing. Add your SML ID on the register page, then try again.',
+        'Your league profile is missing. Sign in and set your display name, then try again.',
       )
     }
 

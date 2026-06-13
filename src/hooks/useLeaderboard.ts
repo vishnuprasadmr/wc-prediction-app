@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import type { SeasonAnswers } from '../lib/seasonQuestions'
+import type { LeaderboardLeague } from '../lib/leaderboardUtils'
 import { supabase } from '../lib/supabase'
 import type { LeaderboardEntry } from '../lib/types'
 
@@ -13,8 +14,9 @@ interface LeaderboardCache {
 
 const leaderboardCache = new Map<string, LeaderboardCache>()
 
-function cacheKey(stageFilter?: string): string {
-  return stageFilter && stageFilter !== 'all' ? stageFilter : 'all'
+function cacheKey(stageFilter?: string, league: LeaderboardLeague = 'global'): string {
+  const stage = stageFilter && stageFilter !== 'all' ? stageFilter : 'all'
+  return `${stage}:${league}`
 }
 
 /** One realtime channel shared across all useLeaderboard() callers. */
@@ -64,8 +66,8 @@ async function fetchHeartTeams(): Promise<HeartTeamMap> {
   return map
 }
 
-export function useLeaderboard(stageFilter?: string) {
-  const key = cacheKey(stageFilter)
+export function useLeaderboard(stageFilter?: string, league: LeaderboardLeague = 'global') {
+  const key = cacheKey(stageFilter, league)
   const cached = leaderboardCache.get(key)
 
   const [entries, setEntries] = useState<LeaderboardEntry[]>(() => cached?.entries ?? [])
@@ -76,9 +78,14 @@ export function useLeaderboard(stageFilter?: string) {
   const fetchLeaderboard = useCallback(async () => {
     setError(null)
 
+    const stage = stageFilter && stageFilter !== 'all' ? stageFilter : 'all'
+
     const [heartMap, leaderboardResult] = await Promise.all([
       fetchHeartTeams(),
       (async () => {
+        if (league === 'simelabs') {
+          return supabase.rpc('get_simelabs_leaderboard', { stage_filter: stage })
+        }
         if (stageFilter && stageFilter !== 'all') {
           return supabase.rpc('get_leaderboard_by_stage', { stage_filter: stageFilter })
         }
@@ -90,6 +97,7 @@ export function useLeaderboard(stageFilter?: string) {
 
     if (leaderboardResult.error) {
       setError(leaderboardResult.error.message)
+      setEntries([])
     } else {
       const nextEntries = (leaderboardResult.data as LeaderboardEntry[]) ?? []
       setEntries(nextEntries)
@@ -97,7 +105,7 @@ export function useLeaderboard(stageFilter?: string) {
     }
 
     setLoading(false)
-  }, [stageFilter, key])
+  }, [stageFilter, league, key])
 
   useEffect(() => {
     const hit = leaderboardCache.get(key)

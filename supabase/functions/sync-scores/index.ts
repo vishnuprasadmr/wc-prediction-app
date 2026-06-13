@@ -1,18 +1,14 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
-import { withSupabase } from 'jsr:@supabase/server@^1'
 import {
   extractScores,
   fetchAllFifaMatches,
   mapFifaStatus,
   MATCH_NUMBER_OFFSET,
-  type FifaMatch,
 } from './fifa.ts'
 
 interface SyncPayload {
-  /** Sync one FIFA match number (1–104) */
   matchNumber?: number
-  /** Only sync matches that have kicked off but are not finished in DB */
   dueOnly?: boolean
 }
 
@@ -134,41 +130,42 @@ async function syncFifaToDb(
 
 console.info('sync-scores: server started')
 
-export default {
-  fetch: withSupabase({ auth: ['secret', 'publishable'] }, async (req, ctx) => {
-    if (req.method === 'OPTIONS') {
-      return new Response('ok', { headers: corsHeaders })
-    }
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
 
-    if (req.method !== 'POST') {
-      return Response.json({ error: 'POST only' }, { status: 405, headers: corsHeaders })
-    }
+  if (req.method !== 'POST') {
+    return Response.json({ error: 'POST only' }, { status: 405, headers: corsHeaders })
+  }
 
+  try {
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    )
+
+    let body: SyncPayload = {}
     try {
-      const supabase = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      )
-
-      let body: SyncPayload = {}
-      try {
-        const text = await req.text()
-        if (text) body = JSON.parse(text)
-      } catch {
-        body = {}
-      }
-
-      const result = await syncFifaToDb(supabase, {
-        matchNumber: body.matchNumber,
-        dueOnly: body.dueOnly ?? (!body.matchNumber && ctx.authMode !== 'secret'),
-      })
-
-      return Response.json(result, { headers: corsHeaders })
-    } catch (err) {
-      return Response.json(
-        { error: err instanceof Error ? err.message : String(err) },
-        { status: 500, headers: corsHeaders },
-      )
+      const text = await req.text()
+      if (text) body = JSON.parse(text)
+    } catch {
+      body = {}
     }
-  }),
-}
+
+    const apikey = req.headers.get('apikey') ?? ''
+    const isServiceCaller = apikey === (Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '')
+
+    const result = await syncFifaToDb(supabase, {
+      matchNumber: body.matchNumber,
+      dueOnly: body.dueOnly ?? (!body.matchNumber && !isServiceCaller),
+    })
+
+    return Response.json(result, { headers: corsHeaders })
+  } catch (err) {
+    return Response.json(
+      { error: err instanceof Error ? err.message : String(err) },
+      { status: 500, headers: corsHeaders },
+    )
+  }
+})

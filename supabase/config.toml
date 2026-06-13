@@ -1,4 +1,4 @@
 project_id = "wc-prediction-app"
 
 [functions.sync-scores]
-verify_jwt = true
+verify_jwt = false

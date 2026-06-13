@@ -21,7 +21,7 @@ import { PredictionBreakdownList } from '../components/PredictionBreakdownList'
 import { SeasonTrackerCard } from '../components/SeasonTrackerCard'
 import { ShareStandingsButton } from '../components/ShareStandingsButton'
 import { NotificationSettings } from '../components/NotificationSettings'
-import { DepartmentSelect } from '../components/DepartmentSelect'
+import { EmployeeIdCard } from '../components/EmployeeIdCard'
 import { GloryOptIn } from '../components/GloryOptIn'
 
 export function ProfilePage() {
@@ -69,9 +69,6 @@ export function ProfilePage() {
         />
         <h2 className="type-page-title mt-3 break-words">{profile?.display_name}</h2>
         <p className="type-body-sm mt-1 break-all text-muted">{user?.email}</p>
-        {profile?.employee_id && (
-          <p className="type-caption mt-1 font-mono text-simelabs">{profile.employee_id}</p>
-        )}
         {heartTeam && (
           <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-simelabs/10 px-2.5 py-1">
             <TeamFlag team={heartTeam} emoji="" size="sm" />
@@ -113,7 +110,7 @@ export function ProfilePage() {
 
       <PredictionBreakdownList predictions={predictions} />
 
-      <DepartmentSelect value={profile?.department} onSaved={() => void refreshProfile()} />
+      <EmployeeIdCard value={profile?.employee_id} onSaved={() => void refreshProfile()} />
       <GloryOptIn
         value={profile?.glory_opt_in ?? false}
         onSaved={() => void refreshProfile()}

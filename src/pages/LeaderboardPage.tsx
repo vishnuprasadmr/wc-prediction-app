@@ -1,15 +1,16 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { DailyRecapCard } from '../components/DailyRecapCard'
 import { GloryWall } from '../components/GloryWall'
 import { HeadToHeadCard } from '../components/HeadToHeadCard'
 import { LeaderboardTable } from '../components/LeaderboardTable'
 import { ScoringRulesSheet } from '../components/ScoringRulesSheet'
 import { SeasonAwardsCard } from '../components/SeasonAwardsCard'
-import { DEPARTMENTS } from '../lib/departments'
+import { useAuth } from '../contexts/AuthContext'
 import { useLeaderboard } from '../hooks/useLeaderboard'
 import { useLeaderboardReveal } from '../hooks/useLeaderboardReveal'
 import { useMatches } from '../hooks/useMatches'
-import { hasFinishedMatches } from '../lib/leaderboardUtils'
+import { canViewSimelabsLeaderboard } from '../lib/employeeId'
+import { hasFinishedMatches, type LeaderboardLeague } from '../lib/leaderboardUtils'
 
 const stages = [
   { key: 'all', label: 'Overall' },
@@ -22,10 +23,22 @@ const stages = [
 ]
 
 export function LeaderboardPage() {
+  const { profile } = useAuth()
   const [stage, setStage] = useState('all')
-  const [department, setDepartment] = useState<string>('all')
+  const [league, setLeague] = useState<LeaderboardLeague>('global')
   const [showRules, setShowRules] = useState(false)
   const { matches } = useMatches()
+
+  const canViewSimelabs = canViewSimelabsLeaderboard(profile)
+
+  useEffect(() => {
+    if (!canViewSimelabs && league === 'simelabs') {
+      setLeague('global')
+    }
+  }, [canViewSimelabs, league])
+
+  const effectiveLeague: LeaderboardLeague =
+    league === 'simelabs' && canViewSimelabs ? 'simelabs' : 'global'
 
   const tournamentStarted = useMemo(() => hasFinishedMatches(matches, 'all'), [matches])
 
@@ -35,21 +48,21 @@ export function LeaderboardPage() {
   )
 
   const effectiveStage = rankingsAvailable ? stage : 'all'
-  const { entries: rawEntries, heartTeams, loading } = useLeaderboard(effectiveStage)
-
-  const entries = useMemo(() => {
-    if (department === 'all') return rawEntries
-    return rawEntries
-      .filter((e) => e.department === department)
-      .map((e, i) => ({ ...e, rank: i + 1 }))
-  }, [rawEntries, department])
+  const { entries, heartTeams, loading } = useLeaderboard(effectiveStage, effectiveLeague)
 
   const { reveal: rankReveal } = useLeaderboardReveal(
     entries,
     loading,
     rankingsAvailable,
-    effectiveStage,
+    `${effectiveStage}:${effectiveLeague}`,
   )
+
+  const leagueTabs: { key: LeaderboardLeague; label: string }[] = canViewSimelabs
+    ? [
+        { key: 'global', label: 'Global' },
+        { key: 'simelabs', label: 'Simelabs' },
+      ]
+    : [{ key: 'global', label: 'Global' }]
 
   return (
     <div className="space-y-4">
@@ -71,18 +84,19 @@ export function LeaderboardPage() {
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-1">
-        <select
-          value={department}
-          onChange={(e) => setDepartment(e.target.value)}
-          className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium outline-none"
-        >
-          <option value="all">All depts</option>
-          {DEPARTMENTS.map((d) => (
-            <option key={d} value={d}>
-              {d}
-            </option>
-          ))}
-        </select>
+        {leagueTabs.map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setLeague(key)}
+            className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-medium transition ${
+              effectiveLeague === key
+                ? 'bg-simelabs text-simelabs-foreground'
+                : 'bg-muted text-muted hover:text-theme'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       {tournamentStarted && (

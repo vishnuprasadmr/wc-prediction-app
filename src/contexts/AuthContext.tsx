@@ -20,7 +20,7 @@ import {
   isOAuthCallback,
   setAuthError,
 } from '../lib/authOAuth'
-import { completeEmployeeProfile, ensureUserProfile, syncProfileAvatar } from '../lib/ensureProfile'
+import { completeUserProfile, ensureUserProfile, syncProfileAvatar } from '../lib/ensureProfile'
 import type { Profile } from '../lib/types'
 import { supabase } from '../lib/supabase'
 
@@ -35,7 +35,7 @@ interface AuthContextValue {
   oauthSettling: boolean
   signInGoogle: () => Promise<void>
   signUpGoogle: () => Promise<void>
-  completeEmployeeProfile: (displayName: string, employeeId: string) => Promise<void>
+  completeUserProfile: (displayName: string, employeeId?: string | null) => Promise<void>
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
 }
@@ -155,11 +155,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithGoogle('/register')
   }, [])
 
-  const completeEmployeeProfileFn = useCallback(async (displayName: string, employeeId: string) => {
+  const completeUserProfileFn = useCallback(async (displayName: string, employeeId?: string | null) => {
     if (!session?.user) {
       throw new Error('You must be signed in to complete registration.')
     }
-    await completeEmployeeProfile(session.user, displayName, employeeId)
+    await completeUserProfile(session.user, displayName, employeeId)
     await fetchProfile(session.user)
   }, [session?.user, fetchProfile])
 
@@ -178,7 +178,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       oauthSettling,
       signInGoogle,
       signUpGoogle,
-      completeEmployeeProfile: completeEmployeeProfileFn,
+      completeUserProfile: completeUserProfileFn,
       signOut,
       refreshProfile,
     }),
@@ -189,7 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       oauthSettling,
       signInGoogle,
       signUpGoogle,
-      completeEmployeeProfileFn,
+      completeUserProfileFn,
       signOut,
       refreshProfile,
     ],

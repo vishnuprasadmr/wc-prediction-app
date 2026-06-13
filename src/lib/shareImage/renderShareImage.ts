@@ -354,7 +354,7 @@ export async function renderShareImageCanvas(input: ShareImageInput): Promise<HT
     ctx.font = F.label
     ctx.fillStyle = C.textMuted
     ctx.textAlign = 'center'
-    ctx.fillText('Simelabs internal prediction league', W / 2, 300)
+    ctx.fillText('Simelabs WC 2026 predictions', W / 2, 300)
   }
 
   drawStatsRow(ctx, input)

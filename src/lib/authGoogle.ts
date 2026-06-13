@@ -1,20 +1,13 @@
 import { appAuthRedirect } from './appOrigin'
-import { LEAGUE_ID, supabase } from './supabase'
+import { supabase } from './supabase'
 import type { User } from '@supabase/supabase-js'
 import {
-  displayNameFromUser,
   GOOGLE_ONLY_MESSAGE,
   hasOAuthCompleteLock,
-  AUTH_ERROR_KEY,
   setAuthError,
   setOAuthCompleteLock,
 } from './authOAuth'
-import { resolveUserAvatarUrl } from './avatarUrl'
 import { syncProfileAvatar } from './ensureProfile'
-import {
-  isEmployeeIdTakenByOther,
-  validateEmployeeId,
-} from './employeeId'
 
 const PENDING_EMPLOYEE_ID_KEY = 'wc-google-employee-id'
 const PENDING_NAME_KEY = 'wc-google-display-name'
@@ -83,76 +76,19 @@ export async function signInWithGoogle(redirectPath: '/login' | '/register' = '/
   if (error) throw error
 }
 
-async function hasVerifiedEmployeeProfile(userId: string): Promise<boolean> {
+async function hasLeagueProfileRow(userId: string): Promise<boolean> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('employee_id')
+    .select('display_name')
     .eq('id', userId)
     .maybeSingle()
 
   if (error) {
-    console.error('Failed to check employee profile:', error.message)
+    console.error('Failed to check league profile:', error.message)
     return false
   }
 
-  if (!data?.employee_id) return false
-  return validateEmployeeId(data.employee_id).valid
-}
-
-async function createGoogleProfile(
-  user: User,
-  displayName: string | undefined,
-  employeeId: string,
-): Promise<boolean> {
-  const { data: existing } = await supabase
-    .from('profiles')
-    .select('employee_id, avatar_url')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  if (existing?.employee_id && validateEmployeeId(existing.employee_id).valid) {
-    await syncProfileAvatar(user, existing.avatar_url)
-    return true
-  }
-
-  if (await isEmployeeIdTakenByOther(employeeId, user.id)) {
-    setAuthError('This employee ID is already registered.')
-    return false
-  }
-
-  const name = displayNameFromUser(user, displayName)
-  const avatarUrl = resolveUserAvatarUrl(user)
-  const { error } = await supabase.from('profiles').upsert({
-    id: user.id,
-    display_name: name,
-    league_id: LEAGUE_ID,
-    is_admin: false,
-    employee_id: employeeId,
-    avatar_url: avatarUrl,
-  })
-
-  if (error) {
-    console.error('Failed to create profile:', error.message)
-    if (error.code === '23505') {
-      setAuthError('This employee ID is already registered.')
-    }
-    return false
-  }
-
-  const { error: metaError } = await supabase.auth.updateUser({
-    data: {
-      display_name: name,
-      employee_id: employeeId,
-      league_id: LEAGUE_ID,
-      ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
-    },
-  })
-
-  if (metaError) {
-    console.warn('Could not update auth metadata:', metaError.message)
-  }
-
-  return true
+  return Boolean(data?.display_name?.trim())
 }
 
 export async function completeGoogleAuth(user: User): Promise<void> {
@@ -161,35 +97,13 @@ export async function completeGoogleAuth(user: User): Promise<void> {
 
   const store = pendingStore()
   const fromRegister = store.getItem(REGISTER_FLOW_KEY) === '1'
-  const pendingEmployeeId = store.getItem(PENDING_EMPLOYEE_ID_KEY)
-  const pendingName = store.getItem(PENDING_NAME_KEY)
 
   if (fromRegister) {
-    if (!pendingEmployeeId) {
-      // Google first — SML ID collected on register page after OAuth
-      return
-    }
-
-    const parsed = validateEmployeeId(pendingEmployeeId)
-    if (!parsed.valid) {
-      setAuthError(parsed.message)
-      return
-    }
-
-    const ok = await createGoogleProfile(user, pendingName ?? undefined, parsed.normalized)
-    if (!ok) {
-      if (!sessionStorage.getItem(AUTH_ERROR_KEY)) {
-        setAuthError('Could not create your league profile. Please try again.')
-      }
-      return
-    }
-
-    clearPendingGoogleRegistration()
-    setOAuthCompleteLock('google', user.id)
+    // Google first — display name (and optional SML ID) on register page after OAuth
     return
   }
 
-  if (!(await hasVerifiedEmployeeProfile(user.id))) {
+  if (!(await hasLeagueProfileRow(user.id))) {
     startGoogleRegistration()
     return
   }

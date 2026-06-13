@@ -1,12 +1,29 @@
 import { supabase } from './supabase'
-import type { Profile } from './types'
+import type { LeaderboardEntry, Profile } from './types'
 
 export const EMPLOYEE_ID_PLACEHOLDER = 'SML 457'
 
+/** Joined the league — display name set (SML ID not required). */
+export function hasLeagueProfile(profile: Profile | null | undefined): boolean {
+  return Boolean(profile?.display_name?.trim())
+}
+
+/** Valid SML employee ID on file — appears on Simelabs point table. */
 export function isSimelabsEmployee(profile: Profile | null | undefined): boolean {
   if (!profile?.employee_id) return false
   return validateEmployeeId(profile.employee_id).valid
 }
+
+/** Valid SML employee ID — can view the private Simelabs point table. */
+export function canViewSimelabsLeaderboard(profile: Profile | null | undefined): boolean {
+  return isSimelabsEmployee(profile)
+}
+
+export function isSimelabsLeaderboardEntry(entry: LeaderboardEntry): boolean {
+  if (!entry.employee_id) return false
+  return validateEmployeeId(entry.employee_id).valid
+}
+
 export function validateEmployeeId(input: string):
   | { valid: true; normalized: string }
   | { valid: false; message: string } {

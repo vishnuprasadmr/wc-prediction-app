@@ -1,7 +1,7 @@
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { AuthLoadingScreen } from './AuthLoadingScreen'
-import { isSimelabsEmployee } from '../lib/employeeId'
+import { hasLeagueProfile } from '../lib/employeeId'
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, profile, loading } = useAuth()
@@ -14,7 +14,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" replace />
   }
 
-  if (!isSimelabsEmployee(profile)) {
+  if (!hasLeagueProfile(profile)) {
     return <Navigate to="/register" replace />
   }
 

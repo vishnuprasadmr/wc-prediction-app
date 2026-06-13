@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { GoogleSignInButton } from '../components/GoogleSignInButton'
 import { AuthLoadingScreen } from '../components/AuthLoadingScreen'
-import { isSimelabsEmployee } from '../lib/employeeId'
+import { hasLeagueProfile } from '../lib/employeeId'
 import { consumeAuthError } from '../lib/authOAuth'
 
 export function LoginPage() {
@@ -25,9 +25,9 @@ export function LoginPage() {
     )
   }
 
-  if (session && isSimelabsEmployee(profile)) return <Navigate to="/" replace />
+  if (session && hasLeagueProfile(profile)) return <Navigate to="/" replace />
 
-  if (session && !isSimelabsEmployee(profile)) {
+  if (session && !hasLeagueProfile(profile)) {
     return <Navigate to="/register" replace />
   }
 
@@ -55,7 +55,7 @@ export function LoginPage() {
           </div>
           <h1 className="type-display">Welcome back</h1>
           <p className="type-body-sm mt-2 text-muted">
-            Simelabs WC 2026 Prediction League
+            WC 2026 Prediction League — open to everyone
           </p>
           <p className="type-caption mt-2 text-pretty text-muted">
             Sign in with your Google account

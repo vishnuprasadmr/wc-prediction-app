@@ -5,7 +5,11 @@ import { useAuth } from '../contexts/AuthContext'
 import { GoogleSignInButton } from '../components/GoogleSignInButton'
 import { AuthLoadingScreen } from '../components/AuthLoadingScreen'
 import { ProfileAvatar } from '../components/ProfileAvatar'
-import { EMPLOYEE_ID_PLACEHOLDER, isSimelabsEmployee, validateEmployeeId } from '../lib/employeeId'
+import {
+  EMPLOYEE_ID_PLACEHOLDER,
+  hasLeagueProfile,
+  validateEmployeeId,
+} from '../lib/employeeId'
 import { isGoogleUser } from '../lib/authGoogle'
 import { consumeAuthError, displayNameFromUser } from '../lib/authOAuth'
 import { resolveUserAvatarUrl } from '../lib/avatarUrl'
@@ -13,7 +17,7 @@ import { resolveUserAvatarUrl } from '../lib/avatarUrl'
 export function RegisterPage() {
   const {
     signUpGoogle,
-    completeEmployeeProfile,
+    completeUserProfile,
     session,
     profile,
     user,
@@ -27,7 +31,7 @@ export function RegisterPage() {
   const [submitting, setSubmitting] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
 
-  const completingProfile = Boolean(session && !isSimelabsEmployee(profile))
+  const completingProfile = Boolean(session && !hasLeagueProfile(profile))
 
   useEffect(() => {
     const oauthError = consumeAuthError()
@@ -50,7 +54,7 @@ export function RegisterPage() {
 
   const registerReady =
     displayName.trim().length > 0 &&
-    employeeIdCheck?.valid === true
+    (employeeId.trim() === '' || employeeIdCheck?.valid === true)
 
   if (loading || oauthSettling) {
     return (
@@ -66,7 +70,7 @@ export function RegisterPage() {
         <div className="page-content w-full max-w-sm text-center">
           <p className="type-display">Google sign-in only</p>
           <p className="type-body-sm mt-2 text-muted text-pretty">
-            Sign-in is Google only. Use any Google account, then add your SML employee ID.
+            Sign in with any Google account to join the league.
           </p>
           {error && (
             <p className="mt-4 text-sm text-red-400" role="alert">
@@ -85,19 +89,19 @@ export function RegisterPage() {
     )
   }
 
-  if (session && isSimelabsEmployee(profile)) return <Navigate to="/" replace />
+  if (session && hasLeagueProfile(profile)) return <Navigate to="/" replace />
 
   const handleComplete = async () => {
-    if (!registerReady || !employeeIdCheck?.valid) {
-      setError(employeeIdError ?? 'Enter a valid employee ID.')
+    if (!registerReady) {
+      setError(employeeIdError ?? 'Enter your display name.')
       return
     }
     setSubmitting(true)
     setError(null)
     try {
-      await completeEmployeeProfile(displayName, employeeId)
+      await completeUserProfile(displayName, employeeId.trim() || null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save employee ID')
+      setError(err instanceof Error ? err.message : 'Could not save your profile')
     } finally {
       setSubmitting(false)
     }
@@ -133,7 +137,7 @@ export function RegisterPage() {
             />
             <h1 className="type-display mt-4">Welcome!</h1>
             <p className="type-body-sm mt-2 text-muted text-pretty">
-              One last step — enter your Simelabs employee ID to join the league
+              Pick a display name to join. Simelabs staff can add an SML ID to unlock the company point table.
             </p>
             {user?.email && (
               <p className="type-caption mt-2 break-all text-muted">{user.email}</p>
@@ -154,10 +158,11 @@ export function RegisterPage() {
               />
             </div>
             <div>
-              <label className="type-label mb-1.5 block">Employee ID</label>
+              <label className="type-label mb-1.5 block">
+                Simelabs Employee ID <span className="font-normal text-muted">(optional)</span>
+              </label>
               <input
                 type="text"
-                required
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value.toUpperCase())}
                 className="input-field font-mono uppercase tracking-wide"
@@ -170,7 +175,7 @@ export function RegisterPage() {
                 <p className="type-caption mt-1.5 text-red-400">{employeeIdError}</p>
               ) : (
                 <p className="type-caption mt-1.5 text-muted">
-                  Format: SML followed by a number from 0 to 1000
+                  Simelabs employees only — format SML + number (e.g. SML 457)
                 </p>
               )}
             </div>
@@ -205,10 +210,10 @@ export function RegisterPage() {
         <div className="mb-8 text-center">
           <h1 className="type-display">Join the League</h1>
           <p className="type-body-sm mt-2 text-muted text-pretty">
-            Simelabs employees · continue with Google
+            Open to everyone — continue with Google
           </p>
           <p className="type-caption mt-2 text-muted">
-            You&apos;ll add your SML ID right after signing in
+            You&apos;ll pick a display name after signing in
           </p>
         </div>
 
