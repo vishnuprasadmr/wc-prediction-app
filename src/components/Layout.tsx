@@ -1,5 +1,7 @@
 import { Outlet } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { AppSidebar } from './AppSidebar'
 import { BottomNav } from './BottomNav'
 import { GameNotificationHost } from './GameNotificationHost'
 import { InstallPrompt } from './InstallPrompt'
@@ -47,48 +49,73 @@ function EngagementHooks() {
   )
 }
 
+function MenuIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+      <path d="M4 7h16M4 12h16M4 17h16" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export function Layout() {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
   return (
     <MatchesProvider>
     <QuestionnaireGate>
     <EngagementHooks />
     <GameNotificationHost />
-    <div className="page-shell safe-top pb-[calc(4.25rem+env(safe-area-inset-bottom))]">
-      <header className="page-content sticky top-0 z-40 border-b border-default bg-elevated/95 backdrop-blur-md">
-        <div className="mx-auto flex max-w-lg items-center justify-between px-4 py-3">
-          <div className="min-w-0">
-            <h1 className="type-page-title">
-              <span className="text-simelabs">Simelabs</span>{' '}
-              <span className="text-theme">WC 26</span>
-            </h1>
-            <p className="type-caption leading-snug">
-              Prediction League
-              <span className="text-muted/50"> · </span>
-              <span className="whitespace-nowrap">All times IST</span>
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-simelabs to-simelabs-dark text-sm font-bold text-simelabs-foreground shadow-glow-sm">
-              WC
+    <div className="page-shell flex min-h-dvh pb-[calc(4.25rem+env(safe-area-inset-bottom))] lg:pb-0">
+      <AppSidebar mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      <div className="page-content flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-40 border-b border-default bg-elevated/95 backdrop-blur-md safe-top">
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <button
+                type="button"
+                aria-label="Open menu"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-default bg-muted text-theme transition hover:border-simelabs/35 hover:bg-simelabs/10 lg:hidden"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <MenuIcon className="h-5 w-5" />
+              </button>
+              <div className="min-w-0 lg:hidden">
+                <h1 className="type-page-title truncate">
+                  <span className="text-simelabs">Simelabs</span>{' '}
+                  <span className="text-theme">WC 26</span>
+                </h1>
+                <p className="type-caption leading-snug text-muted">Prediction League</p>
+              </div>
+              <div className="hidden min-w-0 lg:block">
+                <p className="type-caption text-muted">All times IST</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <div className="hidden h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-simelabs to-simelabs-dark text-sm font-bold text-simelabs-foreground shadow-glow-sm sm:flex">
+                WC
+              </div>
             </div>
           </div>
+        </header>
+
+        <motion.main
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: 'easeOut' }}
+          className="mx-auto w-full max-w-5xl flex-1 px-4 py-4"
+        >
+          <SeasonPicksReminder />
+          <Outlet />
+        </motion.main>
+
+        <EngagementPrompt />
+        <div className="lg:hidden">
+          <BottomNav onOpenMenu={() => setSidebarOpen(true)} />
         </div>
-      </header>
-
-      <motion.main
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: 'easeOut' }}
-        className="page-content mx-auto max-w-lg px-4 py-4"
-      >
-        <SeasonPicksReminder />
-        <Outlet />
-      </motion.main>
-
-      <EngagementPrompt />
-      <BottomNav />
-      <InstallPrompt />
+        <InstallPrompt />
+      </div>
     </div>
     </QuestionnaireGate>
     </MatchesProvider>

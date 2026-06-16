@@ -86,7 +86,11 @@ export function MatchCard({
     >
       <div className="px-4 py-4 sm:px-5">
         <div className="flex items-start justify-between gap-2 sm:gap-3">
-          <TeamLabel team={match.home_team} emoji={match.home_flag} />
+          <TeamLabel
+            team={match.home_team}
+            emoji={match.home_flag}
+            to={`/teams?team=${encodeURIComponent(match.home_team)}`}
+          />
           <CenterBlock
             match={match}
             hasScore={hasScore}
@@ -95,7 +99,11 @@ export function MatchCard({
             showLockTimer={filterStatus === 'upcoming' && !locked}
             className="self-center"
           />
-          <TeamLabel team={match.away_team} emoji={match.away_flag} />
+          <TeamLabel
+            team={match.away_team}
+            emoji={match.away_flag}
+            to={`/teams?team=${encodeURIComponent(match.away_team)}`}
+          />
         </div>
 
         <p className="type-caption mt-3 text-center text-pretty">

@@ -1,20 +1,28 @@
+import { useCallback } from 'react'
 import { motion } from 'framer-motion'
 import type { RankReveal } from '../hooks/useLeaderboardReveal'
 import type { LeaderboardEntry } from '../lib/types'
 import type { HeartTeamMap } from '../hooks/useLeaderboard'
-import { sortPlayersAlphabetically } from '../lib/leaderboardUtils'
+import { computePlayerGaps, sortPlayersAlphabetically } from '../lib/leaderboardUtils'
 import { useAuth } from '../contexts/AuthContext'
+import { playSound } from '../lib/sounds'
 import { LeaderboardAvatar } from './LeaderboardAvatar'
 import { LeaderboardPodium } from './LeaderboardPodium'
+import { LeaderboardPlayerSheet } from './LeaderboardPlayerSheet'
 import { SupportingTeamFlag } from './SupportingTeamFlag'
 import { TruncatedText } from './TruncatedText'
 
 interface LeaderboardTableProps {
   entries: LeaderboardEntry[]
+  allEntries?: LeaderboardEntry[]
   heartTeams?: HeartTeamMap
   loading?: boolean
   rankingsAvailable?: boolean
   rankReveal?: RankReveal | null
+  selectedPlayerId?: string | null
+  onSelectPlayer?: (entry: LeaderboardEntry | null) => void
+  onSetRival?: (userId: string) => void
+  highlightUserId?: string | null
 }
 
 function rankRowMotion(isMe: boolean, reveal: RankReveal | null | undefined) {
@@ -38,30 +46,46 @@ function LeaderboardRow({
   isMe,
   rankReveal,
   heartTeam,
+  allEntries,
+  onSelect,
+  highlighted,
 }: {
   entry: LeaderboardEntry
   index: number
   isMe: boolean
   rankReveal?: RankReveal | null
   heartTeam?: string | null
+  allEntries: LeaderboardEntry[]
+  onSelect: () => void
+  highlighted?: boolean
 }) {
   const motionProps = rankRowMotion(isMe, rankReveal)
+  const gaps = computePlayerGaps(entry, allEntries)
 
   return (
-    <motion.div
+    <motion.button
+      type="button"
       layout
+      id={`leaderboard-row-${entry.user_id}`}
       {...motionProps}
+      animate={{
+        opacity: motionProps.animate?.opacity ?? 1,
+        x: motionProps.animate?.x ?? 0,
+        y: motionProps.animate?.y ?? 0,
+        scale: motionProps.animate?.scale ?? 1,
+      }}
       transition={{
         type: 'spring',
         stiffness: 320,
         damping: 28,
         delay: isMe ? 0.05 : index * 0.03,
       }}
-      className={`flex items-center gap-3 rounded-2xl border p-4 transition ${
+      onClick={onSelect}
+      className={`flex w-full items-center gap-3 rounded-2xl border p-4 text-left transition hover:border-simelabs/30 hover:shadow-md active:scale-[0.99] ${
         isMe
           ? 'border-simelabs/40 bg-gradient-to-r from-simelabs/12 to-card shadow-glow-sm'
           : 'border-default bg-card shadow-card'
-      }`}
+      } ${highlighted ? 'ring-2 ring-simelabs/50' : ''}`}
     >
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-default bg-muted font-heading text-sm font-bold tabular-nums text-subtle">
         {entry.rank}
@@ -96,29 +120,61 @@ function LeaderboardRow({
           {' · '}
           {entry.predictions_made} predicted
         </p>
+        {gaps.behindLeader > 0 && isMe && (
+          <p className="mt-0.5 text-[10px] font-medium text-simelabs">
+            {gaps.behindLeader} pts to catch the leader
+          </p>
+        )}
+        {gaps.aheadOfNext != null && gaps.aheadOfNext <= 3 && gaps.aheadOfNext > 0 && !isMe && (
+          <p className="mt-0.5 text-[10px] text-muted">
+            Only {gaps.aheadOfNext} pt{gaps.aheadOfNext === 1 ? '' : 's'} ahead of #{entry.rank + 1}
+          </p>
+        )}
       </div>
 
-      <motion.div
-        key={entry.total_points}
-        initial={{ scale: 1.15 }}
-        animate={{ scale: 1 }}
-        className="text-right"
-      >
-        <p className="type-stat text-simelabs">{entry.total_points}</p>
-        <p className="type-caption">pts</p>
-      </motion.div>
-    </motion.div>
+      <div className="flex shrink-0 items-center gap-2">
+        <motion.div
+          key={entry.total_points}
+          initial={{ scale: 1.15 }}
+          animate={{ scale: 1 }}
+          className="text-right"
+        >
+          <p className="type-stat text-simelabs">{entry.total_points}</p>
+          <p className="type-caption">pts</p>
+        </motion.div>
+        <span className="text-muted/60" aria-hidden>
+          ›
+        </span>
+      </div>
+    </motion.button>
   )
 }
 
 export function LeaderboardTable({
   entries,
+  allEntries,
   heartTeams = {},
   loading,
   rankingsAvailable = true,
   rankReveal = null,
+  selectedPlayerId = null,
+  onSelectPlayer,
+  onSetRival,
+  highlightUserId,
 }: LeaderboardTableProps) {
   const { user } = useAuth()
+  const fullEntries = allEntries ?? entries
+  const selectedEntry = selectedPlayerId
+    ? fullEntries.find((e) => e.user_id === selectedPlayerId) ?? null
+    : null
+
+  const handleSelect = useCallback(
+    (entry: LeaderboardEntry) => {
+      playSound('select')
+      onSelectPlayer?.(entry)
+    },
+    [onSelectPlayer],
+  )
 
   if (loading && entries.length === 0) {
     return (
@@ -205,23 +261,27 @@ export function LeaderboardTable({
   if (entries.length === 0) {
     return (
       <div className="rounded-2xl border border-default bg-card p-8 text-center">
-        <p className="text-4xl">🏆</p>
-        <p className="mt-2 font-medium text-subtle">No scores yet</p>
-        <p className="mt-1 text-sm text-muted">Predictions are in — check back once matches kick off.</p>
+        <p className="text-4xl">🔍</p>
+        <p className="mt-2 font-medium text-subtle">No players match</p>
+        <p className="mt-1 text-sm text-muted">Try a different search or clear filters.</p>
       </div>
     )
   }
 
-  const rest = entries.filter((e) => e.rank > 3)
+  const showPodium = entries.some((e) => e.rank <= 3)
+  const topThree = showPodium ? entries.filter((e) => e.rank <= 3).sort((a, b) => a.rank - b.rank) : []
+  const topThreeIds = new Set(topThree.map((e) => e.user_id))
+  const rest = entries.filter((e) => !topThreeIds.has(e.user_id))
 
   return (
     <div>
-      {entries.length >= 1 && (
+      {topThree.length >= 1 && (
         <LeaderboardPodium
-          entries={entries}
+          entries={topThree}
           heartTeams={heartTeams}
           currentUserId={user?.id}
           rankReveal={rankReveal}
+          onSelectPlayer={onSelectPlayer ? (e) => handleSelect(e) : undefined}
         />
       )}
 
@@ -251,7 +311,7 @@ export function LeaderboardTable({
         <div className="space-y-2">
           {rest.length > 0 && entries.length > 3 && (
             <p className="type-overline mb-2 !text-[10px] text-muted">
-              Rest of the table
+              Rest of the table · tap a player for details
             </p>
           )}
           {rest.map((entry, index) => (
@@ -262,11 +322,28 @@ export function LeaderboardTable({
               isMe={entry.user_id === user?.id}
               rankReveal={rankReveal}
               heartTeam={heartTeams[entry.user_id]}
+              allEntries={fullEntries}
+              onSelect={() => handleSelect(entry)}
+              highlighted={highlightUserId === entry.user_id}
             />
           ))}
         </div>
       )}
 
+      {topThree.length > 0 && rest.length === 0 && entries.length <= 3 && (
+        <p className="mt-2 text-center type-caption text-muted">
+          Tap a player on the podium for details
+        </p>
+      )}
+
+      <LeaderboardPlayerSheet
+        entry={selectedEntry}
+        allEntries={fullEntries}
+        heartTeam={selectedEntry ? heartTeams[selectedEntry.user_id] : undefined}
+        currentUserId={user?.id}
+        onClose={() => onSelectPlayer?.(null)}
+        onSetRival={onSetRival}
+      />
     </div>
   )
 }

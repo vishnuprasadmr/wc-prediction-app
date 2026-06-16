@@ -9,13 +9,21 @@ import { TruncatedText } from './TruncatedText'
 export function HeadToHeadCard({
   entries,
   heartTeams,
+  rivalId: rivalIdProp,
+  onRivalChange,
 }: {
   entries: LeaderboardEntry[]
   heartTeams: Record<string, string>
+  rivalId?: string
+  onRivalChange?: (userId: string) => void
 }) {
   const { user } = useAuth()
-  const [rivalId, setRivalId] = useState<string>('')
+  const [rivalIdLocal, setRivalIdLocal] = useState<string>('')
   const scrollRef = useRef<HTMLDivElement>(null)
+  const h2hRef = useRef<HTMLDivElement>(null)
+
+  const rivalId = rivalIdProp ?? rivalIdLocal
+  const setRivalId = onRivalChange ?? setRivalIdLocal
 
   const me = useMemo(
     () => entries.find((e) => e.user_id === user?.id),
@@ -34,7 +42,13 @@ export function HeadToHeadCard({
     if (!rivalId && rivals[0]) {
       setRivalId(rivals[0].user_id)
     }
-  }, [rivalId, rivals])
+  }, [rivalId, rivals, setRivalId])
+
+  useEffect(() => {
+    if (rivalIdProp) {
+      h2hRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
+  }, [rivalIdProp])
 
   const pickRival = (id: string) => {
     playSound('select')
@@ -57,7 +71,7 @@ export function HeadToHeadCard({
   const losing = diff < 0
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-default bg-card shadow-card">
+    <div ref={h2hRef} className="overflow-hidden rounded-2xl border border-default bg-card shadow-card">
       {/* Pitch strip */}
       <div className="relative border-b border-simelabs/20 bg-gradient-to-r from-simelabs/15 via-simelabs/5 to-simelabs/15 px-4 py-3">
         <div

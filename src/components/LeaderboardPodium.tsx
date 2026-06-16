@@ -10,6 +10,7 @@ interface LeaderboardPodiumProps {
   heartTeams?: HeartTeamMap
   currentUserId?: string
   rankReveal?: RankReveal | null
+  onSelectPlayer?: (entry: LeaderboardEntry) => void
 }
 
 const PODIUM_ORDER = [2, 1, 3] as const
@@ -79,15 +80,18 @@ function PodiumSlot({
   isMe,
   rankReveal,
   heartTeam,
+  onSelect,
 }: {
   entry: LeaderboardEntry
   rank: 1 | 2 | 3
   isMe: boolean
   rankReveal?: RankReveal | null
   heartTeam?: string | null
+  onSelect?: () => void
 }) {
   const meta = podiumMeta[rank]
   const motionProps = podiumEntryMotion(isMe, rankReveal)
+  const Wrapper = onSelect ? 'button' : 'div'
 
   return (
     <motion.div
@@ -106,40 +110,47 @@ function PodiumSlot({
         </motion.div>
       )}
 
-      <div
-        className={`relative mb-2 rounded-full p-0.5 ${meta.ring} ${meta.glow} ${
-          isMe ? 'ring-simelabs ring-offset-2 ring-offset-card' : ''
-        }`}
+      <Wrapper
+        type={onSelect ? 'button' : undefined}
+        onClick={onSelect}
+        id={`leaderboard-row-${entry.user_id}`}
+        className={`flex flex-col items-center ${onSelect ? 'rounded-xl transition hover:bg-muted/40 active:scale-[0.98]' : ''}`}
       >
-        <LeaderboardAvatar
-          name={entry.display_name}
-          avatarUrl={entry.avatar_url}
-          heartTeam={heartTeam}
-          size={meta.avatar}
-        />
-        <span
-          className={`absolute -bottom-1 -right-1 z-20 flex h-6 min-w-6 items-center justify-center rounded-full px-1 font-heading text-[11px] font-bold tabular-nums ${meta.rankBadge}`}
+        <div
+          className={`relative mb-2 rounded-full p-0.5 ${meta.ring} ${meta.glow} ${
+            isMe ? 'ring-simelabs ring-offset-2 ring-offset-card' : ''
+          }`}
         >
-          {rank}
-        </span>
-      </div>
+          <LeaderboardAvatar
+            name={entry.display_name}
+            avatarUrl={entry.avatar_url}
+            heartTeam={heartTeam}
+            size={meta.avatar}
+          />
+          <span
+            className={`absolute -bottom-1 -right-1 z-20 flex h-6 min-w-6 items-center justify-center rounded-full px-1 font-heading text-[11px] font-bold tabular-nums ${meta.rankBadge}`}
+          >
+            {rank}
+          </span>
+        </div>
 
-      <TruncatedText
-        text={entry.display_name}
-        className={`max-w-[5.5rem] text-center text-xs font-semibold sm:max-w-[6.5rem] sm:text-sm ${
-          isMe ? 'text-simelabs' : 'text-theme'
-        }`}
-      />
-      {isMe && (
-        <span className="type-caption text-[10px] font-semibold uppercase tracking-wider text-simelabs">
-          You
-        </span>
-      )}
+        <TruncatedText
+          text={entry.display_name}
+          className={`max-w-[5.5rem] text-center text-xs font-semibold sm:max-w-[6.5rem] sm:text-sm ${
+            isMe ? 'text-simelabs' : 'text-theme'
+          }`}
+        />
+        {isMe && (
+          <span className="type-caption text-[10px] font-semibold uppercase tracking-wider text-simelabs">
+            You
+          </span>
+        )}
 
-      <p className="type-stat mt-1 text-simelabs">
-        {entry.total_points}
-        <span className="ml-0.5 type-caption font-normal">pts</span>
-      </p>
+        <p className="type-stat mt-1 text-simelabs">
+          {entry.total_points}
+          <span className="ml-0.5 type-caption font-normal">pts</span>
+        </p>
+      </Wrapper>
 
       <div
         className={`mt-2 flex w-full items-end justify-center rounded-t-xl border border-b-0 border-default/60 pb-2 ${meta.height} ${meta.bar}`}
@@ -157,6 +168,7 @@ export function LeaderboardPodium({
   heartTeams = {},
   currentUserId,
   rankReveal,
+  onSelectPlayer,
 }: LeaderboardPodiumProps) {
   const topThree = entries.filter((e) => e.rank <= 3).sort((a, b) => a.rank - b.rank)
   if (topThree.length === 0) return null
@@ -204,6 +216,7 @@ export function LeaderboardPodium({
               isMe={entry.user_id === currentUserId}
               rankReveal={rankReveal}
               heartTeam={heartTeams[entry.user_id]}
+              onSelect={onSelectPlayer ? () => onSelectPlayer(entry) : undefined}
             />
           )
         })}

@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DailyRecapCard } from '../components/DailyRecapCard'
 import { GloryWall } from '../components/GloryWall'
 import { HeadToHeadCard } from '../components/HeadToHeadCard'
 import { LeaderboardTable } from '../components/LeaderboardTable'
+import { LeaderboardToolbar } from '../components/LeaderboardToolbar'
 import { ScoringRulesSheet } from '../components/ScoringRulesSheet'
 import { SeasonAwardsCard } from '../components/SeasonAwardsCard'
 import { useAuth } from '../contexts/AuthContext'
@@ -10,7 +11,15 @@ import { useLeaderboard } from '../hooks/useLeaderboard'
 import { useLeaderboardReveal } from '../hooks/useLeaderboardReveal'
 import { useMatches } from '../hooks/useMatches'
 import { canViewSimelabsLeaderboard } from '../lib/employeeId'
-import { hasFinishedMatches, type LeaderboardLeague } from '../lib/leaderboardUtils'
+import {
+  filterLeaderboardBySearch,
+  hasFinishedMatches,
+  sortLeaderboardEntries,
+  type LeaderboardLeague,
+  type LeaderboardSortKey,
+} from '../lib/leaderboardUtils'
+import type { LeaderboardEntry } from '../lib/types'
+import { playSound } from '../lib/sounds'
 
 const stages = [
   { key: 'all', label: 'Overall' },
@@ -23,10 +32,16 @@ const stages = [
 ]
 
 export function LeaderboardPage() {
-  const { profile } = useAuth()
+  const { user, profile } = useAuth()
   const [stage, setStage] = useState('all')
   const [league, setLeague] = useState<LeaderboardLeague>('global')
   const [showRules, setShowRules] = useState(false)
+  const [search, setSearch] = useState('')
+  const [sortKey, setSortKey] = useState<LeaderboardSortKey>('rank')
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null)
+  const [highlightUserId, setHighlightUserId] = useState<string | null>(null)
+  const [h2hRivalId, setH2hRivalId] = useState<string | undefined>(undefined)
+  const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { matches } = useMatches()
 
   const canViewSimelabs = canViewSimelabsLeaderboard(profile)
@@ -56,6 +71,45 @@ export function LeaderboardPage() {
     rankingsAvailable,
     `${effectiveStage}:${effectiveLeague}`,
   )
+
+  const myEntry = useMemo(
+    () => entries.find((e) => e.user_id === user?.id),
+    [entries, user?.id],
+  )
+
+  const displayEntries = useMemo(() => {
+    const searched = filterLeaderboardBySearch(entries, search)
+    return sortLeaderboardEntries(searched, sortKey)
+  }, [entries, search, sortKey])
+
+  const handleSelectPlayer = useCallback((entry: LeaderboardEntry | null) => {
+    setSelectedPlayerId(entry?.user_id ?? null)
+  }, [])
+
+  const findMe = useCallback(() => {
+    if (!user?.id) return
+    playSound('select')
+    setHighlightUserId(user.id)
+    if (highlightTimer.current) clearTimeout(highlightTimer.current)
+    highlightTimer.current = setTimeout(() => setHighlightUserId(null), 2400)
+
+    requestAnimationFrame(() => {
+      document
+        .getElementById(`leaderboard-row-${user.id}`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    })
+  }, [user?.id])
+
+  const handleSetRival = useCallback((userId: string) => {
+    setH2hRivalId(userId)
+    playSound('select')
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (highlightTimer.current) clearTimeout(highlightTimer.current)
+    }
+  }, [])
 
   const leagueTabs: { key: LeaderboardLeague; label: string }[] = canViewSimelabs
     ? [
@@ -117,15 +171,38 @@ export function LeaderboardPage() {
         </div>
       )}
 
+      {rankingsAvailable && entries.length > 0 && (
+        <LeaderboardToolbar
+          search={search}
+          onSearchChange={setSearch}
+          sortKey={sortKey}
+          onSortChange={setSortKey}
+          totalCount={entries.length}
+          filteredCount={displayEntries.length}
+          myEntry={myEntry}
+          onFindMe={user ? findMe : undefined}
+        />
+      )}
+
       <LeaderboardTable
-        entries={entries}
+        entries={displayEntries}
+        allEntries={entries}
         heartTeams={heartTeams}
         loading={loading}
         rankingsAvailable={rankingsAvailable}
         rankReveal={rankReveal}
+        selectedPlayerId={selectedPlayerId}
+        onSelectPlayer={handleSelectPlayer}
+        onSetRival={handleSetRival}
+        highlightUserId={highlightUserId}
       />
 
-      <HeadToHeadCard entries={entries} heartTeams={heartTeams} />
+      <HeadToHeadCard
+        entries={entries}
+        heartTeams={heartTeams}
+        rivalId={h2hRivalId}
+        onRivalChange={setH2hRivalId}
+      />
       <GloryWall />
       <SeasonAwardsCard />
 
