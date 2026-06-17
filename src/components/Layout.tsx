@@ -16,6 +16,7 @@ import { QuestionnaireGate } from './QuestionnaireGate'
 import { SeasonPicksReminder } from './SeasonPicksReminder'
 import { useBadgeUnlock } from '../hooks/useBadgeUnlock'
 import { useMatchResultNotifications } from '../hooks/useMatchResultNotifications'
+import { useMealBetNotifications } from '../hooks/useMealBetNotifications'
 import { useOracleMoment } from '../hooks/useOracleMoment'
 import { useLeaderboard } from '../hooks/useLeaderboard'
 import { useUserPredictions } from '../hooks/usePredictions'
@@ -24,6 +25,7 @@ import { computeBadges } from '../lib/badges'
 
 function EngagementHooks() {
   useMatchResultNotifications()
+  useMealBetNotifications()
   const { moment, dismiss } = useOracleMoment()
   const { user, profile } = useAuth()
   const { entries } = useLeaderboard()

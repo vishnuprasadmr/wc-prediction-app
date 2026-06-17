@@ -1,4 +1,6 @@
 import type { Match, Prediction } from './types'
+import type { MealBetBadgeInput } from './mealBetNotifications'
+import { isActionableMealBet, isMealBetSeen } from './mealBetNotifications'
 import {
   getPredictableMatches,
   formatPredictionLockTimeIst,
@@ -10,7 +12,7 @@ import { addIstDays, formatKickoffTimeIst, toIstDateKey } from './timezone'
 
 const STORAGE_KEY = 'wc-dismissed-engagement-prompts'
 
-export type EngagementPromptKind = 'predict' | 'leaderboard'
+export type EngagementPromptKind = 'predict' | 'meal' | 'leaderboard'
 
 export interface PredictPrompt {
   kind: 'predict'
@@ -29,7 +31,17 @@ export interface LeaderboardPrompt {
   userPrediction: string
 }
 
-export type EngagementPrompt = PredictPrompt | LeaderboardPrompt
+export interface MealBetPrompt {
+  kind: 'meal'
+  key: string
+  challengeId: string
+  creatorName: string
+  claimText: string
+  stakeText: string
+  match: Match
+}
+
+export type EngagementPrompt = PredictPrompt | MealBetPrompt | LeaderboardPrompt
 
 function getDismissedKeys(): Set<string> {
   try {
@@ -90,16 +102,16 @@ export function resolveEngagementPrompt(input: {
   matches: Match[]
   predictions: Record<string, Prediction>
   pathname: string
+  userId?: string
+  liveMealBets?: MealBetBadgeInput[]
+  mealBetLabels?: Map<string, { creatorName: string; claimText: string; stakeText: string; match: Match }>
 }): EngagementPrompt | null {
-  const { matches, predictions, pathname } = input
+  const { matches, predictions, pathname, userId, liveMealBets, mealBetLabels } = input
   const dismissed = getDismissedKeys()
 
   const nextMatch = getPredictableMatches(matches).find((m) => !predictions[m.id]) ?? null
   const lockWarning = nextMatch ? isLockWarningWindow(nextMatch.kickoff_at) : false
-  if (
-    nextMatch &&
-    (pathname !== '/predict' || lockWarning)
-  ) {
+  if (nextMatch && (pathname !== '/predict' || lockWarning)) {
     const key = `predict:${nextMatch.id}`
     if (!dismissed.has(key)) {
       return {
@@ -109,6 +121,29 @@ export function resolveEngagementPrompt(input: {
         dayLabel: getIstDayLabel(nextMatch.kickoff_at),
         lockTime: formatPredictionLockTimeIst(nextMatch.kickoff_at),
         urgent: lockWarning,
+      }
+    }
+  }
+
+  if (userId && liveMealBets && mealBetLabels && pathname !== '/meals') {
+    const actionable = liveMealBets.find(
+      (c) => isActionableMealBet(c, userId) && !isMealBetSeen(c.id),
+    )
+    if (actionable) {
+      const labels = mealBetLabels.get(actionable.id)
+      if (labels) {
+        const key = `meal:${actionable.id}`
+        if (!dismissed.has(key)) {
+          return {
+            kind: 'meal',
+            key,
+            challengeId: actionable.id,
+            creatorName: labels.creatorName,
+            claimText: labels.claimText,
+            stakeText: labels.stakeText,
+            match: labels.match,
+          }
+        }
       }
     }
   }
@@ -169,6 +204,23 @@ export function getPredictPromptMessage(prompt: PredictPrompt): {
     bodyLines: [
       `${prompt.dayLabel} · ${home_team} vs ${away_team}`,
       `Did you predict yet? Lock closes at ${prompt.lockTime} IST`,
+    ],
+  }
+}
+
+export function getMealBetPromptMessage(prompt: MealBetPrompt): {
+  title: string
+  body: string
+  bodyLines: string[]
+} {
+  const { home_team, away_team } = prompt.match
+  return {
+    title: 'New meal bet — take it?',
+    body: `${prompt.creatorName}: “${prompt.claimText}” — stake league points before lock.`,
+    bodyLines: [
+      `${prompt.creatorName} · ${home_team} vs ${away_team}`,
+      `“${prompt.claimText}” — or ${prompt.stakeText}`,
+      'Accept & stake points before predictions lock.',
     ],
   }
 }

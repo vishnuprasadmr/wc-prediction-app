@@ -118,7 +118,7 @@ export interface NavItem {
   ariaLabel: string
   Icon: (props: NavIconProps) => ReactNode
   end?: boolean
-  urgentKey?: 'predict'
+  urgentKey?: 'predict' | 'meals'
   adminOnly?: boolean
   /** Shown to players only when prize page is published; admins always see it */
   prizesGated?: boolean
@@ -135,7 +135,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { to: '/', label: 'Fixtures', ariaLabel: 'Fixtures', Icon: FixturesIcon, end: true },
       { to: '/predict', label: 'Predict', ariaLabel: 'Predict scores', Icon: PredictIcon, urgentKey: 'predict' },
-      { to: '/meals', label: 'Meal bets', ariaLabel: 'Meal challenges', Icon: MealBetsIcon },
+      { to: '/meals', label: 'Meal bets', ariaLabel: 'Meal challenges', Icon: MealBetsIcon, urgentKey: 'meals' },
     ],
   },
   {

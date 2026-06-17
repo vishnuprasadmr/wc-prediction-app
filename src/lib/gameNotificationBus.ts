@@ -1,4 +1,4 @@
-export type GameNotificationKind = 'lock' | 'result' | 'predict' | 'leaderboard'
+export type GameNotificationKind = 'lock' | 'result' | 'predict' | 'leaderboard' | 'meal'
 
 export interface GameNotification {
   id: string

@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useLockDrama } from '../hooks/useLockDrama'
+import { useUnseenMealBetCount } from '../hooks/useMealBetNotifications'
 import { useAuth } from '../contexts/AuthContext'
 import { useLeaguePrizes } from '../hooks/useLeaguePrizes'
 import { NAV_SECTIONS, type NavItem } from '../lib/navItems'
@@ -14,15 +14,20 @@ interface AppSidebarProps {
 function NavItemLink({
   item,
   urgentCount,
+  mealBetCount,
   onNavigate,
   compact,
 }: {
   item: NavItem
   urgentCount: number
+  mealBetCount: number
   onNavigate?: () => void
   compact?: boolean
 }) {
-  const showUrgent = item.urgentKey === 'predict' && urgentCount > 0
+  const showPredictUrgent = item.urgentKey === 'predict' && urgentCount > 0
+  const showMealBadge = item.urgentKey === 'meals' && mealBetCount > 0
+  const badgeCount = showPredictUrgent ? urgentCount : showMealBadge ? mealBetCount : 0
+  const showBadge = badgeCount > 0
 
   return (
     <NavLink
@@ -44,9 +49,13 @@ function NavItemLink({
     >
       {({ isActive }) => (
         <>
-          {showUrgent && (
-            <span className="absolute right-2 top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
-              {urgentCount}
+          {showBadge && (
+            <span
+              className={`absolute right-2 top-2 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold text-white ${
+                showMealBadge ? 'bg-[#E23744]' : 'bg-red-500'
+              }`}
+            >
+              {badgeCount}
             </span>
           )}
           <item.Icon
@@ -68,6 +77,7 @@ function SidebarPanel({
 }) {
   const { profile } = useAuth()
   const { urgentUnpickedCount } = useLockDrama()
+  const unseenMealBets = useUnseenMealBetCount()
   const { published: prizesPublished } = useLeaguePrizes()
   const isAdmin = Boolean(profile?.is_admin)
 
@@ -106,6 +116,7 @@ function SidebarPanel({
                     <NavItemLink
                       item={item}
                       urgentCount={urgentUnpickedCount}
+                      mealBetCount={unseenMealBets}
                       onNavigate={onNavigate}
                     />
                   </li>
