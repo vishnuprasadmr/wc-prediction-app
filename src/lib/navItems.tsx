@@ -94,6 +94,15 @@ function AdminIcon({ className }: NavIconProps) {
   )
 }
 
+function PrizesIcon({ className }: NavIconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+      <path d="M8 21h8M12 17v4M7 4h10l1 4H6l1-4z" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9 8h6v5a3 3 0 01-6 0V8z" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 export interface NavItem {
   to: string
   label: string
@@ -102,6 +111,8 @@ export interface NavItem {
   end?: boolean
   urgentKey?: 'predict'
   adminOnly?: boolean
+  /** Shown to players only when prize page is published; admins always see it */
+  prizesGated?: boolean
 }
 
 export interface NavSection {
@@ -124,6 +135,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { to: '/results', label: 'Results', ariaLabel: 'Match results', Icon: ResultsIcon },
       { to: '/teams', label: 'Teams', ariaLabel: 'Team squads and formations', Icon: TeamsIcon },
       { to: '/leaderboard', label: 'Point table', ariaLabel: 'Leaderboard', Icon: LeaderboardIcon },
+      { to: '/prizes', label: 'Prizes', ariaLabel: 'Prize pool', Icon: PrizesIcon, prizesGated: true },
     ],
   },
   {

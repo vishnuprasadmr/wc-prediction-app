@@ -41,7 +41,7 @@ describe('buildUpcomingMatchShare', () => {
       totalPicks: 25,
     })
 
-    expect(share.crowdLabel).toBe('Simelabs thinks: 62% Argentina win')
+    expect(share.crowdLabel).toBe('League says: 62% Argentina win')
     expect(share.crowdSentiment?.totalPicks).toBe(25)
   })
 })

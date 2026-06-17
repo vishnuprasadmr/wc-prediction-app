@@ -34,7 +34,7 @@ export function buildCrowdSentimentLabel(
   awayTeam: string,
 ): string {
   if (sentiment.totalPicks === 0) {
-    return 'No Simelabs picks yet for this match'
+    return 'No league picks yet for this match'
   }
 
   const dominant = getDominantCrowdOutcome(sentiment)
@@ -52,5 +52,5 @@ export function buildCrowdSentimentLabel(
         ? `${awayTeam} win`
         : 'a draw'
 
-  return `Simelabs thinks: ${pct}% ${outcomeLabel}`
+  return `League says: ${pct}% ${outcomeLabel}`
 }

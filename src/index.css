@@ -75,6 +75,7 @@
     transition: background-color 0.4s ease, color 0.4s ease;
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    height: -webkit-fill-available;
   }
 
   body {
@@ -87,11 +88,13 @@
     font-feature-settings: 'cv02' 1, 'cv03' 1, 'cv04' 1, 'cv11' 1;
     text-rendering: optimizeLegibility;
     min-height: 100dvh;
+    min-height: -webkit-fill-available;
     background-color: var(--color-page);
   }
 
   #root {
     min-height: 100dvh;
+    min-height: -webkit-fill-available;
   }
 
   h1,
@@ -412,6 +415,20 @@
 
   .safe-top {
     padding-top: env(safe-area-inset-top);
+  }
+
+  /* Pin mobile tab bar to the visual viewport (Safari address-bar scroll bug). */
+  .bottom-nav-shell {
+    transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  @supports (height: 100dvh) {
+    .bottom-nav-shell {
+      bottom: 0;
+    }
   }
 
   .text-pretty {

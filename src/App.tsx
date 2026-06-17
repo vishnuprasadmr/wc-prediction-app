@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import { ProtectedRoute, AdminRoute } from './components/ProtectedRoute'
+import { PrizesRoute } from './components/PrizesRoute'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { FixturesPage } from './pages/FixturesPage'
@@ -12,6 +13,7 @@ import { TeamsPage } from './pages/TeamsPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { AdminPage } from './pages/AdminPage'
 import { WidgetPage } from './pages/WidgetPage'
+import { PrizesPage } from './pages/PrizesPage'
 
 export default function App() {
   return (
@@ -33,6 +35,14 @@ export default function App() {
           <Route path="results" element={<ResultsPage />} />
           <Route path="teams" element={<TeamsPage />} />
           <Route path="leaderboard" element={<LeaderboardPage />} />
+          <Route
+            path="prizes"
+            element={
+              <PrizesRoute>
+                <PrizesPage />
+              </PrizesRoute>
+            }
+          />
           <Route path="profile" element={<ProfilePage />} />
           <Route
             path="admin"

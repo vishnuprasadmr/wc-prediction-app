@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLockDrama } from '../hooks/useLockDrama'
 import { useAuth } from '../contexts/AuthContext'
+import { useLeaguePrizes } from '../hooks/useLeaguePrizes'
 import { NAV_SECTIONS, type NavItem } from '../lib/navItems'
 import { primeAudio } from '../lib/sounds'
 
@@ -67,6 +68,7 @@ function SidebarPanel({
 }) {
   const { profile } = useAuth()
   const { urgentUnpickedCount } = useLockDrama()
+  const { published: prizesPublished } = useLeaguePrizes()
   const isAdmin = Boolean(profile?.is_admin)
 
   return (
@@ -88,7 +90,11 @@ function SidebarPanel({
 
       <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Sidebar">
         {NAV_SECTIONS.map((section) => {
-          const items = section.items.filter((item) => !item.adminOnly || isAdmin)
+          const items = section.items.filter((item) => {
+            if (item.adminOnly && !isAdmin) return false
+            if (item.prizesGated && !prizesPublished && !isAdmin) return false
+            return true
+          })
           if (items.length === 0) return null
 
           return (

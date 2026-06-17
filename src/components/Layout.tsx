@@ -113,11 +113,11 @@ export function Layout() {
         </motion.main>
 
         <EngagementPrompt />
-        <div className="lg:hidden">
-          <BottomNav onOpenMenu={() => setSidebarOpen(true)} />
-        </div>
         <InstallPrompt />
       </div>
+    </div>
+    <div className="lg:hidden">
+      <BottomNav onOpenMenu={() => setSidebarOpen(true)} />
     </div>
     </QuestionnaireGate>
     </MatchesProvider>

@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import { NavLink } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useLockDrama } from '../hooks/useLockDrama'
@@ -21,10 +22,10 @@ function MoreIcon({ className }: { className?: string }) {
 export function BottomNav({ onOpenMenu }: BottomNavProps) {
   const { urgentUnpickedCount } = useLockDrama()
 
-  return (
+  return createPortal(
     <nav
       aria-label="Main navigation"
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-50 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1.5"
+      className="bottom-nav-shell pointer-events-none fixed inset-x-0 bottom-0 z-50 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1.5"
     >
       <div className="pointer-events-auto mx-auto flex max-w-lg items-stretch gap-0.5 rounded-2xl border border-default bg-card/98 p-1 shadow-[0_-4px_24px_rgb(0_0_0/0.18),0_8px_32px_rgb(38_203_153/0.12)] backdrop-blur-xl dark:shadow-[0_-4px_28px_rgb(0_0_0/0.55),0_0_0_1px_rgb(38_203_153/0.08),0_8px_32px_rgb(38_203_153/0.1)]">
         {MOBILE_NAV_ITEMS.map(({ to, label, ariaLabel, Icon, end, urgentKey }) => {
@@ -95,6 +96,7 @@ export function BottomNav({ onOpenMenu }: BottomNavProps) {
           <span className="text-[10px] font-medium leading-none">More</span>
         </button>
       </div>
-    </nav>
+    </nav>,
+    document.body,
   )
 }

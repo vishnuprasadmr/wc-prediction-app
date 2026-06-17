@@ -7,6 +7,7 @@ import type { Match, MatchStatus } from '../lib/types'
 import { AdminSeasonPanel } from '../components/AdminSeasonPanel'
 import { AdminSharePanel } from '../components/AdminSharePanel'
 import { AdminStatsPanel } from '../components/AdminStatsPanel'
+import { AdminPrizesPanel } from '../components/AdminPrizesPanel'
 
 export function AdminPage() {
   const { matches, loading, refetch } = useMatches()
@@ -91,6 +92,7 @@ export function AdminPage() {
       />
 
       <AdminStatsPanel onSynced={() => void refetch()} />
+      <AdminPrizesPanel />
       <AdminSharePanel />
       <AdminSeasonPanel />
 
