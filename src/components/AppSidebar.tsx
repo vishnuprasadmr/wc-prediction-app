@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useLockDrama } from '../hooks/useLockDrama'
 import { useUnseenMealBetCount } from '../hooks/useMealBetNotifications'
 import { useAuth } from '../contexts/AuthContext'
 import { useLeaguePrizes } from '../hooks/useLeaguePrizes'
