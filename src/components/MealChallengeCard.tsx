@@ -9,6 +9,7 @@ import {
 import { formatKickoffIst } from '../lib/timezone'
 import { formatPredictionLockTimeIst, isMatchLocked } from '../lib/matchUtils'
 import { MealChallengeAcceptancesDetail } from './MealChallengeAcceptancesDetail'
+import { MealFulfillmentPanel } from './MealFulfillmentPanel'
 import { LockCountdown } from './LockCountdown'
 import { LeaderboardAvatar } from './LeaderboardAvatar'
 
@@ -24,11 +25,15 @@ export function MealChallengeCard({
   challenge,
   showCreator = true,
   detailed = false,
+  currentUserId,
+  onFulfillmentPosted,
   actions,
 }: {
   challenge: MealChallengeView
   showCreator?: boolean
   detailed?: boolean
+  currentUserId?: string
+  onFulfillmentPosted?: () => void
   actions?: ReactNode
 }) {
   const match = challenge.match
@@ -171,6 +176,23 @@ export function MealChallengeCard({
                   </li>
                 ))}
               </ul>
+            </div>
+          )}
+          {currentUserId && (
+            <MealFulfillmentPanel
+              challenge={challenge}
+              userId={currentUserId}
+              onPosted={() => onFulfillmentPosted?.()}
+            />
+          )}
+          {challenge.fulfillment_photo_url && challenge.creator_id !== currentUserId && (
+            <div className="rounded-xl border border-default bg-muted/30 p-3">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-muted">Meal proof</p>
+              <img
+                src={challenge.fulfillment_photo_url}
+                alt="Meal bought for the bet"
+                className="mt-2 max-h-48 w-full rounded-lg object-cover"
+              />
             </div>
           )}
         </div>

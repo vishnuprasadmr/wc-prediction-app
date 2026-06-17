@@ -1,9 +1,11 @@
 import type { MealChallengeView } from '../hooks/useMealChallenges'
+import { creatorOwesMealFulfillment } from './mealFulfillment'
 import {
   mealChallengeWinLabel,
   mealClaimOutcomeLabel,
 } from './mealChallenges'
 import { renderMealChallengeBlob } from './shareImage/renderMealChallengeCard'
+import { renderMealFulfillmentBlob } from './shareImage/renderMealFulfillmentCard'
 import type {
   MealChallengeCardInput,
   MealChallengeShare,
@@ -83,12 +85,89 @@ export function buildMealChallengeShareText(share: MealChallengeShare): string {
   return lines.join('\n')
 }
 
+export function buildMealFulfillmentShare(challenge: MealChallengeView): MealChallengeShare | null {
+  if (!creatorOwesMealFulfillment(challenge, challenge.match)) return null
+
+  const match = challenge.match
+  const hasScore =
+    match?.home_score !== null &&
+    match?.home_score !== undefined &&
+    match?.away_score !== null &&
+    match?.away_score !== undefined
+
+  const acceptorsWon = challenge.acceptances.filter((a) => (a.points_delta ?? 0) > 0).length
+
+  return {
+    mode: 'fulfillment',
+    homeTeam: match?.home_team ?? 'Home',
+    awayTeam: match?.away_team ?? 'Away',
+    kickoffLabel: match ? formatKickoffIst(match.kickoff_at) : '',
+    scoreLabel: hasScore ? `${match!.home_score}–${match!.away_score}` : undefined,
+    creatorName: challenge.creator_name,
+    claimText: challenge.claim_text,
+    stakeText: challenge.stake_text,
+    claimLabel: mealClaimOutcomeLabel(challenge.backed_outcome, match),
+    winConditionLabel: mealChallengeWinLabel(challenge.win_condition),
+    acceptorsCount: challenge.acceptances.length,
+    totalPointsStaked: challenge.total_points_staked,
+    winnerName: challenge.winner_name,
+    winnerNote: challenge.winner_note,
+    photoUrl: challenge.fulfillment_photo_url,
+    acceptorsWonCount: acceptorsWon,
+    ctaLine: 'I lost the bet — meal delivered 🍽️',
+    badge: 'MEAL PAID',
+  }
+}
+
+export function buildMealFulfillmentShareText(share: MealChallengeShare): string {
+  const lines = [
+    '🍽️ Simelabs WC 2026 — Meal bet paid up',
+    `${share.homeTeam} vs ${share.awayTeam}`,
+  ]
+
+  if (share.scoreLabel) lines.push(`Final: ${share.scoreLabel}`)
+  lines.push(
+    '',
+    `${share.creatorName} lost the claim “${share.claimText}”`,
+    `Paid: ${share.stakeText}`,
+  )
+
+  if (share.winnerName) {
+    lines.push(`Meal for ${share.winnerName}`)
+  } else if (share.acceptorsWonCount) {
+    lines.push(`${share.acceptorsWonCount} colleague(s) won +1 pt each`)
+  }
+
+  lines.push('', share.ctaLine, '', 'Join the league · Predict every match')
+  return lines.join('\n')
+}
+
 function toCardInput(share: MealChallengeShare): MealChallengeCardInput {
   return { share, dateLabel: formatShareDateIst() }
 }
 
 export function prepareMealChallengeBlob(share: MealChallengeShare): Promise<Blob> {
+  if (share.mode === 'fulfillment') {
+    return renderMealFulfillmentBlob(toCardInput(share))
+  }
   return renderMealChallengeBlob(toCardInput(share))
+}
+
+export async function shareMealFulfillmentWithImage(
+  challenge: MealChallengeView,
+  preparedBlob?: Blob | null,
+): Promise<ShareResult> {
+  const share = buildMealFulfillmentShare(challenge)
+  if (!share) {
+    return { ok: false }
+  }
+  const text = buildMealFulfillmentShareText(share)
+  try {
+    const blob = preparedBlob ?? (await renderMealFulfillmentBlob(toCardInput(share)))
+    return shareStandings(text, blob)
+  } catch {
+    return shareStandings(text)
+  }
 }
 
 export async function shareMealChallengeWithImage(
@@ -109,9 +188,13 @@ export async function downloadMealChallengeImage(
   preparedBlob?: Blob | null,
 ): Promise<boolean> {
   try {
-    const blob = preparedBlob ?? (await renderMealChallengeBlob(toCardInput(share)))
+    const blob = preparedBlob ?? (await prepareMealChallengeBlob(share))
     const name =
-      share.mode === 'live' ? 'wc-meal-bet-share.png' : 'wc-meal-winner-share.png'
+      share.mode === 'live'
+        ? 'wc-meal-bet-share.png'
+        : share.mode === 'fulfillment'
+          ? 'wc-meal-paid-share.png'
+          : 'wc-meal-winner-share.png'
     return downloadShareImage(blob, name)
   } catch {
     return false

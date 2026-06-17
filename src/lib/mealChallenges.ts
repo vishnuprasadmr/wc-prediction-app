@@ -38,6 +38,9 @@ export interface MealChallenge {
   winner_note: string | null
   settled_at: string | null
   settled_by: string | null
+  claim_correct: boolean | null
+  fulfillment_photo_url: string | null
+  fulfillment_posted_at: string | null
   created_at: string
   updated_at: string
 }

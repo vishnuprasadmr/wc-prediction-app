@@ -51,12 +51,20 @@ import {
   prepareMealChallengeBlob,
   shareMealChallengeWithImage,
 } from '../lib/shareMealChallenge'
+import {
+  buildGameSnapshotInput,
+  buildGameSnapshotShareText,
+  downloadGameSnapshotImage,
+  prepareGameSnapshotBlob,
+  shareGameSnapshotWithImage,
+} from '../lib/shareGameSnapshot'
 import { LeaderboardAvatar } from './LeaderboardAvatar'
 import type { Match } from '../lib/types'
 
 const TOP_N_OPTIONS = [5, 10, 15] as const
 
 type ShareTab =
+  | 'snapshot'
   | 'upcoming'
   | 'fulltime'
   | 'meal-live'
@@ -151,7 +159,7 @@ function ShareActions({
 export function AdminSharePanel() {
   const { matches } = useMatches()
   const { live: liveMealBets, settled: settledMealBets } = useMealChallenges(matches)
-  const [tab, setTab] = useState<ShareTab>('fulltime')
+  const [tab, setTab] = useState<ShareTab>('snapshot')
   const [league, setLeague] = useState<LeaderboardLeague>('simelabs')
   const [topN, setTopN] = useState<number>(10)
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null)
@@ -228,6 +236,27 @@ export function AdminSharePanel() {
     [tableEntries, hero, matches, leagueLabel],
   )
 
+  const finishedMatchCount = useMemo(
+    () =>
+      matches.filter(
+        (m) => m.status === 'finished' && m.home_score != null && m.away_score != null,
+      ).length,
+    [matches],
+  )
+
+  const gameSnapshotInput = useMemo(
+    () =>
+      buildGameSnapshotInput({
+        entries,
+        leagueLabel,
+        lastMatch,
+        liveMealBets,
+        settledMealBets: settledMealResults,
+        finishedMatchCount,
+      }),
+    [entries, leagueLabel, lastMatch, liveMealBets, settledMealResults, finishedMatchCount],
+  )
+
   const { blob: fulltimeBlob, generating: fulltimeGenerating } = useShareBlobCache(
     () => prepareMatchResultBlob(matchResult!),
     tab === 'fulltime' && Boolean(matchResult),
@@ -263,8 +292,14 @@ export function AdminSharePanel() {
     tab === 'meal-result' && Boolean(mealResultShare),
     [mealResultShare, tab],
   )
+  const { blob: snapshotBlob, generating: snapshotGenerating } = useShareBlobCache(
+    () => prepareGameSnapshotBlob(gameSnapshotInput),
+    tab === 'snapshot' && entries.length > 0,
+    [gameSnapshotInput, tab, entries.length],
+  )
 
   const cardPreparing =
+    (tab === 'snapshot' && snapshotGenerating) ||
     (tab === 'upcoming' && upcomingGenerating) ||
     (tab === 'fulltime' && fulltimeGenerating) ||
     (tab === 'meal-live' && mealLiveGenerating) ||
@@ -301,6 +336,7 @@ export function AdminSharePanel() {
   }
 
   const tabs: { id: ShareTab; label: string; hint: string }[] = [
+    { id: 'snapshot', label: 'Game recap', hint: 'Top 3 + latest result + meal bets' },
     { id: 'upcoming', label: 'Next match', hint: 'Captain + IST + league picks %' },
     { id: 'fulltime', label: 'Full-time', hint: 'Winner + hero + scorers' },
     { id: 'meal-live', label: 'Meal bet', hint: 'Promote a live food challenge' },
@@ -344,6 +380,116 @@ export function AdminSharePanel() {
           </button>
         ))}
       </div>
+
+      {tab === 'snapshot' && (
+        <div className="mt-4 space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <select
+              value={league}
+              onChange={(e) => setLeague(e.target.value as LeaderboardLeague)}
+              className="rounded-lg bg-muted px-3 py-2 text-sm outline-none"
+            >
+              <option value="simelabs">Simelabs league</option>
+              <option value="global">Global league</option>
+            </select>
+          </div>
+
+          {loading ? (
+            <div className="h-40 animate-pulse rounded-xl bg-muted" />
+          ) : topThree.length === 0 ? (
+            <p className="text-sm text-muted">No leaderboard entries yet.</p>
+          ) : (
+            <>
+              <div className="rounded-xl border border-default p-4">
+                <p className="text-xs font-semibold uppercase text-muted">Tournament snapshot</p>
+                <p className="mt-1 text-sm text-subtle">
+                  {finishedMatchCount} matches played · {liveMealBets.length} live meal bets ·{' '}
+                  {settledMealResults.length} settled
+                </p>
+
+                {lastMatch && lastMatch.home_score != null && lastMatch.away_score != null && (
+                  <div className="mt-3 rounded-lg bg-muted/40 px-3 py-2">
+                    <p className="text-xs font-semibold uppercase text-muted">Latest result</p>
+                    <p className="mt-1 font-bold text-theme">
+                      {lastMatch.home_team} {lastMatch.home_score}–{lastMatch.away_score}{' '}
+                      {lastMatch.away_team}
+                    </p>
+                  </div>
+                )}
+
+                <div className="mt-4 flex items-end justify-center gap-2">
+                  {[2, 1, 3].map((rank) => {
+                    const entry = topThree.find((e) => e.rank === rank)
+                    if (!entry) return <div key={rank} className="min-w-0 flex-1" />
+                    const isFirst = rank === 1
+                    return (
+                      <div key={entry.user_id} className="flex min-w-0 flex-1 flex-col items-center">
+                        <LeaderboardAvatar
+                          name={entry.display_name}
+                          avatarUrl={entry.avatar_url}
+                          size={isFirst ? 'lg' : 'md'}
+                        />
+                        <p className="mt-1 text-xs font-bold text-simelabs">#{entry.rank}</p>
+                        <p className="w-full truncate text-center text-sm font-semibold">
+                          {entry.display_name}
+                        </p>
+                        <p className="font-mono text-lg font-bold">{entry.total_points}</p>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {gameSnapshotInput.mealRows.length > 0 && (
+                  <div className="mt-4 space-y-2 border-t border-default pt-4">
+                    <p className="text-xs font-semibold uppercase text-[#E23744]">Meal bets</p>
+                    {gameSnapshotInput.mealRows.map((row, i) => (
+                      <div key={i} className="rounded-lg bg-muted/30 px-3 py-2 text-sm">
+                        <p className="font-semibold text-theme">{row.matchLabel}</p>
+                        <p className="text-muted">{row.line}</p>
+                        {row.subline && (
+                          <p
+                            className={
+                              row.kind === 'live' ? 'text-amber-300' : 'text-emerald-400'
+                            }
+                          >
+                            {row.subline}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <ShareActions
+                busy={busy}
+                disabled={loading || topThree.length === 0 || snapshotGenerating}
+                onShare={() =>
+                  void run(
+                    () => shareGameSnapshotWithImage(gameSnapshotInput, snapshotBlob),
+                    'Shared!',
+                    'Could not share',
+                  )
+                }
+                onDownload={() =>
+                  void run(
+                    () => downloadGameSnapshotImage(gameSnapshotInput, snapshotBlob),
+                    'Downloaded!',
+                    'Download failed',
+                  )
+                }
+                onCopy={() =>
+                  void run(
+                    () => shareStandings(buildGameSnapshotShareText(gameSnapshotInput)),
+                    'Copied!',
+                    'Copy failed',
+                  )
+                }
+              />
+            </>
+          )}
+        </div>
+      )}
 
       {tab === 'upcoming' && (
         <div className="mt-4 space-y-3">

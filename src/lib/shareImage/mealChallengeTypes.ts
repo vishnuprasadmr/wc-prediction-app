@@ -1,4 +1,4 @@
-export type MealChallengeShareMode = 'live' | 'result'
+export type MealChallengeShareMode = 'live' | 'result' | 'fulfillment'
 
 export interface MealChallengeShare {
   mode: MealChallengeShareMode
@@ -17,6 +17,8 @@ export interface MealChallengeShare {
   winnerNote?: string | null
   ctaLine: string
   badge: string
+  photoUrl?: string | null
+  acceptorsWonCount?: number
 }
 
 export interface MealChallengeCardInput {

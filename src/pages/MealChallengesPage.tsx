@@ -31,6 +31,7 @@ function ChallengeList({
   showAccept,
   showCancel,
   detailed,
+  currentUserId,
   onRefetch,
 }: {
   items: MealChallengeView[]
@@ -40,6 +41,7 @@ function ChallengeList({
   showAccept?: boolean
   showCancel?: boolean
   detailed?: boolean
+  currentUserId?: string
   onRefetch: () => void
 }) {
   if (items.length === 0) {
@@ -58,6 +60,8 @@ function ChallengeList({
           challenge={c}
           detailed={detailed}
           showCreator={showCreator}
+          currentUserId={currentUserId ?? userId}
+          onFulfillmentPosted={onRefetch}
           actions={
             <>
               {showAccept &&
@@ -196,7 +200,7 @@ export function MealChallengesPage() {
 
       {error && (
         <p className="rounded-xl bg-red-500/10 px-3 py-2 text-sm text-red-400">
-          {error}. Run migrations <code className="text-xs">021</code>–<code className="text-xs">026</code>.
+          {error}. Run migrations <code className="text-xs">021</code>–<code className="text-xs">027</code>.
         </p>
       )}
 
@@ -223,6 +227,7 @@ export function MealChallengesPage() {
             items={liveOpen}
             empty="No open meal bets — locked or finished matches move below once kickoff nears."
             userId={user?.id}
+            currentUserId={user?.id}
             showAccept
             detailed
             onRefetch={handleRefetch}
@@ -283,6 +288,7 @@ export function MealChallengesPage() {
             empty="No settled challenges yet."
             showCreator
             detailed
+            currentUserId={user?.id}
             onRefetch={handleRefetch}
           />
         )}
