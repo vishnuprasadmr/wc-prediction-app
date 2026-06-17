@@ -112,6 +112,13 @@ export function getActionableMatches(matches: Match[]): Match[] {
     .sort((a, b) => new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime())
 }
 
+/** Scheduled matches for upcoming share cards (kickoff in the future). */
+export function getUpcomingShareMatches(matches: Match[], now = Date.now()): Match[] {
+  return matches
+    .filter((m) => m.status === 'scheduled' && new Date(m.kickoff_at).getTime() > now)
+    .sort((a, b) => new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime())
+}
+
 /** Best scroll/highlight target: unpicked open pick → live → next kickoff. */
 export function getNextFocusMatch(
   matches: Match[],

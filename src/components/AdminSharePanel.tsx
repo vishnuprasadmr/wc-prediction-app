@@ -4,7 +4,7 @@ import { useLeaderboard } from '../hooks/useLeaderboard'
 import { useLastMatchHero } from '../hooks/useLastMatchHero'
 import { useMatchResultShare } from '../hooks/useMatchResultShare'
 import type { LeaderboardLeague } from '../lib/leaderboardUtils'
-import { getRecentFinishedMatches } from '../lib/matchUtils'
+import { getRecentFinishedMatches, getUpcomingShareMatches } from '../lib/matchUtils'
 import {
   buildLeagueTableShareText,
   downloadLeagueTableImage,
@@ -31,6 +31,14 @@ import {
   shareMatchdayWithImage,
   prepareMatchdayBlob,
 } from '../lib/shareMatchday'
+import {
+  buildUpcomingMatchShareText,
+  downloadUpcomingMatchImage,
+  shareUpcomingMatchWithImage,
+  prepareUpcomingMatchBlob,
+} from '../lib/shareUpcomingMatch'
+import { useUpcomingMatchShare } from '../hooks/useUpcomingMatchShare'
+import { formatKickoffIst } from '../lib/timezone'
 import { shareStandings, shareResultMessage, type ShareResult } from '../lib/shareStandings'
 import { useShareBlobCache } from '../hooks/useShareBlobCache'
 import { getDailyLeaderPrompt } from '../lib/dailyLeaderPrompt'
@@ -40,7 +48,7 @@ import type { Match } from '../lib/types'
 
 const TOP_N_OPTIONS = [5, 10, 15] as const
 
-type ShareTab = 'leaderboard' | 'fulltime' | 'leader' | 'matchday'
+type ShareTab = 'upcoming' | 'fulltime' | 'leaderboard' | 'leader' | 'matchday'
 
 function HeroPreview({
   pictureUrl,
@@ -131,6 +139,7 @@ export function AdminSharePanel() {
   const [league, setLeague] = useState<LeaderboardLeague>('simelabs')
   const [topN, setTopN] = useState<number>(10)
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null)
+  const [selectedUpcomingId, setSelectedUpcomingId] = useState<string | null>(null)
   const [status, setStatus] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -138,13 +147,23 @@ export function AdminSharePanel() {
   const { lastMatch, hero, loading: heroLoading, error: heroError } = useLastMatchHero(matches)
 
   const finishedMatches = useMemo(() => getRecentFinishedMatches(matches), [matches])
+  const upcomingMatches = useMemo(() => getUpcomingShareMatches(matches), [matches])
   const selectedMatch = useMemo(
     () => finishedMatches.find((m) => m.id === selectedMatchId) ?? finishedMatches[0] ?? null,
     [finishedMatches, selectedMatchId],
   )
 
+  const selectedUpcoming = useMemo(
+    () => upcomingMatches.find((m) => m.id === selectedUpcomingId) ?? upcomingMatches[0] ?? null,
+    [upcomingMatches, selectedUpcomingId],
+  )
+
   const { result: matchResult, loading: resultLoading } = useMatchResultShare(
     tab === 'fulltime' ? selectedMatch : null,
+  )
+
+  const { share: upcomingShare, loading: upcomingLoading } = useUpcomingMatchShare(
+    tab === 'upcoming' ? selectedUpcoming : null,
   )
 
   const tableEntries = useMemo(() => entries.slice(0, topN), [entries, topN])
@@ -183,8 +202,14 @@ export function AdminSharePanel() {
     tab === 'matchday' && matchdayPreview.matches.length > 0,
     [finishedMatches, tab, matchdayPreview.matches.length],
   )
+  const { blob: upcomingBlob, generating: upcomingGenerating } = useShareBlobCache(
+    () => prepareUpcomingMatchBlob(upcomingShare!),
+    tab === 'upcoming' && Boolean(upcomingShare),
+    [upcomingShare, tab],
+  )
 
   const cardPreparing =
+    (tab === 'upcoming' && upcomingGenerating) ||
     (tab === 'fulltime' && fulltimeGenerating) ||
     (tab === 'leaderboard' && leagueTableGenerating) ||
     (tab === 'leader' && leaderGenerating) ||
@@ -218,6 +243,7 @@ export function AdminSharePanel() {
   }
 
   const tabs: { id: ShareTab; label: string; hint: string }[] = [
+    { id: 'upcoming', label: 'Next match', hint: 'Captain photo + IST kickoff' },
     { id: 'fulltime', label: 'Full-time', hint: 'Winner + hero + scorers' },
     { id: 'leaderboard', label: 'Point table', hint: 'Standings + latest hero' },
     { id: 'leader', label: 'Top 3', hint: 'Podium + daily challenge' },
@@ -258,6 +284,100 @@ export function AdminSharePanel() {
           </button>
         ))}
       </div>
+
+      {tab === 'upcoming' && (
+        <div className="mt-4 space-y-3">
+          {upcomingMatches.length === 0 ? (
+            <p className="text-sm text-muted">No upcoming matches to promote.</p>
+          ) : (
+            <>
+              <select
+                value={selectedUpcoming?.id ?? ''}
+                onChange={(e) => setSelectedUpcomingId(e.target.value)}
+                className="w-full rounded-lg bg-muted px-3 py-2 text-sm outline-none"
+              >
+                {upcomingMatches.map((m: Match) => (
+                  <option key={m.id} value={m.id}>
+                    {m.home_team} vs {m.away_team} · {formatKickoffIst(m.kickoff_at)}
+                  </option>
+                ))}
+              </select>
+
+              {upcomingLoading || !upcomingShare ? (
+                <div className="h-28 animate-pulse rounded-xl bg-muted" />
+              ) : (
+                <>
+                  <HeroPreview
+                    pictureUrl={upcomingShare.hero.pictureUrl}
+                    headline={upcomingShare.hero.headline}
+                    subline={upcomingShare.kickoffLabel}
+                    badge="Captain spotlight"
+                  />
+                  <div className="rounded-xl bg-muted/40 px-3 py-2 text-sm">
+                    <p className="text-xs font-semibold uppercase text-muted">Kickoff (IST)</p>
+                    <p className="mt-1 font-semibold text-theme">{upcomingShare.kickoffLabel}</p>
+                    <p className="mt-1 text-muted">
+                      Predictions lock {upcomingShare.lockTimeLabel} IST
+                    </p>
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      <div>
+                        <p className="text-xs text-muted">{upcomingShare.homeTeam} captain</p>
+                        <p className="font-medium">
+                          #{upcomingShare.homeCaptain.number} {upcomingShare.homeCaptain.name}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted">{upcomingShare.awayTeam} captain</p>
+                        <p className="font-medium">
+                          #{upcomingShare.awayCaptain.number} {upcomingShare.awayCaptain.name}
+                        </p>
+                      </div>
+                    </div>
+                    {upcomingShare.venueLabel && (
+                      <p className="mt-2 text-xs text-muted">{upcomingShare.venueLabel}</p>
+                    )}
+                  </div>
+                </>
+              )}
+
+              <ShareActions
+                busy={busy}
+                disabled={!selectedUpcoming || upcomingLoading || !upcomingShare || upcomingGenerating}
+                onShare={() =>
+                  void run(
+                    () =>
+                      selectedUpcoming && upcomingShare
+                        ? shareUpcomingMatchWithImage(selectedUpcoming, upcomingShare, upcomingBlob)
+                        : Promise.resolve({ ok: false }),
+                    'Shared!',
+                    'Could not share',
+                  )
+                }
+                onDownload={() =>
+                  void run(
+                    () =>
+                      selectedUpcoming && upcomingShare
+                        ? downloadUpcomingMatchImage(selectedUpcoming, upcomingShare, upcomingBlob)
+                        : Promise.resolve(false),
+                    'Downloaded!',
+                    'Download failed',
+                  )
+                }
+                onCopy={() =>
+                  void run(
+                    () =>
+                      upcomingShare
+                        ? shareStandings(buildUpcomingMatchShareText(upcomingShare))
+                        : Promise.resolve(false),
+                    'Copied!',
+                    'Copy failed',
+                  )
+                }
+              />
+            </>
+          )}
+        </div>
+      )}
 
       {tab === 'fulltime' && (
         <div className="mt-4 space-y-3">
