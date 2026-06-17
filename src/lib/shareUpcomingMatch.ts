@@ -1,5 +1,6 @@
 import type { Match } from './types'
 import { fetchFifaMatchDetails } from './fifaMatchDetails'
+import { fetchMatchPickPreview } from './fetchMatchPickPreview'
 import { buildUpcomingMatchShare, type UpcomingMatchShare } from './upcomingMatchStory'
 import { formatShareDateIst } from './timezone'
 import { renderUpcomingMatchBlob } from './shareImage/renderUpcomingMatchCard'
@@ -18,14 +19,28 @@ export function buildUpcomingMatchShareText(share: UpcomingMatchShare): string {
     share.stageLabel,
   ]
 
+  if (share.crowdLabel) {
+    lines.push('')
+    lines.push(share.crowdLabel)
+    if (share.crowdSentiment) {
+      lines.push(
+        `${share.homeTeam} ${share.crowdSentiment.homeWinPct}% · Draw ${share.crowdSentiment.drawPct}% · ${share.awayTeam} ${share.crowdSentiment.awayWinPct}%`,
+      )
+      lines.push(`Based on ${share.crowdSentiment.totalPicks} league pick${share.crowdSentiment.totalPicks === 1 ? '' : 's'}`)
+    }
+  }
+
   if (share.venueLabel) lines.push(share.venueLabel)
   lines.push('', share.ctaLine, '', 'Join the league and predict every match!')
   return lines.join('\n')
 }
 
 export async function resolveUpcomingMatchShare(match: Match): Promise<UpcomingMatchShare> {
-  const details = await fetchFifaMatchDetails(match)
-  return buildUpcomingMatchShare(match, details)
+  const [details, crowdSentiment] = await Promise.all([
+    fetchFifaMatchDetails(match),
+    fetchMatchPickPreview(match.id),
+  ])
+  return buildUpcomingMatchShare(match, details, crowdSentiment)
 }
 
 function toCardInput(share: UpcomingMatchShare): UpcomingMatchCardInput {

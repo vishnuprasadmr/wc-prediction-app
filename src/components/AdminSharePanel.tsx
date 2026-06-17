@@ -243,7 +243,7 @@ export function AdminSharePanel() {
   }
 
   const tabs: { id: ShareTab; label: string; hint: string }[] = [
-    { id: 'upcoming', label: 'Next match', hint: 'Captain photo + IST kickoff' },
+    { id: 'upcoming', label: 'Next match', hint: 'Captain + IST + league picks %' },
     { id: 'fulltime', label: 'Full-time', hint: 'Winner + hero + scorers' },
     { id: 'leaderboard', label: 'Point table', hint: 'Standings + latest hero' },
     { id: 'leader', label: 'Top 3', hint: 'Podium + daily challenge' },
@@ -319,6 +319,34 @@ export function AdminSharePanel() {
                     <p className="mt-1 text-muted">
                       Predictions lock {upcomingShare.lockTimeLabel} IST
                     </p>
+                    {upcomingShare.crowdSentiment && upcomingShare.crowdLabel ? (
+                      <div className="mt-3 rounded-lg border border-simelabs/25 bg-simelabs/5 px-3 py-2">
+                        <p className="text-xs font-semibold uppercase text-simelabs">League picks</p>
+                        <p className="mt-1 font-semibold text-theme">{upcomingShare.crowdLabel}</p>
+                        <div className="mt-2 flex h-2 overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="bg-simelabs"
+                            style={{ width: `${upcomingShare.crowdSentiment.homeWinPct}%` }}
+                          />
+                          <div
+                            className="bg-muted-foreground/40"
+                            style={{ width: `${upcomingShare.crowdSentiment.drawPct}%` }}
+                          />
+                          <div
+                            className="bg-amber-400/80"
+                            style={{ width: `${upcomingShare.crowdSentiment.awayWinPct}%` }}
+                          />
+                        </div>
+                        <p className="mt-2 text-xs text-muted">
+                          {upcomingShare.crowdSentiment.homeWinPct}% {upcomingShare.homeTeam} ·{' '}
+                          {upcomingShare.crowdSentiment.drawPct}% draw ·{' '}
+                          {upcomingShare.crowdSentiment.awayWinPct}% {upcomingShare.awayTeam} ·{' '}
+                          {upcomingShare.crowdSentiment.totalPicks} picks
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="mt-3 text-xs text-muted">No league picks yet — share after a few predictions come in.</p>
+                    )}
                     <div className="mt-3 grid gap-2 sm:grid-cols-2">
                       <div>
                         <p className="text-xs text-muted">{upcomingShare.homeTeam} captain</p>

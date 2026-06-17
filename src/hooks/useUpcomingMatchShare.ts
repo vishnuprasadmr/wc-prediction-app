@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { buildUpcomingMatchShare, type UpcomingMatchShare } from '../lib/upcomingMatchStory'
 import { fetchFifaMatchDetails } from '../lib/fifaMatchDetails'
+import { fetchMatchPickPreview } from '../lib/fetchMatchPickPreview'
 import type { Match } from '../lib/types'
 
 export function useUpcomingMatchShare(match: Match | null) {
@@ -21,13 +22,16 @@ export function useUpcomingMatchShare(match: Match | null) {
 
     void (async () => {
       try {
-        const details = await fetchFifaMatchDetails(match)
+        const [details, crowdSentiment] = await Promise.all([
+          fetchFifaMatchDetails(match),
+          fetchMatchPickPreview(match.id),
+        ])
         if (cancelled) return
-        setShare(buildUpcomingMatchShare(match, details))
+        setShare(buildUpcomingMatchShare(match, details, crowdSentiment))
       } catch (err) {
         if (cancelled) return
         setError(err instanceof Error ? err.message : 'Could not load match preview')
-        setShare(buildUpcomingMatchShare(match, null))
+        setShare(buildUpcomingMatchShare(match, null, null))
       } finally {
         if (!cancelled) setLoading(false)
       }

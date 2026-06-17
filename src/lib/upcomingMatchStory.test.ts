@@ -32,4 +32,16 @@ describe('buildUpcomingMatchShare', () => {
     expect(share.lockTimeLabel).toMatch(/^\d{2}:\d{2}$/)
     expect(share.hero.headline).toContain('Messi')
   })
+
+  it('includes crowd pick percentages when available', () => {
+    const share = buildUpcomingMatchShare(makeMatch(), null, {
+      homeWinPct: 62,
+      drawPct: 18,
+      awayWinPct: 20,
+      totalPicks: 25,
+    })
+
+    expect(share.crowdLabel).toBe('Simelabs thinks: 62% Argentina win')
+    expect(share.crowdSentiment?.totalPicks).toBe(25)
+  })
 })

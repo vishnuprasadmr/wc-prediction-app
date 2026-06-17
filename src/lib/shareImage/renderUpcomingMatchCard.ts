@@ -134,6 +134,72 @@ function drawCaptainRow(
   return y + rowH + 12
 }
 
+function drawCrowdSentimentBlock(
+  ctx: CanvasRenderingContext2D,
+  input: UpcomingMatchCardInput,
+  y: number,
+): number {
+  const sentiment = input.match.crowdSentiment
+  const label = input.match.crowdLabel
+  if (!sentiment || !label || sentiment.totalPicks === 0) return y
+
+  const boxX = 80
+  const boxW = CARD_W - 160
+
+  ctx.font = '700 16px Inter, system-ui, sans-serif'
+  ctx.fillStyle = C.accent
+  ctx.textAlign = 'center'
+  ctx.fillText('LEAGUE PICKS', CARD_W / 2, y + 20)
+
+  ctx.font = '700 22px Inter, system-ui, sans-serif'
+  ctx.fillStyle = C.text
+  ctx.fillText(truncate(ctx, label, boxW - 40), CARD_W / 2, y + 52)
+
+  const barY = y + 68
+  const barH = 14
+  roundRect(ctx, boxX, barY, boxW, barH, 7)
+  ctx.fillStyle = C.chipBg
+  ctx.fill()
+
+  let offset = boxX
+  const segments = [
+    { pct: sentiment.homeWinPct, color: C.accent },
+    { pct: sentiment.drawPct, color: 'rgba(160, 176, 168, 0.55)' },
+    { pct: sentiment.awayWinPct, color: 'rgba(251, 191, 36, 0.75)' },
+  ]
+
+  for (const seg of segments) {
+    if (seg.pct <= 0) continue
+    const w = Math.max(2, (boxW * seg.pct) / 100)
+    ctx.fillStyle = seg.color
+    ctx.fillRect(offset, barY, w, barH)
+    offset += w
+  }
+
+  ctx.font = '600 16px Inter, system-ui, sans-serif'
+  ctx.fillStyle = C.textMuted
+  ctx.textAlign = 'left'
+  ctx.fillText(`${sentiment.homeWinPct}% ${input.match.homeTeam.slice(0, 3).toUpperCase()}`, boxX, barY + 36)
+  ctx.textAlign = 'center'
+  ctx.fillText(`${sentiment.drawPct}% draw`, CARD_W / 2, barY + 36)
+  ctx.textAlign = 'right'
+  ctx.fillText(
+    `${sentiment.awayWinPct}% ${input.match.awayTeam.slice(0, 3).toUpperCase()}`,
+    boxX + boxW,
+    barY + 36,
+  )
+
+  ctx.textAlign = 'center'
+  ctx.font = '500 15px Inter, system-ui, sans-serif'
+  ctx.fillText(
+    `${sentiment.totalPicks} pick${sentiment.totalPicks === 1 ? '' : 's'} so far`,
+    CARD_W / 2,
+    barY + 58,
+  )
+
+  return y + 88
+}
+
 function drawMeta(ctx: CanvasRenderingContext2D, input: UpcomingMatchCardInput, y: number): void {
   const { match } = input
   ctx.font = F.caption
@@ -193,9 +259,10 @@ export async function renderUpcomingMatchCanvas(
 
   let y = PANEL_TOP + 24
   y = drawKickoffBlock(ctx, input, y)
+  y = drawCrowdSentimentBlock(ctx, input, y)
   y = drawCaptainRow(ctx, `${input.match.homeTeam} captain`, input.match.homeCaptain.name, input.match.homeCaptain.number, y)
   drawCaptainRow(ctx, `${input.match.awayTeam} captain`, input.match.awayCaptain.name, input.match.awayCaptain.number, y)
-  drawMeta(ctx, input, PANEL_BOTTOM - 72)
+  drawMeta(ctx, input, PANEL_BOTTOM - 56)
 
   drawShareFooter(ctx, input.dateLabel)
 

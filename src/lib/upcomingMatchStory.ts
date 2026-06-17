@@ -1,6 +1,7 @@
 import { buildCaptainSpotlight, type CaptainSpotlight } from './captainSpotlight'
 import type { FifaMatchDetails } from './fifaMatchDetails'
 import { formatPredictionLockTimeIst, formatStageLabel } from './matchUtils'
+import { buildCrowdSentimentLabel, type CrowdSentiment } from './pickCrowdSentiment'
 import { formatKickoffIst, formatIstDateHeader, toIstDateKey } from './timezone'
 import { formatVenueLabel, getMatchVenueCity } from './venues'
 import type { Match } from './types'
@@ -15,6 +16,8 @@ export interface UpcomingMatchShare {
   venueLabel?: string
   homeCaptain: CaptainSpotlight
   awayCaptain: CaptainSpotlight
+  crowdSentiment?: CrowdSentiment
+  crowdLabel?: string
   /** Hero photo — home captain, with away as fallback backdrop team */
   hero: {
     playerName: string
@@ -30,6 +33,7 @@ export interface UpcomingMatchShare {
 export function buildUpcomingMatchShare(
   match: Match,
   details: FifaMatchDetails | null,
+  crowdSentiment?: CrowdSentiment | null,
 ): UpcomingMatchShare {
   const players = details?.players
   const homeCaptain =
@@ -49,6 +53,10 @@ export function buildUpcomingMatchShare(
     awayCaptain.pictureUrl ??
     findFifaPlayerPhotoFromDetails(details, homeCaptain.name, match.home_team)
 
+  const crowdLabel = crowdSentiment
+    ? buildCrowdSentimentLabel(crowdSentiment, match.home_team, match.away_team)
+    : undefined
+
   return {
     homeTeam: match.home_team,
     awayTeam: match.away_team,
@@ -59,6 +67,8 @@ export function buildUpcomingMatchShare(
     venueLabel: venueCity ? formatVenueLabel(venueCity) : undefined,
     homeCaptain,
     awayCaptain,
+    crowdSentiment: crowdSentiment ?? undefined,
+    crowdLabel,
     hero: {
       playerName: homeCaptain.name,
       teamName: match.home_team,
