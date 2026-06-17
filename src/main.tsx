@@ -7,10 +7,12 @@ import { EnvGuard } from './components/EnvGuard'
 import { SplashGate } from './components/SplashGate'
 import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { captureReferralFromUrl } from './lib/referral'
 import { installSoundUnlock } from './lib/sounds'
 import './index.css'
 
 installSoundUnlock()
+captureReferralFromUrl()
 
 try {
   registerSW({

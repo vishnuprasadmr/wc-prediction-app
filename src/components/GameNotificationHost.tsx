@@ -40,6 +40,11 @@ const KIND_STYLES: Record<
     glow: 'shadow-[0_8px_32px_rgb(0_0_0/0.25),0_0_20px_rgb(226_55_68/0.22)]',
     bar: 'bg-gradient-to-r from-[#E23744] via-[#ff6b6b] to-[#E23744]',
   },
+  bonus: {
+    border: 'border-emerald-500/40',
+    glow: 'shadow-[0_8px_32px_rgb(0_0_0/0.25),0_0_20px_rgb(16_185_129/0.22)]',
+    bar: 'bg-gradient-to-r from-emerald-500 via-emerald-400 to-emerald-500',
+  },
 }
 
 function ToastCard({

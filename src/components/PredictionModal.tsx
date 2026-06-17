@@ -9,6 +9,7 @@ import { TeamLabel } from './TeamLabel'
 import { playSound } from '../lib/sounds'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { useMatches } from '../contexts/MatchesContext'
 import { useSeasonQuestionnaireContextOptional } from '../contexts/SeasonQuestionnaireContext'
 import { LockCountdown } from './LockCountdown'
 
@@ -18,7 +19,7 @@ interface PredictionModalProps {
   initialHome?: number
   initialAway?: number
   onClose: () => void
-  onSaved: () => void
+  onSaved: (meta?: { firstPredictionBonus?: boolean }) => void
 }
 
 export function PredictionModal({
@@ -30,6 +31,7 @@ export function PredictionModal({
   onSaved,
 }: PredictionModalProps) {
   const { user } = useAuth()
+  const { predictions } = useMatches()
   const season = useSeasonQuestionnaireContextOptional()
   const [home, setHome] = useState(initialHome)
   const [away, setAway] = useState(initialAway)
@@ -61,6 +63,8 @@ export function PredictionModal({
     setSaving(true)
     setError(null)
 
+    const isFirstPrediction = Object.keys(predictions).length === 0
+
     const { error: saveError } = await supabase.from('predictions').upsert(
       {
         user_id: user.id,
@@ -79,7 +83,7 @@ export function PredictionModal({
       return
     }
 
-    onSaved()
+    onSaved(isFirstPrediction ? { firstPredictionBonus: true } : undefined)
     onClose()
   }
 

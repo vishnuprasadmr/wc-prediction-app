@@ -20,6 +20,7 @@ export interface Profile {
   created_at: string
   questionnaire_completed_at?: string | null
   questionnaire_skipped_at?: string | null
+  referred_by?: string | null
 }
 
 export interface Match {
@@ -62,6 +63,8 @@ export interface LeaderboardEntry {
   exact_scores: number
   early_bonuses?: number
   season_bonuses?: number
+  meal_bet_points?: number
+  engagement_bonuses?: number
   predictions_made: number
   rank: number
   last_prediction_at?: string | null

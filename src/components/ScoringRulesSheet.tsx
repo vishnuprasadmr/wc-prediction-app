@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { ENGAGEMENT_BONUS_RULES } from '../lib/engagementBonuses'
 import { SCORING_RULES } from '../lib/scoring'
 import { SEASON_SCORING_RULES } from '../lib/seasonScoring'
 import { MAX_SEASON_BONUS } from '../lib/seasonQuestions'
@@ -73,6 +74,30 @@ export function ScoringRulesSheet({ open, onClose }: ScoringRulesSheetProps) {
                       <p className="text-xs text-muted text-pretty">{rule.description}</p>
                     </div>
                     <span className="shrink-0 text-lg font-bold text-simelabs">{rule.points}</span>
+                  </div>
+                ))}
+              </div>
+
+              <h3 className="type-label mt-6 mb-2">Engagement bonuses</h3>
+              <p className="type-caption mb-3 text-pretty">
+                Small one-time boosts — count toward your total and meal-bet stakes.
+              </p>
+              <div className="space-y-3">
+                {ENGAGEMENT_BONUS_RULES.map((rule) => (
+                  <div
+                    key={rule.label}
+                    className="flex items-center justify-between rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4"
+                  >
+                    <div className="min-w-0 pr-2">
+                      <p className="flex flex-wrap items-center gap-1.5 font-medium">
+                        <span>{rule.label}</span>
+                        <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-400">
+                          {rule.badge}
+                        </span>
+                      </p>
+                      <p className="text-xs text-muted text-pretty">{rule.description}</p>
+                    </div>
+                    <span className="shrink-0 text-lg font-bold text-emerald-400">{rule.points}</span>
                   </div>
                 ))}
               </div>

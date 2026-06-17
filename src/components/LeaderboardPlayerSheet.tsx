@@ -165,9 +165,10 @@ export function LeaderboardPlayerSheet({
                 />
               </div>
 
-              <div className="mt-5 grid grid-cols-3 gap-2">
+              <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
                 <MiniStat label="Early" value={entry.early_bonuses ?? 0} />
                 <MiniStat label="Season" value={entry.season_bonuses ?? 0} />
+                <MiniStat label="Bonus" value={entry.engagement_bonuses ?? 0} />
                 <MiniStat label="Exact" value={entry.exact_scores} />
               </div>
 

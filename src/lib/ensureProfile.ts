@@ -7,6 +7,7 @@ import {
   assertEmployeeIdAvailableForUser,
   validateEmployeeId,
 } from './employeeId'
+import { consumeStoredReferral } from './referral'
 import { LEAGUE_ID, supabase } from './supabase'
 
 const AVATAR_SYNC_PREFIX = 'wc-avatar-sync:'
@@ -75,14 +76,35 @@ export async function completeUserProfile(
 
   const avatarUrl = resolveUserAvatarUrl(user)
 
-  const { error: profileError } = await supabase.from('profiles').upsert({
+  let referredBy: string | null = consumeStoredReferral()
+  if (referredBy === user.id) {
+    referredBy = null
+  } else if (referredBy) {
+    const { data: referrer } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', referredBy)
+      .maybeSingle()
+
+    if (!referrer) {
+      referredBy = null
+    }
+  }
+
+  const profilePayload: Record<string, unknown> = {
     id: user.id,
     display_name: trimmedName,
     league_id: LEAGUE_ID,
     is_admin: false,
     employee_id: normalizedEmployeeId,
     avatar_url: avatarUrl,
-  })
+  }
+
+  if (referredBy) {
+    profilePayload.referred_by = referredBy
+  }
+
+  const { error: profileError } = await supabase.from('profiles').upsert(profilePayload)
 
   if (profileError) {
     if (profileError.code === '23505') {

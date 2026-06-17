@@ -20,6 +20,7 @@ export function buildStandingsShareText(input: {
   totalPoints: number
   exactScores: number
   lastMatch?: { home: string; away: string; score: string; points: number | null }
+  inviteUrl?: string
 }): string {
   const lines = [
     `⚽ Simelabs WC 2026 Predictions`,
@@ -30,7 +31,11 @@ export function buildStandingsShareText(input: {
       `Last: ${input.lastMatch.home} ${input.lastMatch.score} ${input.lastMatch.away} → +${input.lastMatch.points} pts`,
     )
   }
-  lines.push('Join the league and predict every match!')
+  lines.push(
+    input.inviteUrl
+      ? `Join the league and predict every match: ${input.inviteUrl}`
+      : 'Join the league and predict every match!',
+  )
   return lines.join('\n')
 }
 
@@ -137,6 +142,7 @@ export async function shareStandingsWithImage(input: {
     awayPred?: number
     firstBonus?: number
   }
+  inviteUrl?: string
   preparedBlob?: Blob | null
 }): Promise<ShareResult> {
   const text = buildStandingsShareText({
@@ -145,6 +151,7 @@ export async function shareStandingsWithImage(input: {
     totalPoints: input.totalPoints,
     exactScores: input.exactScores,
     lastMatch: input.lastMatch,
+    inviteUrl: input.inviteUrl,
   })
 
   try {

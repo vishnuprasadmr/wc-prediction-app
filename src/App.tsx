@@ -1,5 +1,7 @@
-import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
+import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
 import { Layout } from './components/Layout'
+import { captureReferralFromUrl } from './lib/referral'
 import { ProtectedRoute, AdminRoute } from './components/ProtectedRoute'
 import { PrizesRoute } from './components/PrizesRoute'
 import { LoginPage } from './pages/LoginPage'
@@ -17,6 +19,12 @@ import { PrizesPage } from './pages/PrizesPage'
 import { MealChallengesPage } from './pages/MealChallengesPage'
 
 export default function App() {
+  const location = useLocation()
+
+  useEffect(() => {
+    captureReferralFromUrl(location.search)
+  }, [location.search])
+
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />

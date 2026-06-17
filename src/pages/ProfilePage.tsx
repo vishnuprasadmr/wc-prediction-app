@@ -19,6 +19,7 @@ import { usePwaInstall } from '../hooks/usePwaInstall'
 import { computeBadges } from '../lib/badges'
 import { PredictionBreakdownList } from '../components/PredictionBreakdownList'
 import { SeasonTrackerCard } from '../components/SeasonTrackerCard'
+import { InviteFriendsCard } from '../components/InviteFriendsCard'
 import { ShareStandingsButton } from '../components/ShareStandingsButton'
 import { NotificationSettings } from '../components/NotificationSettings'
 import { EmployeeIdCard } from '../components/EmployeeIdCard'
@@ -87,6 +88,8 @@ export function ProfilePage() {
         <h3 className="type-section-title mb-2">Badges</h3>
         <BadgesRow badges={badges} />
       </div>
+
+      {user?.id && <InviteFriendsCard userId={user.id} />}
 
       {rankingsAvailable && rank > 0 && (
         <ShareStandingsButton

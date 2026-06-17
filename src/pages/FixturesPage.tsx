@@ -17,6 +17,7 @@ import {
   isMatchPredictable,
 } from '../lib/matchUtils'
 import { toIstDateKey, formatIstDateHeader } from '../lib/timezone'
+import { notifyFirstPredictionBonus } from '../lib/engagementBonuses'
 import type { Match } from '../lib/types'
 
 type Filter = 'next' | 'upcoming' | 'live' | 'finished' | 'all'
@@ -223,7 +224,8 @@ export function FixturesPage() {
         initialHome={selectedMatch ? predictions[selectedMatch.id]?.home_pred ?? 0 : 0}
         initialAway={selectedMatch ? predictions[selectedMatch.id]?.away_pred ?? 0 : 0}
         onClose={() => setSelectedMatch(null)}
-        onSaved={() => {
+        onSaved={(meta) => {
+          if (meta?.firstPredictionBonus) notifyFirstPredictionBonus()
           dismissSpotlight()
           void refetch()
         }}

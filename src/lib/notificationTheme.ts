@@ -13,6 +13,7 @@ const KIND_ICON: Record<GameNotificationKind, string> = {
   predict: '⚽',
   leaderboard: '🏆',
   meal: '🍽️',
+  bonus: '✨',
 }
 
 const KIND_VIBRATE: Record<GameNotificationKind, number[]> = {
@@ -21,6 +22,7 @@ const KIND_VIBRATE: Record<GameNotificationKind, number[]> = {
   predict: [80, 40, 80],
   leaderboard: [100, 50, 100],
   meal: [100, 40, 100, 40, 100],
+  bonus: [70, 35, 70, 35, 70],
 }
 
 type SwNotificationOptions = NotificationOptions & {

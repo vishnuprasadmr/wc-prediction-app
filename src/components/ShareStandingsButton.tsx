@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { combineShareStatus, shareWithEngagementBonus } from '../lib/engagementBonuses'
+import { buildReferralUrl } from '../lib/referral'
 import { shareStandingsWithImage, shareResultMessage } from '../lib/shareStandings'
 import { resolveUserAvatarUrl } from '../lib/avatarUrl'
 import type { PredictionWithMatch } from '../lib/types'
@@ -40,18 +42,25 @@ export function ShareStandingsButton({
         }
       : undefined
 
-    const result = await shareStandingsWithImage({
-      variant: lastMatch ? 'match-result' : 'standings',
-      displayName,
-      avatarUrl,
-      rank,
-      totalPoints,
-      exactScores,
-      lastMatch,
-    })
+    const inviteUrl = user?.id ? buildReferralUrl(user.id) : undefined
+
+    const { share: result, bonus } = await shareWithEngagementBonus(() =>
+      shareStandingsWithImage({
+        variant: lastMatch ? 'match-result' : 'standings',
+        displayName,
+        avatarUrl,
+        rank,
+        totalPoints,
+        exactScores,
+        lastMatch,
+        inviteUrl,
+      }),
+    )
 
     if (result.ok) playSound('save')
-    setStatus(shareResultMessage(result))
+    setStatus(
+      combineShareStatus(result, bonus, shareResultMessage(result)),
+    )
     setSharing(false)
     setTimeout(() => setStatus(null), 2500)
   }
@@ -65,7 +74,7 @@ export function ShareStandingsButton({
     >
       <div>
         <span className="font-medium">📤 Share your standings</span>
-        <p className="type-caption mt-0.5 text-muted">Branded image card with rank &amp; latest result</p>
+        <p className="type-caption mt-0.5 text-muted">Branded image card — first share earns +1 pt</p>
       </div>
       <span className="shrink-0 text-sm text-simelabs">{status ?? '→'}</span>
     </button>

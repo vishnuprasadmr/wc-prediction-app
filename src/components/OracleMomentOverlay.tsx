@@ -5,6 +5,8 @@ import { fireCelebration } from '../lib/confetti'
 import { primeAudio, playSound } from '../lib/sounds'
 import { useAuth } from '../contexts/AuthContext'
 import { resolveUserAvatarUrl } from '../lib/avatarUrl'
+import { shareWithEngagementBonus } from '../lib/engagementBonuses'
+import { buildReferralUrl } from '../lib/referral'
 import { shareStandingsWithImage } from '../lib/shareStandings'
 import { TeamLabel } from './TeamLabel'
 
@@ -38,23 +40,27 @@ export function OracleMomentOverlay({
   const handleShare = async () => {
     if (!moment) return
     const m = moment.match
-    await shareStandingsWithImage({
-      variant: 'oracle',
-      displayName,
-      avatarUrl,
-      rank,
-      totalPoints,
-      exactScores,
-      lastMatch: {
-        home: m.home_team,
-        away: m.away_team,
-        score: `${m.home_score ?? 0}-${m.away_score ?? 0}`,
-        points: moment.prediction.points_earned,
-        homePred: moment.prediction.home_pred,
-        awayPred: moment.prediction.away_pred,
-        firstBonus: moment.prediction.first_bonus ?? 0,
-      },
-    })
+    const inviteUrl = user?.id ? buildReferralUrl(user.id) : undefined
+    await shareWithEngagementBonus(() =>
+      shareStandingsWithImage({
+        variant: 'oracle',
+        displayName,
+        avatarUrl,
+        rank,
+        totalPoints,
+        exactScores,
+        lastMatch: {
+          home: m.home_team,
+          away: m.away_team,
+          score: `${m.home_score ?? 0}-${m.away_score ?? 0}`,
+          points: moment.prediction.points_earned,
+          homePred: moment.prediction.home_pred,
+          awayPred: moment.prediction.away_pred,
+          firstBonus: moment.prediction.first_bonus ?? 0,
+        },
+        inviteUrl,
+      }),
+    )
   }
 
   return (

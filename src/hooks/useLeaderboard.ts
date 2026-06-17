@@ -41,6 +41,16 @@ function attachLeaderboardRealtime(listener: () => void) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'season_predictions' }, () => {
         notifyLeaderboardListeners()
       })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'point_bonuses' }, () => {
+        notifyLeaderboardListeners()
+      })
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'meal_challenge_point_settlements' },
+        () => {
+          notifyLeaderboardListeners()
+        },
+      )
       .subscribe()
   }
 
