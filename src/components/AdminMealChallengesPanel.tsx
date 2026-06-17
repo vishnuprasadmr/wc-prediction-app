@@ -10,7 +10,7 @@ import {
 } from '../hooks/useMealChallenges'
 import { MealChallengeCard } from './MealChallengeCard'
 
-type Section = 'pending' | 'settle'
+type Section = 'pending' | 'live' | 'settle'
 
 export function AdminMealChallengesPanel() {
   const { user } = useAuth()
@@ -70,18 +70,18 @@ export function AdminMealChallengesPanel() {
   }
 
   const readyToSettle = live.filter((c) => c.match?.status === 'finished')
+  const totalAcceptors = live.reduce((sum, c) => sum + c.acceptances.length, 0)
 
   return (
     <div className="rounded-2xl border border-[#E23744]/25 bg-[#E23744]/5 p-4">
       <h3 className="type-section-title">Meal bets</h3>
       <p className="type-caption mt-1 text-pretty">
-        Approve challenges before they go live. Settle after full time — meal winner + point
-        transfers. Share cards are under the Share tab.
+        Approve, monitor who accepted (player · stake · time), and settle after full time.
       </p>
 
       {message && <p className="mt-3 text-sm text-simelabs">{message}</p>}
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-4 flex flex-wrap gap-2">
         <button
           type="button"
           onClick={() => setSection('pending')}
@@ -90,6 +90,15 @@ export function AdminMealChallengesPanel() {
           }`}
         >
           Pending ({pending.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setSection('live')}
+          className={`rounded-full px-4 py-1.5 text-sm font-medium ${
+            section === 'live' ? 'bg-amber-500 text-black' : 'bg-muted text-muted'
+          }`}
+        >
+          Live ({live.length})
         </button>
         <button
           type="button"
@@ -102,6 +111,13 @@ export function AdminMealChallengesPanel() {
         </button>
       </div>
 
+      {section === 'live' && live.length > 0 && (
+        <p className="mt-3 text-xs text-muted">
+          {totalAcceptors} point bet{totalAcceptors === 1 ? '' : 's'} across {live.length} live
+          challenge{live.length === 1 ? '' : 's'}
+        </p>
+      )}
+
       <div className="mt-4 space-y-3">
         {section === 'pending' &&
           (pending.length === 0 ? (
@@ -111,6 +127,7 @@ export function AdminMealChallengesPanel() {
               <MealChallengeCard
                 key={c.id}
                 challenge={c}
+                detailed
                 actions={
                   <>
                     <button
@@ -135,6 +152,15 @@ export function AdminMealChallengesPanel() {
             ))
           ))}
 
+        {section === 'live' &&
+          (live.length === 0 ? (
+            <p className="text-sm text-muted">No live meal bets right now.</p>
+          ) : (
+            live.map((c) => (
+              <MealChallengeCard key={c.id} challenge={c} detailed />
+            ))
+          ))}
+
         {section === 'settle' &&
           (readyToSettle.length === 0 ? (
             <p className="text-sm text-muted">No finished matches awaiting settlement.</p>
@@ -143,6 +169,7 @@ export function AdminMealChallengesPanel() {
               <MealChallengeCard
                 key={c.id}
                 challenge={c}
+                detailed
                 actions={
                   <button
                     type="button"

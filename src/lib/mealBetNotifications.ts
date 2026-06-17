@@ -1,3 +1,6 @@
+import type { Match } from './types'
+import { isMatchLocked } from './matchUtils'
+
 const NOTIFY_PREFIX = 'wc-meal-notify:'
 const SETTLE_NOTIFY_PREFIX = 'wc-meal-settle-notify:'
 const SEEN_PREFIX = 'wc-meal-seen:'
@@ -59,23 +62,25 @@ export function markAllMealBetsSeen(challengeIds: string[]): void {
 export interface MealBetBadgeInput {
   id: string
   creator_id: string
-  match?: { kickoff_at: string; status: string }
+  match?: Pick<Match, 'kickoff_at' | 'status'>
   acceptances: { user_id: string }[]
 }
 
 export function isActionableMealBet(
   challenge: MealBetBadgeInput,
   userId: string,
-  now = Date.now(),
 ): boolean {
   if (challenge.creator_id === userId) return false
   if (challenge.acceptances.some((a) => a.user_id === userId)) return false
   if (!challenge.match) return false
-  if (challenge.match.status === 'live' || challenge.match.status === 'finished') return false
-  const lockAt =
-    new Date(challenge.match.kickoff_at).getTime() - 15 * 60 * 1000
-  if (now >= lockAt) return false
-  return true
+  return !isMatchLocked(challenge.match as Match)
+}
+
+export function getOpenMealBetsForUser<T extends MealBetBadgeInput>(
+  live: T[],
+  userId: string,
+): T[] {
+  return live.filter((c) => isActionableMealBet(c, userId))
 }
 
 export function countUnseenActionableMealBets(

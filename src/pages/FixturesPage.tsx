@@ -3,6 +3,7 @@ import { PenaltyShootout } from '../components/PenaltyShootout'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { LiveScoreboard } from '../components/LiveScoreboard'
+import { MealBetHomeSurprise } from '../components/MealBetHomeSurprise'
 import { MatchCard } from '../components/MatchCard'
 import { PredictionModal } from '../components/PredictionModal'
 import { useGuardedPredict } from '../hooks/useGuardedPredict'
@@ -96,6 +97,7 @@ export function FixturesPage() {
   return (
     <div>
       <LiveScoreboard matches={matches} syncing={liveScoreSyncing} />
+      <MealBetHomeSurprise />
 
       {unpickedCount > 0 && filter === 'next' && (
         <motion.div
