@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { LeaguePrize, LeaguePrizeConfig } from '../lib/prizes'
-import { formatInr, sumPrizeAmounts } from '../lib/prizes'
+import { formatInr, sumPrizeAmounts, ZOMATO_GIFT_CARD_LABEL, ZOMATO_GIFT_CARD_TAGLINE } from '../lib/prizes'
 import { useLeaguePrizes } from '../hooks/useLeaguePrizes'
 
 type PrizeDraft = Omit<LeaguePrize, 'id'> & { id?: string }
@@ -165,9 +165,9 @@ export function AdminPrizesPanel() {
     <div className="mb-6 rounded-2xl border border-amber-400/30 bg-amber-400/5 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="type-section-title">Prize pool</h3>
+          <h3 className="type-section-title">Zomato gift cards</h3>
           <p className="type-caption mt-1 text-pretty">
-            Hidden from players until you publish.{' '}
+            {ZOMATO_GIFT_CARD_TAGLINE}. Hidden from players until you publish.{' '}
             <Link to="/prizes" className="font-medium text-simelabs hover:underline">
               Preview page →
             </Link>
@@ -205,7 +205,7 @@ export function AdminPrizesPanel() {
           />
         </label>
         <label className="block">
-          <span className="type-caption mb-1 block font-medium">Advertised total (₹)</span>
+          <span className="type-caption mb-1 block font-medium">Total gift card value (₹)</span>
           <input
             type="number"
             min={0}
@@ -230,7 +230,9 @@ export function AdminPrizesPanel() {
       </div>
 
       <div className="mt-4 space-y-3">
-        <p className="type-caption font-semibold uppercase text-muted">Prize breakdown</p>
+        <p className="type-caption font-semibold uppercase text-muted">
+          Prize breakdown · {ZOMATO_GIFT_CARD_LABEL}
+        </p>
         {rows.map((row, index) => (
           <div key={row.id ?? `new-${index}`} className="rounded-xl border border-default bg-card p-3">
             <div className="grid gap-2 sm:grid-cols-12">
@@ -245,7 +247,7 @@ export function AdminPrizesPanel() {
                 min={0}
                 value={row.amount_inr}
                 onChange={(e) => updateRow(index, { amount_inr: Number(e.target.value) || 0 })}
-                placeholder="₹"
+                placeholder="Zomato card ₹"
                 className="rounded-lg bg-muted px-3 py-2 text-sm sm:col-span-2"
               />
               <input

@@ -38,17 +38,32 @@ import {
   prepareUpcomingMatchBlob,
 } from '../lib/shareUpcomingMatch'
 import { useUpcomingMatchShare } from '../hooks/useUpcomingMatchShare'
+import { useMealChallenges } from '../hooks/useMealChallenges'
 import { formatKickoffIst } from '../lib/timezone'
 import { shareStandings, shareResultMessage, type ShareResult } from '../lib/shareStandings'
 import { useShareBlobCache } from '../hooks/useShareBlobCache'
 import { getDailyLeaderPrompt } from '../lib/dailyLeaderPrompt'
 import { resolveCachedAvatarUrl } from '../lib/avatarCache'
+import {
+  buildMealChallengeShare,
+  buildMealChallengeShareText,
+  downloadMealChallengeImage,
+  prepareMealChallengeBlob,
+  shareMealChallengeWithImage,
+} from '../lib/shareMealChallenge'
 import { LeaderboardAvatar } from './LeaderboardAvatar'
 import type { Match } from '../lib/types'
 
 const TOP_N_OPTIONS = [5, 10, 15] as const
 
-type ShareTab = 'upcoming' | 'fulltime' | 'leaderboard' | 'leader' | 'matchday'
+type ShareTab =
+  | 'upcoming'
+  | 'fulltime'
+  | 'meal-live'
+  | 'meal-result'
+  | 'leaderboard'
+  | 'leader'
+  | 'matchday'
 
 function HeroPreview({
   pictureUrl,
@@ -135,11 +150,14 @@ function ShareActions({
 
 export function AdminSharePanel() {
   const { matches } = useMatches()
+  const { live: liveMealBets, settled: settledMealBets } = useMealChallenges(matches)
   const [tab, setTab] = useState<ShareTab>('fulltime')
   const [league, setLeague] = useState<LeaderboardLeague>('simelabs')
   const [topN, setTopN] = useState<number>(10)
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null)
   const [selectedUpcomingId, setSelectedUpcomingId] = useState<string | null>(null)
+  const [selectedMealLiveId, setSelectedMealLiveId] = useState<string | null>(null)
+  const [selectedMealResultId, setSelectedMealResultId] = useState<string | null>(null)
   const [status, setStatus] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -156,6 +174,34 @@ export function AdminSharePanel() {
   const selectedUpcoming = useMemo(
     () => upcomingMatches.find((m) => m.id === selectedUpcomingId) ?? upcomingMatches[0] ?? null,
     [upcomingMatches, selectedUpcomingId],
+  )
+
+  const selectedMealLive = useMemo(
+    () => liveMealBets.find((c) => c.id === selectedMealLiveId) ?? liveMealBets[0] ?? null,
+    [liveMealBets, selectedMealLiveId],
+  )
+
+  const settledMealResults = useMemo(
+    () => settledMealBets.filter((c) => c.status === 'settled'),
+    [settledMealBets],
+  )
+
+  const selectedMealResult = useMemo(
+    () =>
+      settledMealResults.find((c) => c.id === selectedMealResultId) ??
+      settledMealResults[0] ??
+      null,
+    [settledMealResults, selectedMealResultId],
+  )
+
+  const mealLiveShare = useMemo(
+    () => (selectedMealLive ? buildMealChallengeShare(selectedMealLive, 'live') : null),
+    [selectedMealLive],
+  )
+
+  const mealResultShare = useMemo(
+    () => (selectedMealResult ? buildMealChallengeShare(selectedMealResult, 'result') : null),
+    [selectedMealResult],
   )
 
   const { result: matchResult, loading: resultLoading } = useMatchResultShare(
@@ -207,10 +253,22 @@ export function AdminSharePanel() {
     tab === 'upcoming' && Boolean(upcomingShare),
     [upcomingShare, tab],
   )
+  const { blob: mealLiveBlob, generating: mealLiveGenerating } = useShareBlobCache(
+    () => prepareMealChallengeBlob(mealLiveShare!),
+    tab === 'meal-live' && Boolean(mealLiveShare),
+    [mealLiveShare, tab],
+  )
+  const { blob: mealResultBlob, generating: mealResultGenerating } = useShareBlobCache(
+    () => prepareMealChallengeBlob(mealResultShare!),
+    tab === 'meal-result' && Boolean(mealResultShare),
+    [mealResultShare, tab],
+  )
 
   const cardPreparing =
     (tab === 'upcoming' && upcomingGenerating) ||
     (tab === 'fulltime' && fulltimeGenerating) ||
+    (tab === 'meal-live' && mealLiveGenerating) ||
+    (tab === 'meal-result' && mealResultGenerating) ||
     (tab === 'leaderboard' && leagueTableGenerating) ||
     (tab === 'leader' && leaderGenerating) ||
     (tab === 'matchday' && matchdayGenerating)
@@ -245,6 +303,8 @@ export function AdminSharePanel() {
   const tabs: { id: ShareTab; label: string; hint: string }[] = [
     { id: 'upcoming', label: 'Next match', hint: 'Captain + IST + league picks %' },
     { id: 'fulltime', label: 'Full-time', hint: 'Winner + hero + scorers' },
+    { id: 'meal-live', label: 'Meal bet', hint: 'Promote a live food challenge' },
+    { id: 'meal-result', label: 'Meal winner', hint: 'Who won the meal' },
     { id: 'leaderboard', label: 'Point table', hint: 'Standings + latest hero' },
     { id: 'leader', label: 'Top 3', hint: 'Podium + daily challenge' },
     { id: 'matchday', label: 'Matchday', hint: 'Recent results grid' },
@@ -488,6 +548,175 @@ export function AdminSharePanel() {
                       matchResult
                         ? shareStandings(buildMatchResultShareText(matchResult))
                         : Promise.resolve(false),
+                    'Copied!',
+                    'Copy failed',
+                  )
+                }
+              />
+            </>
+          )}
+        </div>
+      )}
+
+      {tab === 'meal-live' && (
+        <div className="mt-4 space-y-3">
+          {liveMealBets.length === 0 ? (
+            <p className="text-sm text-muted">
+              No live meal bets — approve one under Moderation first.
+            </p>
+          ) : (
+            <>
+              <select
+                value={selectedMealLive?.id ?? ''}
+                onChange={(e) => setSelectedMealLiveId(e.target.value)}
+                className="w-full rounded-lg bg-muted px-3 py-2 text-sm outline-none"
+              >
+                {liveMealBets.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.match?.home_team} vs {c.match?.away_team} · {c.creator_name}:{' '}
+                    {c.claim_text.slice(0, 40)}
+                  </option>
+                ))}
+              </select>
+
+              {mealLiveShare && selectedMealLive && (
+                <div className="rounded-xl border border-[#E23744]/30 bg-[#E23744]/5 p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-[#E23744]">
+                    Meal bet
+                  </p>
+                  <p className="mt-2 text-lg font-bold text-theme">“{mealLiveShare.claimText}”</p>
+                  <p className="mt-2 text-sm text-muted">
+                    {mealLiveShare.creatorName} · {mealLiveShare.claimLabel}
+                  </p>
+                  <p className="mt-1 text-sm">
+                    Or else: <span className="font-semibold">{mealLiveShare.stakeText}</span>
+                  </p>
+                  {mealLiveShare.acceptorsCount > 0 && (
+                    <p className="mt-2 text-xs text-amber-300">
+                      {mealLiveShare.acceptorsCount} accepted · {mealLiveShare.totalPointsStaked}{' '}
+                      pts on the line
+                    </p>
+                  )}
+                  <p className="mt-2 text-xs text-muted">{mealLiveShare.kickoffLabel}</p>
+                </div>
+              )}
+
+              <ShareActions
+                busy={busy}
+                disabled={!mealLiveShare || mealLiveGenerating}
+                onShare={() =>
+                  void run(
+                    () =>
+                      mealLiveShare
+                        ? shareMealChallengeWithImage(mealLiveShare, mealLiveBlob)
+                        : Promise.resolve({ ok: false }),
+                    'Shared!',
+                    'Could not share',
+                  )
+                }
+                onDownload={() =>
+                  void run(
+                    () =>
+                      mealLiveShare
+                        ? downloadMealChallengeImage(mealLiveShare, mealLiveBlob)
+                        : Promise.resolve(false),
+                    'Downloaded!',
+                    'Download failed',
+                  )
+                }
+                onCopy={() =>
+                  void run(
+                    () =>
+                      mealLiveShare
+                        ? shareStandings(buildMealChallengeShareText(mealLiveShare))
+                        : Promise.resolve({ ok: false }),
+                    'Copied!',
+                    'Copy failed',
+                  )
+                }
+              />
+            </>
+          )}
+        </div>
+      )}
+
+      {tab === 'meal-result' && (
+        <div className="mt-4 space-y-3">
+          {settledMealResults.length === 0 ? (
+            <p className="text-sm text-muted">
+              No settled meal challenges yet — settle one under Moderation after full time.
+            </p>
+          ) : (
+            <>
+              <select
+                value={selectedMealResult?.id ?? ''}
+                onChange={(e) => setSelectedMealResultId(e.target.value)}
+                className="w-full rounded-lg bg-muted px-3 py-2 text-sm outline-none"
+              >
+                {settledMealResults.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.match?.home_team} vs {c.match?.away_team}
+                    {c.winner_name ? ` · 🍽️ ${c.winner_name}` : ''}
+                  </option>
+                ))}
+              </select>
+
+              {mealResultShare && selectedMealResult && (
+                <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-400">
+                    Meal winner
+                  </p>
+                  {mealResultShare.scoreLabel && (
+                    <p className="mt-1 text-sm text-muted">Final {mealResultShare.scoreLabel}</p>
+                  )}
+                  {mealResultShare.winnerName ? (
+                    <div className="mt-3 flex items-center gap-3">
+                      <LeaderboardAvatar name={mealResultShare.winnerName} size="lg" />
+                      <div>
+                        <p className="text-xl font-bold text-theme">{mealResultShare.winnerName}</p>
+                        <p className="text-sm text-emerald-400">Wins the meal 🍽️</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-sm text-muted">
+                      {mealResultShare.winnerNote ?? 'No meal winner'}
+                    </p>
+                  )}
+                  <p className="mt-3 text-xs text-muted">
+                    Stake: {mealResultShare.stakeText}
+                  </p>
+                </div>
+              )}
+
+              <ShareActions
+                busy={busy}
+                disabled={!mealResultShare || mealResultGenerating}
+                onShare={() =>
+                  void run(
+                    () =>
+                      mealResultShare
+                        ? shareMealChallengeWithImage(mealResultShare, mealResultBlob)
+                        : Promise.resolve({ ok: false }),
+                    'Shared!',
+                    'Could not share',
+                  )
+                }
+                onDownload={() =>
+                  void run(
+                    () =>
+                      mealResultShare
+                        ? downloadMealChallengeImage(mealResultShare, mealResultBlob)
+                        : Promise.resolve(false),
+                    'Downloaded!',
+                    'Download failed',
+                  )
+                }
+                onCopy={() =>
+                  void run(
+                    () =>
+                      mealResultShare
+                        ? shareStandings(buildMealChallengeShareText(mealResultShare))
+                        : Promise.resolve({ ok: false }),
                     'Copied!',
                     'Copy failed',
                   )

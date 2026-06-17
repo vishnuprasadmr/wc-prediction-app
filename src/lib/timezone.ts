@@ -74,3 +74,26 @@ export function formatIstDateHeader(dateKey: string, now = Date.now()): string {
     day: 'numeric',
   }).format(utcNoon)
 }
+
+/** When a player last saved or changed a match pick — IST + short relative hint. */
+export function formatLastPickUpdated(iso: string, now = Date.now()): string {
+  const then = new Date(iso).getTime()
+  const diffMs = Math.max(0, now - then)
+  const ist = formatKickoffIst(iso)
+
+  if (diffMs < 60_000) return `Just now · ${ist}`
+  if (diffMs < 3_600_000) {
+    const mins = Math.floor(diffMs / 60_000)
+    return `${mins} min ago · ${ist}`
+  }
+  if (diffMs < 86_400_000) {
+    const hours = Math.floor(diffMs / 3_600_000)
+    return `${hours}h ago · ${ist}`
+  }
+  if (diffMs < 7 * 86_400_000) {
+    const days = Math.floor(diffMs / 86_400_000)
+    return `${days}d ago · ${ist}`
+  }
+
+  return ist
+}

@@ -5,6 +5,7 @@ import {
   formatIstDateHeader,
   formatKickoffIst,
   formatKickoffTimeIst,
+  formatLastPickUpdated,
   toIstDateKey,
 } from './timezone'
 
@@ -35,5 +36,12 @@ describe('timezone', () => {
     const tomorrow = addIstDays(today, 1)
     expect(formatIstDateHeader(today, now)).toBe('Today')
     expect(formatIstDateHeader(tomorrow, now)).toBe('Tomorrow')
+  })
+
+  it('formats last pick updated with relative hint', () => {
+    const now = new Date('2026-06-15T14:05:00.000Z').getTime()
+    const recent = '2026-06-15T14:00:00.000Z'
+    expect(formatLastPickUpdated(recent, now)).toMatch(/^5 min ago · /)
+    expect(formatLastPickUpdated(recent, now)).toContain('IST')
   })
 })

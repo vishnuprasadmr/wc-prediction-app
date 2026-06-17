@@ -14,6 +14,7 @@ import { ProfilePage } from './pages/ProfilePage'
 import { AdminPage } from './pages/AdminPage'
 import { WidgetPage } from './pages/WidgetPage'
 import { PrizesPage } from './pages/PrizesPage'
+import { MealChallengesPage } from './pages/MealChallengesPage'
 
 export default function App() {
   return (
@@ -31,6 +32,7 @@ export default function App() {
         <Route element={<Layout />}>
           <Route index element={<FixturesPage />} />
           <Route path="predict" element={<PredictPage />} />
+          <Route path="meals" element={<MealChallengesPage />} />
           <Route path="groups" element={<GroupsPage />} />
           <Route path="results" element={<ResultsPage />} />
           <Route path="teams" element={<TeamsPage />} />

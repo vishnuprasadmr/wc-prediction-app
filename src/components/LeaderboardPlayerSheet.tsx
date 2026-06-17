@@ -2,6 +2,7 @@ import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { LeaderboardEntry } from '../lib/types'
 import { computePlayerGaps } from '../lib/leaderboardUtils'
+import { formatLastPickUpdated } from '../lib/timezone'
 import { LeaderboardAvatar } from './LeaderboardAvatar'
 import { SupportingTeamFlag } from './SupportingTeamFlag'
 
@@ -108,6 +109,20 @@ export function LeaderboardPlayerSheet({
                       <SupportingTeamFlag team={heartTeam} variant="inline" />
                     </div>
                   )}
+                  <p className="mt-2 text-xs text-muted">
+                    {entry.last_prediction_at ? (
+                      <>
+                        <span className="font-medium text-theme">Last pick updated</span>
+                        <span className="mt-0.5 block tabular-nums">
+                          {formatLastPickUpdated(entry.last_prediction_at)}
+                        </span>
+                      </>
+                    ) : entry.predictions_made > 0 ? (
+                      'Picks on file — update time unavailable'
+                    ) : (
+                      'No match picks yet'
+                    )}
+                  </p>
                 </div>
                 <button
                   type="button"

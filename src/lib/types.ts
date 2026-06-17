@@ -64,6 +64,7 @@ export interface LeaderboardEntry {
   season_bonuses?: number
   predictions_made: number
   rank: number
+  last_prediction_at?: string | null
 }
 
 export interface SeasonPrediction {

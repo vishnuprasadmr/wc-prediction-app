@@ -103,6 +103,15 @@ function PrizesIcon({ className }: NavIconProps) {
   )
 }
 
+function MealBetsIcon({ className }: NavIconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+      <path d="M12 3c-2 2-4 4.5-4 7a4 4 0 108 0c0-2.5-2-5-4-7z" strokeLinejoin="round" />
+      <path d="M8 21h8M10 18h4" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export interface NavItem {
   to: string
   label: string
@@ -126,6 +135,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { to: '/', label: 'Fixtures', ariaLabel: 'Fixtures', Icon: FixturesIcon, end: true },
       { to: '/predict', label: 'Predict', ariaLabel: 'Predict scores', Icon: PredictIcon, urgentKey: 'predict' },
+      { to: '/meals', label: 'Meal bets', ariaLabel: 'Meal challenges', Icon: MealBetsIcon },
     ],
   },
   {
