@@ -6,6 +6,7 @@ import { BottomNav } from './BottomNav'
 import { GameNotificationHost } from './GameNotificationHost'
 import { InstallPrompt } from './InstallPrompt'
 import { ThemeToggle } from './ThemeToggle'
+import { LeaderNarrativeBanner } from './LeaderNarrativeBanner'
 import { EngagementPrompt } from './EngagementPrompt'
 import { useMemo } from 'react'
 import { BadgeUnlockModal } from './BadgeUnlockModal'
@@ -107,6 +108,7 @@ export function Layout() {
           className="mx-auto w-full max-w-5xl flex-1 px-4 py-4"
         >
           <SeasonPicksReminder />
+          <LeaderNarrativeBanner />
           <Outlet />
         </motion.main>
 

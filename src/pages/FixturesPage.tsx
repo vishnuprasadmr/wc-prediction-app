@@ -124,12 +124,15 @@ export function FixturesPage() {
 
       <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
         {filters.map(({ key, label }) => (
-          <button
+          <motion.button
             key={key}
+            type="button"
+            layout
+            whileTap={{ scale: 0.96 }}
             onClick={() => setFilter(key)}
             className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition ${
               filter === key
-                ? 'bg-simelabs text-simelabs-foreground'
+                ? 'bg-simelabs text-simelabs-foreground shadow-glow-sm'
                 : 'bg-muted text-muted hover:text-theme'
             }`}
           >
@@ -139,7 +142,7 @@ export function FixturesPage() {
                 {unpickedCount}
               </span>
             )}
-          </button>
+          </motion.button>
         ))}
       </div>
 

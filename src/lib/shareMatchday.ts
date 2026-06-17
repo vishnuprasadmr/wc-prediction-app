@@ -1,5 +1,5 @@
 import type { Match } from './types'
-import { formatShareDateIst, toIstDateKey } from './timezone'
+import { formatShareDateIst } from './timezone'
 import { renderMatchdayBlob } from './shareImage/renderMatchdayCard'
 import type { MatchdayCardInput } from './shareImage/matchdayTypes'
 import { shareStandings, type ShareResult } from './shareStandings'
@@ -10,7 +10,6 @@ export function buildMatchdayShareInput(
   title = 'MATCHDAY RECAP',
   now = Date.now(),
 ): MatchdayCardInput {
-  const yesterdayKey = toIstDateKey(new Date(now - 86_400_000).toISOString())
   const rows = matches
     .filter((m) => m.status === 'finished' && m.home_score !== null && m.away_score !== null)
     .sort((a, b) => new Date(b.kickoff_at).getTime() - new Date(a.kickoff_at).getTime())

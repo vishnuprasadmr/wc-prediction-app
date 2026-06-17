@@ -103,7 +103,9 @@ function winningTeam(match: Pick<Match, 'home_team' | 'away_team' | 'home_score'
 
 function squadSpotlightPlayer(team: string): { name: string; teamName: string } | null {
   const squad = getTeamSquad(team)
-  const forward = squad.players.find((p) => p.role === 'FWD') ?? squad.players.at(-1)
+  const forward =
+    squad.players.find((p) => p.role === 'FWD') ??
+    squad.players[squad.players.length - 1]
   if (!forward) return null
   return { name: forward.name, teamName: team }
 }

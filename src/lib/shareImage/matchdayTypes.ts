@@ -1,5 +1,3 @@
-import type { Match } from '../types'
-
 export interface MatchdayRow {
   homeTeam: string
   awayTeam: string

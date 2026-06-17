@@ -15,7 +15,7 @@ import { isExactScorePoints } from '../lib/scoring'
 import { playSound } from '../lib/sounds'
 import { TeamLabel } from './TeamLabel'
 import { MatchComments } from './MatchComments'
-import { MatchPickDistribution } from './MatchPickDistribution'
+import { MatchCrowdPicks } from './MatchCrowdPicks'
 import { MatchReactions } from './MatchReactions'
 import { MatchResultTimeline } from './MatchResultTimeline'
 import { ShareMatchButton } from './ShareMatchButton'
@@ -145,12 +145,15 @@ export function MatchCard({
           </div>
         )}
 
+        {(locked || match.status === 'live' || match.status === 'finished') && (
+          <MatchCrowdPicks match={match} />
+        )}
+
         {match.status === 'finished' && (
           <>
             {prediction && showPoints && (
               <MatchResultTimeline match={match} prediction={prediction} />
             )}
-            <MatchPickDistribution matchId={match.id} finished />
             <MatchReactions matchId={match.id} finished />
             <MatchComments matchId={match.id} finished />
           </>
