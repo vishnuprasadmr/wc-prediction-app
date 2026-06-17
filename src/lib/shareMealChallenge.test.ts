@@ -37,8 +37,19 @@ const challenge: MealChallengeView = {
     score_source: 'api',
     manual_override: false,
   },
-  acceptances: [{ id: 'a1', challenge_id: '1', user_id: 'u2', points_staked: 3, status: 'active', points_delta: null, created_at: '', display_name: 'Blair' }],
-  total_points_staked: 3,
+  acceptances: [{
+    id: 'a1',
+    challenge_id: '1',
+    user_id: 'u2',
+    points_staked: 1,
+    status: 'active',
+    points_delta: null,
+    created_at: '',
+    display_name: 'Blair',
+    home_pred: 1,
+    away_pred: 1,
+  }],
+  total_points_staked: 1,
 }
 
 describe('buildMealChallengeShareText', () => {
@@ -47,7 +58,7 @@ describe('buildMealChallengeShareText', () => {
     const text = buildMealChallengeShareText(share)
     expect(text).toContain('Portugal will win today')
     expect(text).toContain('Chicken mandi')
-    expect(text).toContain('3 pts on the line')
+    expect(text).toContain('1 pts on the line')
   })
 
   it('highlights meal winner on result cards', () => {

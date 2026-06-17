@@ -5,6 +5,24 @@ const NOTIFY_PREFIX = 'wc-meal-notify:'
 const SETTLE_NOTIFY_PREFIX = 'wc-meal-settle-notify:'
 const SEEN_PREFIX = 'wc-meal-seen:'
 
+const ACCEPT_NOTIFY_PREFIX = 'wc-meal-accept-notify:'
+
+export function wasMealAcceptNotified(acceptanceId: string): boolean {
+  try {
+    return localStorage.getItem(`${ACCEPT_NOTIFY_PREFIX}${acceptanceId}`) === '1'
+  } catch {
+    return false
+  }
+}
+
+export function markMealAcceptNotified(acceptanceId: string): void {
+  try {
+    localStorage.setItem(`${ACCEPT_NOTIFY_PREFIX}${acceptanceId}`, '1')
+  } catch {
+    /* ignore */
+  }
+}
+
 export function wasMealBetNotified(challengeId: string): boolean {
   try {
     return localStorage.getItem(`${NOTIFY_PREFIX}${challengeId}`) === '1'

@@ -6,11 +6,14 @@ import { pushGameNotification } from '../lib/gameNotificationBus'
 import {
   countUnseenActionableMealBets,
   isActionableMealBet,
+  markMealAcceptNotified,
   markMealBetNotified,
   markMealSettleNotified,
+  wasMealAcceptNotified,
   wasMealBetNotified,
   wasMealSettleNotified,
 } from '../lib/mealBetNotifications'
+import { mealClaimOutcomeLabel } from '../lib/mealChallenges'
 import { showGameNotification } from '../lib/notificationTheme'
 
 /** In-app toast + optional push when a meal bet goes live or settles. */
@@ -29,6 +32,27 @@ export function useMealBetNotifications() {
 
       try {
         for (const challenge of live) {
+          if (challenge.creator_id === user.id) {
+            for (const acceptance of challenge.acceptances) {
+              if (wasMealAcceptNotified(acceptance.id)) continue
+
+              markMealAcceptNotified(acceptance.id)
+              const match = challenge.match
+              const claim = mealClaimOutcomeLabel(challenge.backed_outcome, match)
+              const title = 'Someone took your meal bet!'
+              const body = `${acceptance.display_name} staked ${acceptance.points_staked} pts vs ${claim} — ${match?.home_team ?? 'Match'} vs ${match?.away_team ?? ''}`
+
+              pushGameNotification({ title, body, url: '/meals', kind: 'meal' })
+              void showGameNotification({
+                title,
+                body,
+                tag: `meal-accept:${acceptance.id}`,
+                kind: 'meal',
+                url: '/meals',
+              })
+            }
+          }
+
           if (!isActionableMealBet(challenge, user.id)) continue
           if (wasMealBetNotified(challenge.id)) continue
 

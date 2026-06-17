@@ -6,12 +6,14 @@ import type {
   MealChallengePointStake,
   MealChallengeStatus,
 } from '../lib/mealChallenges'
-import { findMealChallengeWinners, isClaimCorrect } from '../lib/mealChallenges'
+import { findMealChallengeWinners, isClaimCorrect, canAcceptMealBet } from '../lib/mealChallenges'
 import type { Match } from '../lib/types'
 import { supabase } from '../lib/supabase'
 
 export interface MealChallengeAcceptanceView extends MealChallengeAcceptance {
   display_name: string
+  home_pred: number | null
+  away_pred: number | null
 }
 
 export interface MealChallengeView extends MealChallenge {
@@ -72,11 +74,36 @@ async function fetchProfileNames(ids: string[]): Promise<Map<string, string>> {
   return map
 }
 
+async function fetchAcceptancePredictions(
+  challenges: MealChallenge[],
+  acceptances: MealChallengeAcceptance[],
+): Promise<Map<string, { home_pred: number; away_pred: number }>> {
+  const matchIds = [...new Set(challenges.map((c) => c.match_id))]
+  const userIds = [...new Set(acceptances.map((a) => a.user_id))]
+  if (matchIds.length === 0 || userIds.length === 0) return new Map()
+
+  const { data } = await supabase
+    .from('predictions')
+    .select('user_id, match_id, home_pred, away_pred')
+    .in('match_id', matchIds)
+    .in('user_id', userIds)
+
+  const map = new Map<string, { home_pred: number; away_pred: number }>()
+  for (const row of data ?? []) {
+    map.set(`${row.user_id as string}:${row.match_id as string}`, {
+      home_pred: row.home_pred as number,
+      away_pred: row.away_pred as number,
+    })
+  }
+  return map
+}
+
 function enrichRows(
   rows: MealChallenge[],
   names: Map<string, string>,
   matches: Match[],
   acceptances: MealChallengeAcceptance[],
+  predictions: Map<string, { home_pred: number; away_pred: number }>,
 ): MealChallengeView[] {
   const matchMap = new Map(matches.map((m) => [m.id, m]))
   return rows.map((row) => {
@@ -87,10 +114,15 @@ function enrichRows(
       creator_name: names.get(row.creator_id) ?? 'Player',
       winner_name: row.winner_user_id ? names.get(row.winner_user_id) ?? null : null,
       match: matchMap.get(row.match_id),
-      acceptances: rowAcceptances.map((a) => ({
-        ...a,
-        display_name: names.get(a.user_id) ?? 'Player',
-      })),
+      acceptances: rowAcceptances.map((a) => {
+        const pred = predictions.get(`${a.user_id}:${row.match_id}`)
+        return {
+          ...a,
+          display_name: names.get(a.user_id) ?? 'Player',
+          home_pred: pred?.home_pred ?? null,
+          away_pred: pred?.away_pred ?? null,
+        }
+      }),
       total_points_staked: rowAcceptances.reduce((sum, a) => sum + a.points_staked, 0),
     }
   })
@@ -122,7 +154,8 @@ export function useMealChallenges(matches: Match[]) {
       ...acceptances.map((a) => a.user_id),
     ]
     const names = await fetchProfileNames(nameIds)
-    setChallenges(enrichRows(rows, names, matches, acceptances))
+    const predictions = await fetchAcceptancePredictions(rows, acceptances)
+    setChallenges(enrichRows(rows, names, matches, acceptances, predictions))
     setLoading(false)
   }, [matches])
 
@@ -150,14 +183,21 @@ export function useMealChallenges(matches: Match[]) {
   }
 }
 
-export async function createMealChallenge(input: {
-  match_id: string
-  creator_id: string
-  claim_text: string
-  stake_text: string
-  backed_outcome: MealChallenge['backed_outcome']
-  win_condition: MealChallenge['win_condition']
-}): Promise<{ ok: true } | { ok: false; message: string }> {
+export async function createMealChallenge(
+  input: {
+    match_id: string
+    creator_id: string
+    claim_text: string
+    stake_text: string
+    backed_outcome: MealChallenge['backed_outcome']
+    win_condition: MealChallenge['win_condition']
+  },
+  match?: Match,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  if (!match || !canAcceptMealBet(match) || match.id !== input.match_id) {
+    return { ok: false, message: 'This match is locked — meal bets are closed.' }
+  }
+
   const { error } = await supabase.from('meal_challenges').insert({
     ...input,
     claim_text: input.claim_text.trim(),
@@ -187,7 +227,29 @@ export async function acceptMealChallenge(
   return { ok: true }
 }
 
-export async function approveMealChallenge(id: string, adminId: string) {
+export async function updateMealChallengeStake(
+  challengeId: string,
+  pointsStaked: MealChallengePointStake,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const { data, error } = await supabase.rpc('update_meal_challenge_stake', {
+    p_challenge_id: challengeId,
+    p_points_staked: pointsStaked,
+  })
+
+  if (error) return { ok: false, message: error.message }
+
+  const result = data as { ok?: boolean; message?: string }
+  if (!result?.ok) {
+    return { ok: false, message: result?.message ?? 'Could not update stake' }
+  }
+  return { ok: true }
+}
+
+export async function approveMealChallenge(id: string, adminId: string, match?: Match) {
+  if (match && !canAcceptMealBet(match)) {
+    return { error: { message: 'Cannot approve — match predictions are locked.' } }
+  }
+
   return supabase
     .from('meal_challenges')
     .update({

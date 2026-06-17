@@ -1,4 +1,6 @@
 import type { MealChallengeAcceptanceView } from '../hooks/useMealChallenges'
+import { acceptorBetLine, type MealClaimOutcome } from '../lib/mealChallenges'
+import type { Match } from '../lib/types'
 import { formatKickoffTimeIst } from '../lib/timezone'
 import { LeaderboardAvatar } from './LeaderboardAvatar'
 
@@ -11,10 +13,14 @@ const STATUS_LABEL: Record<string, string> = {
 export function MealChallengeAcceptancesDetail({
   acceptances,
   totalPointsStaked,
+  backedOutcome,
+  match,
   showEmpty = true,
 }: {
   acceptances: MealChallengeAcceptanceView[]
   totalPointsStaked: number
+  backedOutcome?: MealClaimOutcome
+  match?: Pick<Match, 'home_team' | 'away_team'>
   showEmpty?: boolean
 }) {
   if (acceptances.length === 0) {
@@ -35,11 +41,12 @@ export function MealChallengeAcceptancesDetail({
         <p className="text-xs font-semibold text-amber-300">{totalPointsStaked} pts total</p>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[280px] text-left text-xs">
+        <table className="w-full min-w-[320px] text-left text-xs">
           <thead>
             <tr className="border-b border-default/60 text-muted">
               <th className="px-3 py-2 font-medium">Player</th>
               <th className="px-3 py-2 font-medium">Stake</th>
+              {backedOutcome && <th className="px-3 py-2 font-medium">Pick · bet</th>}
               <th className="px-3 py-2 font-medium">Status</th>
               <th className="px-3 py-2 font-medium">Accepted</th>
               <th className="px-3 py-2 text-right font-medium">Result</th>
@@ -55,6 +62,16 @@ export function MealChallengeAcceptancesDetail({
                   </div>
                 </td>
                 <td className="px-3 py-2 font-semibold text-amber-300">{a.points_staked} pts</td>
+                {backedOutcome && (
+                  <td className="max-w-[140px] px-3 py-2 text-muted">
+                    {acceptorBetLine({
+                      backedOutcome,
+                      match,
+                      homePred: a.home_pred,
+                      awayPred: a.away_pred,
+                    })}
+                  </td>
+                )}
                 <td className="px-3 py-2 text-muted">{STATUS_LABEL[a.status] ?? a.status}</td>
                 <td className="px-3 py-2 text-muted">
                   {formatKickoffTimeIst(a.created_at)} IST

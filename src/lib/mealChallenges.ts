@@ -1,4 +1,5 @@
 import type { Match } from './types'
+import { isMatchLocked } from './matchUtils'
 
 export type MealChallengeStatus =
   | 'pending'
@@ -13,8 +14,13 @@ export type MealClaimOutcome = 'home_win' | 'away_win' | 'draw'
 
 export type MealChallengeAcceptStatus = 'active' | 'won' | 'lost'
 
-export const MEAL_CHALLENGE_POINT_STAKES = [1, 2, 3, 5] as const
+/** Meal bets use 1 pt only — keeps social stakes fun without swinging the leaderboard */
+export const MEAL_CHALLENGE_POINT_STAKES = [1] as const
 export type MealChallengePointStake = (typeof MEAL_CHALLENGE_POINT_STAKES)[number]
+
+export function canAcceptMealBet(match: Match | undefined | null): boolean {
+  return Boolean(match && !isMatchLocked(match))
+}
 
 export interface MealChallenge {
   id: string
@@ -75,6 +81,25 @@ export const MEAL_CHALLENGE_WIN_OPTIONS: {
     hint: 'Picked the winning team — earliest pick wins ties',
   },
 ]
+
+export function formatAcceptorPick(
+  homePred: number | null | undefined,
+  awayPred: number | null | undefined,
+): string {
+  if (homePred == null || awayPred == null) return 'No pick yet'
+  return `${homePred}-${awayPred}`
+}
+
+export function acceptorBetLine(input: {
+  backedOutcome: MealClaimOutcome
+  match?: Pick<Match, 'home_team' | 'away_team'>
+  homePred?: number | null
+  awayPred?: number | null
+}): string {
+  const pick = formatAcceptorPick(input.homePred, input.awayPred)
+  const claim = mealClaimOutcomeLabel(input.backedOutcome, input.match)
+  return `${pick} · vs ${claim}`
+}
 
 export function mealChallengeWinLabel(condition: MealChallengeWinCondition): string {
   return MEAL_CHALLENGE_WIN_OPTIONS.find((o) => o.value === condition)?.label ?? condition

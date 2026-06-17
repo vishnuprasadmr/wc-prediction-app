@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { motion } from 'framer-motion'
 import type { MealChallengeView } from '../hooks/useMealChallenges'
 import {
+  acceptorBetLine,
   mealChallengeWinLabel,
   mealClaimOutcomeLabel,
 } from '../lib/mealChallenges'
@@ -93,6 +94,8 @@ export function MealChallengeCard({
           <MealChallengeAcceptancesDetail
             acceptances={challenge.acceptances}
             totalPointsStaked={challenge.total_points_staked}
+            backedOutcome={challenge.backed_outcome}
+            match={match}
           />
         ) : (
           challenge.acceptances.length > 0 && (
@@ -100,11 +103,23 @@ export function MealChallengeCard({
               <p className="text-[10px] font-bold uppercase tracking-wide text-muted">
                 Point bets ({challenge.total_points_staked} pts on the line)
               </p>
-              <ul className="mt-1.5 space-y-1">
+              <ul className="mt-1.5 space-y-1.5">
                 {challenge.acceptances.map((a) => (
-                  <li key={a.id} className="flex items-center justify-between text-xs">
-                    <span className="text-theme">{a.display_name}</span>
-                    <span className="font-semibold text-amber-300">{a.points_staked} pts</span>
+                  <li key={a.id} className="text-xs">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium text-theme">{a.display_name}</span>
+                      <span className="shrink-0 font-semibold text-amber-300">
+                        {a.points_staked} pts
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-[11px] text-pretty text-muted">
+                      {acceptorBetLine({
+                        backedOutcome: challenge.backed_outcome,
+                        match,
+                        homePred: a.home_pred,
+                        awayPred: a.away_pred,
+                      })}
+                    </p>
                   </li>
                 ))}
               </ul>
@@ -116,6 +131,8 @@ export function MealChallengeCard({
         <MealChallengeAcceptancesDetail
           acceptances={challenge.acceptances}
           totalPointsStaked={challenge.total_points_staked}
+          backedOutcome={challenge.backed_outcome}
+          match={match}
           showEmpty={false}
         />
       )}
@@ -137,10 +154,19 @@ export function MealChallengeCard({
               <ul className="mt-1 space-y-0.5 text-muted">
                 {challenge.acceptances.map((a) => (
                   <li key={a.id}>
-                    {a.display_name}:{' '}
+                    <span className="font-medium text-theme">{a.display_name}</span>
+                    {': '}
                     <span className={a.points_delta && a.points_delta > 0 ? 'text-emerald-400' : 'text-red-400'}>
                       {a.points_delta && a.points_delta > 0 ? '+' : ''}
                       {a.points_delta ?? 0} pts
+                    </span>
+                    <span className="block text-[10px] text-muted">
+                      {acceptorBetLine({
+                        backedOutcome: challenge.backed_outcome,
+                        match,
+                        homePred: a.home_pred,
+                        awayPred: a.away_pred,
+                      })}
                     </span>
                   </li>
                 ))}
