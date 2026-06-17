@@ -1,3 +1,5 @@
 export { renderShareImageBlob, renderShareImageCanvas } from './renderShareImage'
+export { renderLeagueTableBlob, renderLeagueTableCanvas } from './renderLeagueTableImage'
 export type { ShareImageInput, ShareImageMatch } from './types'
+export type { LeagueTableShareInput } from './leagueTableTypes'
 export type { ShareImageVariant } from './theme'

@@ -135,6 +135,20 @@ export function getLiveMatches(matches: Match[]): Match[] {
   return matches.filter((m) => m.status === 'live')
 }
 
+/** Most recently kicked-off finished match (tournament-wide). */
+export function getLastFinishedMatch(matches: Match[]): Match | null {
+  return (
+    matches
+      .filter(
+        (m) =>
+          m.status === 'finished' && m.home_score !== null && m.away_score !== null,
+      )
+      .sort(
+        (a, b) => new Date(b.kickoff_at).getTime() - new Date(a.kickoff_at).getTime(),
+      )[0] ?? null
+  )
+}
+
 /** True when FIFA score sync should run (live match or recently kicked off). */
 export function isInScoreSyncWindow(match: Match, now = Date.now()): boolean {
   const kickoff = new Date(match.kickoff_at).getTime()

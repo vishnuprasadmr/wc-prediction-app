@@ -10,6 +10,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/fifa/, ''),
       },
+      '/api/fifa-media': {
+        target: 'https://digitalhub.fifa.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/fifa-media/, ''),
+      },
     },
   },
   test: {

@@ -35,6 +35,13 @@
   status = 200
   force = true
 
+# FIFA player photos (digitalhub) for share cards
+[[redirects]]
+  from = "/api/fifa-media/*"
+  to = "https://digitalhub.fifa.com/:splat"
+  status = 200
+  force = true
+
 # SPA fallback — existing files in dist/ are served first (force = false)
 [[redirects]]
   from = "/*"

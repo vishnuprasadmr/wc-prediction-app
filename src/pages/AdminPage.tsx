@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { formatKickoff } from '../lib/matchUtils'
 import type { Match, MatchStatus } from '../lib/types'
 import { AdminSeasonPanel } from '../components/AdminSeasonPanel'
+import { AdminSharePanel } from '../components/AdminSharePanel'
 import { AdminStatsPanel } from '../components/AdminStatsPanel'
 
 export function AdminPage() {
@@ -90,6 +91,7 @@ export function AdminPage() {
       />
 
       <AdminStatsPanel onSynced={() => void refetch()} />
+      <AdminSharePanel />
       <AdminSeasonPanel />
 
       {message && (

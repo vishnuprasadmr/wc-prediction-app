@@ -36,6 +36,16 @@ export function addIstDays(dateKey: string, days: number): string {
   return toIstDateKey(utc.toISOString())
 }
 
+/** Human-readable IST date for share cards (e.g. "17 Jun 2026"). */
+export function formatShareDateIst(now = Date.now()): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: APP_TIMEZONE,
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(now))
+}
+
 /** Today and tomorrow as IST calendar dates — used for the open prediction window. */
 export function getIstTodayAndTomorrow(now = Date.now()): { today: string; tomorrow: string } {
   const today = toIstDateKey(new Date(now).toISOString())
