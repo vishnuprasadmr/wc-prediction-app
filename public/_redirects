@@ -1,2 +1,3 @@
-# Netlify: proxy FIFA API for live scores (avoids browser CORS)
+# Netlify: FIFA media + API proxies (media rule first)
+/api/fifa-media/*  https://digitalhub.fifa.com/:splat  200
 /api/fifa/*  https://api.fifa.com/api/v3/:splat  200

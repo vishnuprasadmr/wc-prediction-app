@@ -1,4 +1,5 @@
 import type { User } from '@supabase/supabase-js'
+import { AVATAR_CACHE_TTL_MS } from './avatarCache'
 import { resolveUserAvatarUrl } from './avatarUrl'
 import { clearPendingGoogleRegistration } from './authGoogle'
 import { displayNameFromUser, setOAuthCompleteLock } from './authOAuth'
@@ -8,11 +9,37 @@ import {
 } from './employeeId'
 import { LEAGUE_ID, supabase } from './supabase'
 
+const AVATAR_SYNC_PREFIX = 'wc-avatar-sync:'
+
+function shouldSyncAvatarFromProvider(userId: string): boolean {
+  try {
+    const raw = localStorage.getItem(`${AVATAR_SYNC_PREFIX}${userId}`)
+    if (!raw) return true
+    return Date.now() - Number(raw) >= AVATAR_CACHE_TTL_MS
+  } catch {
+    return true
+  }
+}
+
+function markAvatarSynced(userId: string): void {
+  try {
+    localStorage.setItem(`${AVATAR_SYNC_PREFIX}${userId}`, String(Date.now()))
+  } catch {
+    /* private browsing */
+  }
+}
+
 export async function syncProfileAvatar(
   user: User,
   currentAvatarUrl?: string | null,
 ): Promise<string | null> {
+  if (!shouldSyncAvatarFromProvider(user.id)) {
+    return currentAvatarUrl ?? null
+  }
+
   const next = resolveUserAvatarUrl(user)
+  markAvatarSynced(user.id)
+
   if (!next || next === currentAvatarUrl) {
     return currentAvatarUrl ?? null
   }

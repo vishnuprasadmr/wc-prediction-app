@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useCachedAvatarUrl } from '../hooks/useCachedAvatarUrl'
 
 export type ProfileAvatarSize = 'sm' | 'md' | 'lg' | 'xl'
 
@@ -23,8 +24,9 @@ export function ProfileAvatar({
   className = '',
 }: ProfileAvatarProps) {
   const [imageFailed, setImageFailed] = useState(false)
+  const cachedUrl = useCachedAvatarUrl(avatarUrl)
   const initial = name.trim().charAt(0).toUpperCase() || '?'
-  const showImage = Boolean(avatarUrl) && !imageFailed
+  const showImage = Boolean(cachedUrl) && !imageFailed
 
   return (
     <div
@@ -33,7 +35,7 @@ export function ProfileAvatar({
     >
       {showImage ? (
         <img
-          src={avatarUrl!}
+          src={cachedUrl!}
           alt=""
           className="h-full w-full object-cover"
           loading="lazy"

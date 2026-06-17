@@ -1,4 +1,5 @@
 import type { Match, MatchStatus } from './types'
+import { fifaFetch } from './fifaFetch'
 
 export const FIFA_API = 'https://api.fifa.com/api/v3/calendar/matches'
 export const FIFA_SEASON_ID = '285023'
@@ -60,9 +61,7 @@ export async function fetchFifaLiveMap(): Promise<Map<number, FifaLiveSnapshot>>
     })
     if (continuationToken) params.set('continuationToken', continuationToken)
 
-    const res = await fetch(fifaApiUrl(params), {
-      headers: { Accept: 'application/json' },
-    })
+    const res = await fifaFetch(fifaApiUrl(params))
     if (!res.ok) throw new Error(`FIFA API error: ${res.status}`)
 
     const data = await res.json()

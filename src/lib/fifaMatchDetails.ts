@@ -1,5 +1,9 @@
 import { FIFA_COMPETITION_ID, FIFA_SEASON_ID, MATCH_NUMBER_OFFSET } from './fifaLive'
+import { fifaFetch } from './fifaFetch'
 import type { Match } from './types'
+
+const CALENDAR_CACHE_KEY = 'wc-fifa-calendar-v1'
+const CALENDAR_CACHE_TTL_MS = 6 * 60 * 60 * 1000
 
 const PENALTY_GOAL_TYPE = 41
 const OWN_GOAL_TYPE = 34
@@ -61,6 +65,45 @@ export function proxyFifaImageUrl(url: string | null | undefined): string | unde
 }
 
 let calendarRowsPromise: Promise<Record<string, unknown>[]> | null = null
+let calendarRowsCache: Record<string, unknown>[] | null = null
+const fixtureToIdMatch = new Map<number, string>()
+
+const LIVE_DETAILS_TTL_MS = 90_000
+const liveDetailsCache = new Map<string, { details: FifaMatchDetails; expiresAt: number }>()
+const liveDetailsInflight = new Map<string, Promise<FifaMatchDetails | null>>()
+
+function indexCalendarRows(rows: Record<string, unknown>[]): void {
+  fixtureToIdMatch.clear()
+  for (const row of rows) {
+    const matchNumber = Number(row.MatchNumber)
+    const idMatch = String(row.IdMatch ?? '')
+    if (!matchNumber || !idMatch) continue
+    fixtureToIdMatch.set(MATCH_NUMBER_OFFSET + matchNumber, idMatch)
+  }
+}
+
+function readCalendarStorage(): Record<string, unknown>[] | null {
+  try {
+    const raw = sessionStorage.getItem(CALENDAR_CACHE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as { rows?: Record<string, unknown>[]; expiresAt?: number }
+    if (!parsed.rows?.length) return null
+    return parsed.rows
+  } catch {
+    return null
+  }
+}
+
+function writeCalendarStorage(rows: Record<string, unknown>[]): void {
+  try {
+    sessionStorage.setItem(
+      CALENDAR_CACHE_KEY,
+      JSON.stringify({ rows, expiresAt: Date.now() + CALENDAR_CACHE_TTL_MS }),
+    )
+  } catch {
+    /* quota */
+  }
+}
 
 async function fetchCalendarRows(): Promise<Record<string, unknown>[]> {
   const results: Record<string, unknown>[] = []
@@ -75,9 +118,7 @@ async function fetchCalendarRows(): Promise<Record<string, unknown>[]> {
     })
     if (continuationToken) params.set('continuationToken', continuationToken)
 
-    const res = await fetch(fifaApiUrl(`calendar/matches?${params}`), {
-      headers: { Accept: 'application/json' },
-    })
+    const res = await fifaFetch(fifaApiUrl(`calendar/matches?${params}`))
     if (!res.ok) throw new Error(`FIFA calendar error: ${res.status}`)
 
     const data = (await res.json()) as { Results?: Record<string, unknown>[]; ContinuationToken?: string }
@@ -85,27 +126,67 @@ async function fetchCalendarRows(): Promise<Record<string, unknown>[]> {
     continuationToken = data.ContinuationToken
   } while (continuationToken)
 
+  calendarRowsCache = results
+  indexCalendarRows(results)
+  writeCalendarStorage(results)
   return results
 }
 
 function getCalendarRows(): Promise<Record<string, unknown>[]> {
+  if (calendarRowsCache?.length) return Promise.resolve(calendarRowsCache)
+
+  const stored = readCalendarStorage()
+  if (stored?.length) {
+    calendarRowsCache = stored
+    indexCalendarRows(stored)
+  }
+
   if (!calendarRowsPromise) {
-    calendarRowsPromise = fetchCalendarRows().catch((err) => {
-      calendarRowsPromise = null
-      throw err
-    })
+    calendarRowsPromise = fetchCalendarRows()
+      .catch((err) => {
+        calendarRowsPromise = null
+        if (calendarRowsCache?.length) return calendarRowsCache
+        if (stored?.length) {
+          calendarRowsCache = stored
+          return stored
+        }
+        throw err
+      })
+      .then((rows) => {
+        calendarRowsCache = rows
+        return rows
+      })
   }
   return calendarRowsPromise
 }
 
 export function resetFifaCalendarCache(): void {
   calendarRowsPromise = null
+  calendarRowsCache = null
+  fixtureToIdMatch.clear()
+  liveDetailsCache.clear()
+  liveDetailsInflight.clear()
+  try {
+    sessionStorage.removeItem(CALENDAR_CACHE_KEY)
+  } catch {
+    /* ignore */
+  }
 }
 
 export async function findFifaCalendarRow(apiFixtureId: number): Promise<Record<string, unknown> | null> {
+  const cachedId = fixtureToIdMatch.get(apiFixtureId)
+  if (cachedId) {
+    return { IdMatch: cachedId, MatchNumber: apiFixtureId - MATCH_NUMBER_OFFSET }
+  }
+
   const matchNumber = apiFixtureId - MATCH_NUMBER_OFFSET
   const rows = await getCalendarRows()
-  return rows.find((row) => row.MatchNumber === matchNumber) ?? null
+  const row = rows.find((r) => r.MatchNumber === matchNumber) ?? null
+  if (row) {
+    const idMatch = String(row.IdMatch ?? '')
+    if (idMatch) fixtureToIdMatch.set(apiFixtureId, idMatch)
+  }
+  return row
 }
 
 function indexPlayers(
@@ -153,10 +234,8 @@ function collectGoals(
   })
 }
 
-export async function fetchFifaLiveMatchDetails(idMatch: string): Promise<FifaMatchDetails | null> {
-  const res = await fetch(fifaApiUrl(`live/football/${idMatch}`), {
-    headers: { Accept: 'application/json' },
-  })
+async function fetchFifaLiveMatchDetailsInner(idMatch: string): Promise<FifaMatchDetails | null> {
+  const res = await fifaFetch(fifaApiUrl(`live/football/${idMatch}`))
   if (!res.ok) return null
 
   const data = (await res.json()) as Record<string, unknown>
@@ -186,6 +265,36 @@ export async function fetchFifaLiveMatchDetails(idMatch: string): Promise<FifaMa
     players,
     goals,
   }
+}
+
+export async function fetchFifaLiveMatchDetails(idMatch: string): Promise<FifaMatchDetails | null> {
+  const cached = liveDetailsCache.get(idMatch)
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.details
+  }
+
+  const inflight = liveDetailsInflight.get(idMatch)
+  if (inflight) return inflight
+
+  const promise = (async () => {
+    try {
+      const details = await fetchFifaLiveMatchDetailsInner(idMatch)
+      if (details) {
+        liveDetailsCache.set(idMatch, {
+          details,
+          expiresAt: Date.now() + LIVE_DETAILS_TTL_MS,
+        })
+      }
+      return details
+    } catch {
+      return null
+    } finally {
+      liveDetailsInflight.delete(idMatch)
+    }
+  })()
+
+  liveDetailsInflight.set(idMatch, promise)
+  return promise
 }
 
 export async function fetchFifaMatchDetails(match: Match): Promise<FifaMatchDetails | null> {

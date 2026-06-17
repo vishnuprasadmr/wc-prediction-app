@@ -149,6 +149,17 @@ export function getLastFinishedMatch(matches: Match[]): Match | null {
   )
 }
 
+/** Recent finished matches, newest first. */
+export function getRecentFinishedMatches(matches: Match[], limit = 12): Match[] {
+  return matches
+    .filter(
+      (m) =>
+        m.status === 'finished' && m.home_score !== null && m.away_score !== null,
+    )
+    .sort((a, b) => new Date(b.kickoff_at).getTime() - new Date(a.kickoff_at).getTime())
+    .slice(0, limit)
+}
+
 /** True when FIFA score sync should run (live match or recently kicked off). */
 export function isInScoreSyncWindow(match: Match, now = Date.now()): boolean {
   const kickoff = new Date(match.kickoff_at).getTime()

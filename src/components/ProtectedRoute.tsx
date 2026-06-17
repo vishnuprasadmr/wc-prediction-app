@@ -4,9 +4,9 @@ import { AuthLoadingScreen } from './AuthLoadingScreen'
 import { hasLeagueProfile } from '../lib/employeeId'
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { session, profile, loading } = useAuth()
+  const { session, profile, loading, profileLoading } = useAuth()
 
-  if (loading) {
+  if (loading || (session && profileLoading)) {
     return <AuthLoadingScreen message="Loading..." />
   }
 
@@ -22,9 +22,9 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 export function AdminRoute({ children }: { children: React.ReactNode }) {
-  const { profile, loading } = useAuth()
+  const { profile, loading, profileLoading } = useAuth()
 
-  if (loading) {
+  if (loading || profileLoading) {
     return <AuthLoadingScreen />
   }
 

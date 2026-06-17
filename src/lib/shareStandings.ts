@@ -1,4 +1,18 @@
 import { renderShareImageBlob, type ShareImageInput } from './shareImage'
+import { downloadShareImage } from './shareDownload'
+
+export type ShareResult = {
+  ok: boolean
+  method?: 'native' | 'download' | 'clipboard'
+  cancelled?: boolean
+}
+
+export function shareResultMessage(result: ShareResult, failMsg = 'Could not share'): string {
+  if (!result.ok) return result.cancelled ? 'Share cancelled' : failMsg
+  if (result.method === 'download') return 'Downloaded! Attach to your post'
+  if (result.method === 'clipboard') return 'Copied to clipboard'
+  return 'Shared!'
+}
 
 export function buildStandingsShareText(input: {
   displayName: string
@@ -61,49 +75,49 @@ export function buildShareImageInput(input: {
   }
 }
 
-async function downloadShareImage(blob: Blob, filename = 'wc-predict-share.png'): Promise<boolean> {
-  try {
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename
-    link.click()
-    URL.revokeObjectURL(url)
-    return true
-  } catch {
-    return false
-  }
-}
+export async function shareStandings(text: string, imageBlob?: Blob): Promise<ShareResult> {
+  const file =
+    imageBlob && imageBlob.size > 0
+      ? new File([imageBlob], 'wc-predict-share.png', { type: 'image/png' })
+      : null
 
-export async function shareStandings(text: string, imageBlob?: Blob): Promise<boolean> {
-  if (typeof navigator !== 'undefined' && navigator.share) {
+  const canShareFiles = Boolean(
+    file && typeof navigator !== 'undefined' && navigator.canShare?.({ files: [file] }),
+  )
+
+  if (canShareFiles && file && navigator.share) {
     try {
-      if (imageBlob) {
-        const file = new File([imageBlob], 'wc-predict-share.png', { type: 'image/png' })
-        const payload: ShareData = { title: 'WC Predictions', text }
-        if (navigator.canShare?.({ files: [file] })) {
-          await navigator.share({ ...payload, files: [file] })
-          return true
-        }
-      }
-      await navigator.share({ title: 'WC Predictions', text })
-      return true
+      await navigator.share({ title: 'WC Predictions', text, files: [file] })
+      return { ok: true, method: 'native' }
     } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') return false
-      /* try fallbacks */
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        return { ok: false, cancelled: true }
+      }
     }
   }
 
-  if (imageBlob) {
-    const downloaded = await downloadShareImage(imageBlob)
-    if (downloaded) return true
+  if (imageBlob && imageBlob.size > 0) {
+    if (downloadShareImage(imageBlob)) {
+      return { ok: true, method: 'download' }
+    }
+  }
+
+  if (typeof navigator !== 'undefined' && navigator.share && !imageBlob) {
+    try {
+      await navigator.share({ title: 'WC Predictions', text })
+      return { ok: true, method: 'native' }
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        return { ok: false, cancelled: true }
+      }
+    }
   }
 
   try {
     await navigator.clipboard.writeText(text)
-    return true
+    return { ok: true, method: 'clipboard' }
   } catch {
-    return false
+    return { ok: false }
   }
 }
 
@@ -123,7 +137,8 @@ export async function shareStandingsWithImage(input: {
     awayPred?: number
     firstBonus?: number
   }
-}): Promise<boolean> {
+  preparedBlob?: Blob | null
+}): Promise<ShareResult> {
   const text = buildStandingsShareText({
     displayName: input.displayName,
     rank: input.rank,
@@ -133,7 +148,8 @@ export async function shareStandingsWithImage(input: {
   })
 
   try {
-    const imageBlob = await renderShareImageBlob(buildShareImageInput(input))
+    const imageBlob =
+      input.preparedBlob ?? (await renderShareImageBlob(buildShareImageInput(input)))
     return shareStandings(text, imageBlob)
   } catch {
     return shareStandings(text)

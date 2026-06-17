@@ -8,7 +8,7 @@ import { hasLeagueProfile } from '../lib/employeeId'
 import { consumeAuthError } from '../lib/authOAuth'
 
 export function LoginPage() {
-  const { signInGoogle, session, profile, loading, oauthSettling } = useAuth()
+  const { signInGoogle, session, profile, loading, profileLoading, oauthSettling } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const [googleLoading, setGoogleLoading] = useState(false)
 
@@ -17,7 +17,7 @@ export function LoginPage() {
     if (oauthError) setError(oauthError)
   }, [])
 
-  if (loading || oauthSettling) {
+  if (loading || oauthSettling || (session && profileLoading)) {
     return (
       <AuthLoadingScreen
         message={oauthSettling ? 'Signing you in...' : 'Loading...'}

@@ -24,7 +24,7 @@ export function ShareMatchButton({ match, prediction }: { match: Match; predicti
     primeAudio()
 
     const exact = isExactScorePoints(prediction.points_earned, prediction.first_bonus ?? 0)
-    const ok = await shareStandingsWithImage({
+    const result = await shareStandingsWithImage({
       variant: exact ? 'oracle' : 'match-result',
       displayName: profile?.display_name ?? 'Player',
       avatarUrl,
@@ -42,7 +42,7 @@ export function ShareMatchButton({ match, prediction }: { match: Match; predicti
       },
     })
 
-    if (ok) playSound('save')
+    if (result.ok) playSound('save')
     setSharing(false)
   }
 

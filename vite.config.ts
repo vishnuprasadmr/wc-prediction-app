@@ -5,15 +5,19 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   server: {
     proxy: {
-      '/api/fifa': {
-        target: 'https://api.fifa.com/api/v3',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/fifa/, ''),
-      },
+      // Must be listed before /api/fifa/ — otherwise /api/fifa-media is caught by the FIFA API proxy.
       '/api/fifa-media': {
         target: 'https://digitalhub.fifa.com',
         changeOrigin: true,
+        timeout: 30_000,
         rewrite: (path) => path.replace(/^\/api\/fifa-media/, ''),
+      },
+      // Trailing slash avoids matching /api/fifa-media (prefix collision).
+      '/api/fifa/': {
+        target: 'https://api.fifa.com/api/v3',
+        changeOrigin: true,
+        timeout: 30_000,
+        rewrite: (path) => path.replace(/^\/api\/fifa/, ''),
       },
     },
   },
@@ -34,6 +38,7 @@ export default defineConfig({
         'pwa-512x512.png',
         'notification-badge.png',
         'share-qr.png',
+        'wc26-share-logo.svg',
         'sw-notifications.js',
       ],
       manifest: {

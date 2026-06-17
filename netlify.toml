@@ -28,17 +28,17 @@
   [headers.values]
     Content-Type = "application/manifest+json"
 
+# FIFA player photos (digitalhub) for share cards — before /api/fifa/* to avoid splat overlap
+[[redirects]]
+  from = "/api/fifa-media/*"
+  to = "https://digitalhub.fifa.com/:splat"
+  status = 200
+  force = true
+
 # FIFA live scores proxy (browser cannot call api.fifa.com directly)
 [[redirects]]
   from = "/api/fifa/*"
   to = "https://api.fifa.com/api/v3/:splat"
-  status = 200
-  force = true
-
-# FIFA player photos (digitalhub) for share cards
-[[redirects]]
-  from = "/api/fifa-media/*"
-  to = "https://digitalhub.fifa.com/:splat"
   status = 200
   force = true
 

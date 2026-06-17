@@ -1,0 +1,22 @@
+/** Daily challenge lines for leader / podium share cards (IST rotation). */
+export const DAILY_LEADER_PROMPTS: string[] = [
+  'Can anyone catch them?',
+  'Who can beat them?',
+  'Think you can topple #1?',
+  'The throne is under siege.',
+  'Anyone ready to dethrone the leader?',
+  'Is this a one-horse race?',
+  'Who\'s brave enough to chase them down?',
+  'The gap looks catchable… or does it?',
+  'Your move, challengers.',
+  'Will #1 still be standing tomorrow?',
+  'Predict better. Climb faster.',
+  'The podium isn\'t set in stone.',
+  'One exact score could change everything.',
+  'Who\'s got the nerve to pass them?',
+  'Top spot is up for grabs — prove it.',
+  'The hunt for #1 continues.',
+  'Can the chasing pack close the gap?',
+  'Leaders get hunted. Are you hunting?',
+  'Points on the board beat pride in the pocket.',
+]

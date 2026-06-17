@@ -22,6 +22,7 @@ export function RegisterPage() {
     profile,
     user,
     loading,
+    profileLoading,
     oauthSettling,
     signOut,
   } = useAuth()
@@ -56,7 +57,7 @@ export function RegisterPage() {
     displayName.trim().length > 0 &&
     (employeeId.trim() === '' || employeeIdCheck?.valid === true)
 
-  if (loading || oauthSettling) {
+  if (loading || oauthSettling || (session && profileLoading)) {
     return (
       <AuthLoadingScreen
         message={oauthSettling ? 'Connecting your Google account...' : 'Loading...'}

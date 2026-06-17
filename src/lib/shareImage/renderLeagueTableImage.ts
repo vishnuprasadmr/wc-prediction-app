@@ -2,27 +2,20 @@ import { getFlagUrl } from '../flags'
 import {
   canvasToBlob,
   ensureShareFonts,
-  loadAvatarImage,
   loadImage,
+  loadShareImage,
+  computeCoverDraw,
   roundRect,
   truncateText,
 } from './canvasUtils'
 import { SHARE_IMAGE } from './theme'
 import type { LeagueTableShareInput } from './leagueTableTypes'
+import { drawShareBranding } from './shareCardCommon'
 
 const W = 1080
 const H = 1350
 const C = SHARE_IMAGE.colors
 const F = SHARE_IMAGE.fonts
-const { brand, qr } = SHARE_IMAGE
-
-let qrImageCache: HTMLImageElement | null | undefined
-
-async function getQrImage(): Promise<HTMLImageElement | null> {
-  if (qrImageCache !== undefined) return qrImageCache
-  qrImageCache = await loadImage(qr.src)
-  return qrImageCache
-}
 
 async function drawHeroBackground(
   ctx: CanvasRenderingContext2D,
@@ -33,20 +26,23 @@ async function drawHeroBackground(
 
   const hero = input.hero
   const backdropTeam = hero?.backdropTeam ?? hero?.teamName
-  const playerImg = hero?.pictureUrl ? await loadAvatarImage(hero.pictureUrl) : null
+  const playerImg = hero?.pictureUrl ? await loadShareImage(hero.pictureUrl) : null
   const flagUrl = backdropTeam ? getFlagUrl(backdropTeam) : null
   const flagImg = !playerImg && flagUrl ? await loadImage(flagUrl) : null
   const bgImg = playerImg ?? flagImg
 
   if (bgImg) {
-    const scale = Math.max(W / bgImg.width, 520 / bgImg.height)
-    const dw = bgImg.width * scale
-    const dh = bgImg.height * scale
-    const dx = W - dw + 40
-    const dy = 40
+    const clip = { x: 40, y: 40, w: W - 80, h: 500 }
+    const isPlayer = Boolean(playerImg)
+    const { dx, dy, dw, dh } = computeCoverDraw(
+      bgImg.width,
+      bgImg.height,
+      clip,
+      isPlayer ? 'top-right' : 'center',
+    )
 
     ctx.save()
-    roundRect(ctx, 40, 40, W - 80, 500, 32)
+    roundRect(ctx, clip.x, clip.y, clip.w, clip.h, 32)
     ctx.clip()
     ctx.drawImage(bgImg, dx, dy, dw, dh)
 
@@ -69,49 +65,6 @@ async function drawHeroBackground(
   ctx.strokeStyle = C.panelBorder
   ctx.lineWidth = 3
   ctx.stroke()
-}
-
-function drawHeader(ctx: CanvasRenderingContext2D): void {
-  const gradient = ctx.createLinearGradient(0, 0, W, 0)
-  gradient.addColorStop(0, C.accentDark)
-  gradient.addColorStop(0.5, C.accent)
-  gradient.addColorStop(1, C.accentDark)
-  ctx.fillStyle = gradient
-  ctx.fillRect(0, 0, W, 12)
-
-  ctx.font = F.overline
-  ctx.fillStyle = C.accent
-  ctx.textAlign = 'left'
-  ctx.fillText(brand.line1, 72, 72)
-
-  ctx.font = F.label
-  ctx.fillStyle = C.textMuted
-  ctx.fillText(brand.line2, 72, 108)
-}
-
-async function drawQrCode(ctx: CanvasRenderingContext2D): Promise<void> {
-  const img = await getQrImage()
-  if (!img) return
-
-  const size = qr.size
-  const pad = 10
-  const x = W - 72 - size
-  const y = 52
-  const outer = size + pad * 2
-
-  roundRect(ctx, x - pad, y - pad, outer, outer + 28, 14)
-  ctx.fillStyle = '#ffffff'
-  ctx.fill()
-  ctx.strokeStyle = C.accent
-  ctx.lineWidth = 3
-  ctx.stroke()
-
-  ctx.drawImage(img, x, y, size, size)
-
-  ctx.font = '600 18px Inter, system-ui, sans-serif'
-  ctx.fillStyle = '#0a1a14'
-  ctx.textAlign = 'center'
-  ctx.fillText(qr.label, x + size / 2, y + size + 22)
 }
 
 async function drawFlag(
@@ -370,8 +323,7 @@ export async function renderLeagueTableCanvas(
   if (!ctx) throw new Error('Canvas not supported')
 
   await drawHeroBackground(ctx, input)
-  drawHeader(ctx)
-  await drawQrCode(ctx)
+  await drawShareBranding(ctx)
 
   let y = 148
   y = drawHeroStory(ctx, input, y)

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <linearGradient id="wc-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="50%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <linearGradient id="wc-green" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#009688"/>
+    </linearGradient>
+    <linearGradient id="wc-ring" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#26cb99"/>
+      <stop offset="100%" stop-color="#0d9488"/>
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="96" stroke="url(#wc-ring)" stroke-width="5" fill="#0a0f0d"/>
+  <circle cx="100" cy="100" r="82" stroke="url(#wc-gold)" stroke-width="2" fill="#111816"/>
+  <path d="M100 28c-22 18-36 42-36 68 0 20 8 36 20 48 8-14 16-22 16-36 0-18-10-34-24-44 14 6 24 18 24 36 0 16-10 28-20 40 12-10 20-26 20-44 0-26-14-50-36-68z" fill="url(#wc-green)" opacity="0.9"/>
+  <text x="100" y="118" font-family="Arial,Helvetica,sans-serif" font-size="52" font-weight="800" fill="url(#wc-gold)" text-anchor="middle">26</text>
+  <text x="100" y="142" font-family="Arial,Helvetica,sans-serif" font-size="13" font-weight="700" fill="#d0e8e0" text-anchor="middle" letter-spacing="2">WORLD CUP</text>
+  <text x="100" y="162" font-family="Arial,Helvetica,sans-serif" font-size="11" font-weight="600" fill="#26cb99" text-anchor="middle" letter-spacing="1.5">USA &#183; CAN &#183; MEX</text>
+</svg>

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { shareStandingsWithImage } from '../lib/shareStandings'
+import { shareStandingsWithImage, shareResultMessage } from '../lib/shareStandings'
 import { resolveUserAvatarUrl } from '../lib/avatarUrl'
 import type { PredictionWithMatch } from '../lib/types'
 import { playSound, primeAudio } from '../lib/sounds'
@@ -40,7 +40,7 @@ export function ShareStandingsButton({
         }
       : undefined
 
-    const ok = await shareStandingsWithImage({
+    const result = await shareStandingsWithImage({
       variant: lastMatch ? 'match-result' : 'standings',
       displayName,
       avatarUrl,
@@ -50,8 +50,8 @@ export function ShareStandingsButton({
       lastMatch,
     })
 
-    if (ok) playSound('save')
-    setStatus(ok ? 'Shared!' : 'Could not share')
+    if (result.ok) playSound('save')
+    setStatus(shareResultMessage(result))
     setSharing(false)
     setTimeout(() => setStatus(null), 2500)
   }

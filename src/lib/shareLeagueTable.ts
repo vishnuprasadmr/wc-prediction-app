@@ -5,7 +5,8 @@ import { buildMatchHero, type MatchHeroShare } from './matchHeroStory'
 import { fetchFifaMatchDetails } from './fifaMatchDetails'
 import { renderLeagueTableBlob } from './shareImage/renderLeagueTableImage'
 import type { LeagueTableShareInput } from './shareImage/leagueTableTypes'
-import { shareStandings } from './shareStandings'
+import { shareStandings, type ShareResult } from './shareStandings'
+import { downloadShareImage } from './shareDownload'
 
 export function buildLeagueTableShareText(input: {
   entries: LeaderboardEntry[]
@@ -69,14 +70,21 @@ export async function resolveMatchHero(match: Match): Promise<MatchHeroShare> {
   return buildMatchHero(match, details)
 }
 
+export function prepareLeagueTableBlob(payload: LeagueTableShareInput): Promise<Blob> {
+  return renderLeagueTableBlob(payload)
+}
+
 export async function shareLeagueTableWithImage(input: {
   entries: LeaderboardEntry[]
   hero?: MatchHeroShare
   matches: Match[]
   leagueLabel?: string
-}): Promise<boolean> {
+  preparedBlob?: Blob | null
+}): Promise<ShareResult> {
   const lastMatch = getLastFinishedMatch(input.matches)
-  const hero = input.hero ?? (lastMatch ? await resolveMatchHero(lastMatch) : undefined)
+  const hero =
+    input.hero ??
+    (!input.preparedBlob && lastMatch ? await resolveMatchHero(lastMatch) : undefined)
   const payload = buildLeagueTableShareInput({ ...input, hero })
   const text = buildLeagueTableShareText({
     entries: input.entries,
@@ -86,7 +94,7 @@ export async function shareLeagueTableWithImage(input: {
   })
 
   try {
-    const imageBlob = await renderLeagueTableBlob(payload)
+    const imageBlob = input.preparedBlob ?? (await renderLeagueTableBlob(payload))
     return shareStandings(text, imageBlob)
   } catch {
     return shareStandings(text)
@@ -95,17 +103,12 @@ export async function shareLeagueTableWithImage(input: {
 
 export async function downloadLeagueTableImage(
   input: Omit<LeagueTableShareInput, 'dateLabel'> & { now?: number },
+  preparedBlob?: Blob | null,
 ): Promise<boolean> {
   try {
     const dateLabel = formatShareDateIst(input.now)
-    const blob = await renderLeagueTableBlob({ ...input, dateLabel })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = 'wc-leaderboard-share.png'
-    link.click()
-    URL.revokeObjectURL(url)
-    return true
+    const blob = preparedBlob ?? (await renderLeagueTableBlob({ ...input, dateLabel }))
+    return downloadShareImage(blob, 'wc-leaderboard-share.png')
   } catch {
     return false
   }
