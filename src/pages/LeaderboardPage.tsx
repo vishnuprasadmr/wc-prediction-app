@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { DailyRecapCard } from '../components/DailyRecapCard'
 import { GloryWall } from '../components/GloryWall'
 import { HeadToHeadCard } from '../components/HeadToHeadCard'
@@ -32,6 +33,7 @@ const stages = [
 ]
 
 export function LeaderboardPage() {
+  const navigate = useNavigate()
   const { user, profile } = useAuth()
   const [stage, setStage] = useState('all')
   const [league, setLeague] = useState<LeaderboardLeague>('global')
@@ -194,6 +196,7 @@ export function LeaderboardPage() {
         selectedPlayerId={selectedPlayerId}
         onSelectPlayer={handleSelectPlayer}
         onSetRival={handleSetRival}
+        onArenaChallenge={(id) => navigate(`/arena?opponent=${id}`)}
         highlightUserId={highlightUserId}
       />
 

@@ -22,6 +22,7 @@ interface LeaderboardTableProps {
   selectedPlayerId?: string | null
   onSelectPlayer?: (entry: LeaderboardEntry | null) => void
   onSetRival?: (userId: string) => void
+  onArenaChallenge?: (userId: string) => void
   highlightUserId?: string | null
 }
 
@@ -160,6 +161,7 @@ export function LeaderboardTable({
   selectedPlayerId = null,
   onSelectPlayer,
   onSetRival,
+  onArenaChallenge,
   highlightUserId,
 }: LeaderboardTableProps) {
   const { user } = useAuth()
@@ -343,6 +345,7 @@ export function LeaderboardTable({
         currentUserId={user?.id}
         onClose={() => onSelectPlayer?.(null)}
         onSetRival={onSetRival}
+        onArenaChallenge={onArenaChallenge}
       />
     </div>
   )

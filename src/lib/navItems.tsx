@@ -103,6 +103,17 @@ function PrizesIcon({ className }: NavIconProps) {
   )
 }
 
+function ArenaIcon({ className }: NavIconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+      <rect x="3" y="8" width="18" height="10" rx="1" />
+      <path d="M3 12h18" strokeOpacity="0.4" />
+      <circle cx="12" cy="16" r="2" fill="currentColor" stroke="none" />
+      <path d="M8 5l2 3M16 5l-2 3" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 function MealBetsIcon({ className }: NavIconProps) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} aria-hidden>
@@ -136,6 +147,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { to: '/', label: 'Fixtures', ariaLabel: 'Fixtures', Icon: FixturesIcon, end: true },
       { to: '/predict', label: 'Predict', ariaLabel: 'Predict scores', Icon: PredictIcon, urgentKey: 'predict' },
       { to: '/meals', label: 'Meal bets', ariaLabel: 'Meal challenges', Icon: MealBetsIcon, urgentKey: 'meals' },
+      { to: '/arena', label: 'Arena', ariaLabel: 'Penalty shootout arena', Icon: ArenaIcon },
     ],
   },
   {

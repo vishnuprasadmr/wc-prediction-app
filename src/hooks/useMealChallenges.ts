@@ -6,7 +6,7 @@ import type {
   MealChallengePointStake,
   MealChallengeStatus,
 } from '../lib/mealChallenges'
-import { findMealChallengeWinners, isClaimCorrect, canAcceptMealBet } from '../lib/mealChallenges'
+import { isClaimCorrect, canAcceptMealBet, resolveMealChallengeWinner } from '../lib/mealChallenges'
 import type { Match } from '../lib/types'
 import { supabase } from '../lib/supabase'
 
@@ -315,13 +315,15 @@ export async function settleMealChallenge(
       created_at: row.created_at as string,
     })) ?? []
 
-  const winners = findMealChallengeWinners(match, picks, challenge.win_condition)
-  const winner = winners[0]
-  const winnerNote = winner
-    ? winners.length > 1
-      ? `${winner.display_name} wins (${winners.length} tied — earliest pick)`
-      : null
-    : 'No qualifying predictions for this challenge'
+  const winners = resolveMealChallengeWinner(
+    match,
+    picks,
+    challenge.creator_id,
+    challenge.acceptances,
+    challenge.win_condition,
+  )
+  const winner = winners.winner
+  const winnerNote = winners.winnerNote
 
   const claimCorrect = isClaimCorrect(match, challenge.backed_outcome ?? 'home_win')
 

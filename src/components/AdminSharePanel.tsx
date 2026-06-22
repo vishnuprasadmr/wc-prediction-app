@@ -58,6 +58,14 @@ import {
   prepareGameSnapshotBlob,
   shareGameSnapshotWithImage,
 } from '../lib/shareGameSnapshot'
+import {
+  buildShootoutVictoryInput,
+  buildShootoutVictoryShareText,
+  downloadShootoutVictoryImage,
+  prepareShootoutVictoryBlob,
+  shareShootoutVictoryWithImage,
+} from '../lib/shareShootoutVictory'
+import { useShootoutChallenges } from '../hooks/useShootoutChallenges'
 import { LeaderboardAvatar } from './LeaderboardAvatar'
 import type { Match } from '../lib/types'
 
@@ -72,6 +80,7 @@ type ShareTab =
   | 'leaderboard'
   | 'leader'
   | 'matchday'
+  | 'arena'
 
 function HeroPreview({
   pictureUrl,
@@ -166,8 +175,21 @@ export function AdminSharePanel() {
   const [selectedUpcomingId, setSelectedUpcomingId] = useState<string | null>(null)
   const [selectedMealLiveId, setSelectedMealLiveId] = useState<string | null>(null)
   const [selectedMealResultId, setSelectedMealResultId] = useState<string | null>(null)
+  const [selectedArenaId, setSelectedArenaId] = useState<string | null>(null)
   const [status, setStatus] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+
+  const { allCompleted: arenaCompleted, loading: arenaLoading } = useShootoutChallenges()
+
+  const selectedArena = useMemo(
+    () => arenaCompleted.find((c) => c.id === selectedArenaId) ?? arenaCompleted[0] ?? null,
+    [arenaCompleted, selectedArenaId],
+  )
+
+  const arenaVictoryInput = useMemo(
+    () => (selectedArena ? buildShootoutVictoryInput(selectedArena) : null),
+    [selectedArena],
+  )
 
   const { entries, loading } = useLeaderboard('all', league)
   const { lastMatch, hero, loading: heroLoading, error: heroError } = useLastMatchHero(matches)
@@ -297,6 +319,11 @@ export function AdminSharePanel() {
     tab === 'snapshot' && entries.length > 0,
     [gameSnapshotInput, tab, entries.length],
   )
+  const { blob: arenaBlob, generating: arenaGenerating } = useShareBlobCache(
+    () => prepareShootoutVictoryBlob(arenaVictoryInput!),
+    tab === 'arena' && Boolean(arenaVictoryInput),
+    [arenaVictoryInput, tab],
+  )
 
   const cardPreparing =
     (tab === 'snapshot' && snapshotGenerating) ||
@@ -306,7 +333,8 @@ export function AdminSharePanel() {
     (tab === 'meal-result' && mealResultGenerating) ||
     (tab === 'leaderboard' && leagueTableGenerating) ||
     (tab === 'leader' && leaderGenerating) ||
-    (tab === 'matchday' && matchdayGenerating)
+    (tab === 'matchday' && matchdayGenerating) ||
+    (tab === 'arena' && arenaGenerating)
 
   useEffect(() => {
     for (const e of topThree) {
@@ -344,6 +372,7 @@ export function AdminSharePanel() {
     { id: 'leaderboard', label: 'Point table', hint: 'Standings + latest hero' },
     { id: 'leader', label: 'Top 3', hint: 'Podium + daily challenge' },
     { id: 'matchday', label: 'Matchday', hint: 'Recent results grid' },
+    { id: 'arena', label: 'Arena win', hint: 'Shootout victory poster' },
   ]
 
   return (
@@ -1125,6 +1154,83 @@ export function AdminSharePanel() {
                 onCopy={() =>
                   void run(
                     () => shareStandings(buildMatchdayShareText(matchdayPreview)),
+                    'Copied!',
+                    'Copy failed',
+                  )
+                }
+              />
+            </>
+          )}
+        </div>
+      )}
+
+      {tab === 'arena' && (
+        <div className="mt-4 space-y-3">
+          {arenaLoading ? (
+            <div className="h-24 animate-pulse rounded-xl bg-muted" />
+          ) : arenaCompleted.length === 0 ? (
+            <p className="text-sm text-muted">No completed Arena duels yet.</p>
+          ) : (
+            <>
+              <select
+                value={selectedArena?.id ?? ''}
+                onChange={(e) => setSelectedArenaId(e.target.value)}
+                className="w-full rounded-lg bg-muted px-3 py-2 text-sm outline-none"
+              >
+                {arenaCompleted.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.winner_name} beat{' '}
+                    {c.winner_id === c.challenger_id ? c.opponent_name : c.challenger_name} ·{' '}
+                    {c.challenger_score}–{c.opponent_score}
+                  </option>
+                ))}
+              </select>
+
+              {arenaVictoryInput && selectedArena && (
+                <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 text-center">
+                  <LeaderboardAvatar
+                    name={arenaVictoryInput.winnerName}
+                    avatarUrl={arenaVictoryInput.winnerAvatarUrl}
+                    size="lg"
+                  />
+                  <p className="mt-2 text-xl font-bold">{arenaVictoryInput.winnerName}</p>
+                  <p className="text-sm text-muted">{arenaVictoryInput.winnerHeroLabel}</p>
+                  <p className="mt-2 font-mono text-2xl font-black text-simelabs">
+                    {arenaVictoryInput.challengerScore} – {arenaVictoryInput.opponentScore}
+                  </p>
+                  <p className="mt-1 text-xs text-muted">vs {arenaVictoryInput.loserName}</p>
+                </div>
+              )}
+
+              <ShareActions
+                busy={busy}
+                disabled={!arenaVictoryInput || arenaGenerating}
+                onShare={() =>
+                  void run(
+                    () =>
+                      arenaVictoryInput
+                        ? shareShootoutVictoryWithImage(arenaVictoryInput, arenaBlob)
+                        : Promise.resolve({ ok: false }),
+                    'Shared!',
+                    'Could not share',
+                  )
+                }
+                onDownload={() =>
+                  void run(
+                    () =>
+                      arenaVictoryInput
+                        ? downloadShootoutVictoryImage(arenaVictoryInput, arenaBlob)
+                        : Promise.resolve(false),
+                    'Downloaded!',
+                    'Download failed',
+                  )
+                }
+                onCopy={() =>
+                  void run(
+                    () =>
+                      arenaVictoryInput
+                        ? shareStandings(buildShootoutVictoryShareText(arenaVictoryInput))
+                        : Promise.resolve({ ok: false }),
                     'Copied!',
                     'Copy failed',
                   )

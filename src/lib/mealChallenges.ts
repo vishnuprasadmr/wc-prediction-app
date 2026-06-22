@@ -71,17 +71,17 @@ export const MEAL_CHALLENGE_WIN_OPTIONS: {
   {
     value: 'exact_score',
     label: 'Exact score',
-    hint: 'Perfect scoreline — earliest pick wins if more than one',
+    hint: 'Perfect scoreline among meal bet participants — earliest pick wins ties',
   },
   {
     value: 'correct_result',
     label: 'Correct result',
-    hint: 'Right winner or draw — earliest pick wins ties',
+    hint: 'Right winner or draw among participants — earliest pick wins ties',
   },
   {
     value: 'correct_winner',
     label: 'Correct winner',
-    hint: 'Picked the winning team — earliest pick wins ties',
+    hint: 'Picked the winning team among participants — earliest pick wins ties',
   },
 ]
 
@@ -188,6 +188,50 @@ export function findMealChallengeWinners(
   return eligible.sort(
     (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
   )
+}
+
+/** Creator + acceptors are the only people eligible to win the meal stake. */
+export function mealChallengeParticipantIds(
+  creatorId: string,
+  acceptances: Pick<MealChallengeAcceptance, 'user_id'>[],
+): Set<string> {
+  return new Set([creatorId, ...acceptances.map((a) => a.user_id)])
+}
+
+export function filterPicksToMealParticipants(
+  picks: MealChallengePick[],
+  creatorId: string,
+  acceptances: Pick<MealChallengeAcceptance, 'user_id'>[],
+): MealChallengePick[] {
+  const participantIds = mealChallengeParticipantIds(creatorId, acceptances)
+  return picks.filter((p) => participantIds.has(p.user_id))
+}
+
+export function resolveMealChallengeWinner(
+  match: Pick<Match, 'home_score' | 'away_score' | 'status'>,
+  allPicks: MealChallengePick[],
+  creatorId: string,
+  acceptances: Pick<MealChallengeAcceptance, 'user_id'>[],
+  condition: MealChallengeWinCondition,
+): { winner: MealChallengePick | null; winnerNote: string | null } {
+  const participantPicks = filterPicksToMealParticipants(allPicks, creatorId, acceptances)
+  const winners = findMealChallengeWinners(match, participantPicks, condition)
+  const winner = winners[0] ?? null
+
+  if (!winner) {
+    return {
+      winner: null,
+      winnerNote: 'No qualifying pick among meal bet participants',
+    }
+  }
+
+  return {
+    winner,
+    winnerNote:
+      winners.length > 1
+        ? `${winner.display_name} wins (${winners.length} tied among participants — earliest pick)`
+        : null,
+  }
 }
 
 export function formatMealChallengeHeadline(claim: string, stake: string): string {

@@ -13,6 +13,7 @@ interface LeaderboardPlayerSheetProps {
   currentUserId?: string
   onClose: () => void
   onSetRival?: (userId: string) => void
+  onArenaChallenge?: (userId: string) => void
 }
 
 function StatBar({
@@ -52,6 +53,7 @@ export function LeaderboardPlayerSheet({
   currentUserId,
   onClose,
   onSetRival,
+  onArenaChallenge,
 }: LeaderboardPlayerSheetProps) {
   const me = allEntries.find((e) => e.user_id === currentUserId)
   const isMe = entry?.user_id === currentUserId
@@ -225,6 +227,19 @@ export function LeaderboardPlayerSheet({
                     </span>
                   </p>
                 </div>
+              )}
+
+              {!isMe && onArenaChallenge && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onArenaChallenge(entry.user_id)
+                    onClose()
+                  }}
+                  className="mt-3 w-full rounded-xl border border-emerald-500/40 bg-emerald-500/10 py-3 text-sm font-semibold text-emerald-400 transition hover:opacity-90"
+                >
+                  Challenge to Arena shootout
+                </button>
               )}
 
               {!isMe && onSetRival && (
