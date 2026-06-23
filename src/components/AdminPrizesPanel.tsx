@@ -214,12 +214,13 @@ export function AdminPrizesPanel() {
           />
         </label>
         <div className="rounded-lg bg-muted/60 px-3 py-3 sm:col-span-2">
-          <p className="type-caption font-medium text-muted">Total prize pool (from rows)</p>
+          <p className="type-caption font-medium text-muted">Overall prize pool (from rows)</p>
           <p className="mt-1 font-heading text-2xl font-black tabular-nums text-simelabs">
             {formatInr(poolTotal)}
           </p>
-          <p className="type-caption mt-1 text-muted">
-            Paid as Zomato e-gift cards · rows must add up to this total
+          <p className="type-caption mt-1 text-pretty text-muted">
+            Shared across all award rows — not the Champion prize alone. Rows must add up to this
+            total.
           </p>
           {totalMismatch && (
             <p className="mt-2 text-xs font-medium text-amber-400">
@@ -239,7 +240,9 @@ export function AdminPrizesPanel() {
       </div>
 
       <div className="mt-4 space-y-3">
-        <p className="type-caption font-semibold uppercase text-muted">Prize breakdown</p>
+        <p className="type-caption font-semibold uppercase text-muted">
+          Individual awards (each line is part of the pool, not the full pool)
+        </p>
         {rows.map((row, index) => (
           <div key={row.id ?? `new-${index}`} className="rounded-xl border border-default bg-card p-3">
             <div className="grid gap-2 sm:grid-cols-12">

@@ -40,7 +40,9 @@ function attachRealtime(listener: () => void) {
       .channel('shootout-arena')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'shootout_challenges' }, notify)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'shootout_kicks' }, notify)
-      .subscribe()
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') notify()
+      })
   }
   return () => {
     listeners.delete(listener)

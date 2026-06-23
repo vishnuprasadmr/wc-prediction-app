@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, useCallback, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
@@ -53,6 +53,8 @@ export function ArenaPage() {
     () => entries.filter((e) => e.user_id !== user?.id),
     [entries, user?.id],
   )
+
+  const syncArena = useCallback(() => void refetch(), [refetch])
 
   const activeChallenge = useMemo(
     () => active.find((c) => c.id === activeGameId) ?? myTurn[0] ?? null,
@@ -290,10 +292,11 @@ export function ArenaPage() {
 
       {activeChallenge && (
         <ShootoutGameScreen
+          key={`${activeChallenge.id}-${activeChallenge.updated_at}-${activeChallenge.kick_number}-${activeChallenge.phase}`}
           challenge={activeChallenge}
           open={Boolean(activeGameId)}
           onClose={() => setActiveGameId(null)}
-          onComplete={() => void refetch()}
+          onComplete={syncArena}
         />
       )}
     </div>

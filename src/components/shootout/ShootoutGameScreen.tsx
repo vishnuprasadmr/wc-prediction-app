@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../contexts/AuthContext'
 import type { ShootoutChallengeView } from '../../hooks/useShootoutChallenges'
@@ -13,6 +13,7 @@ import { fireCelebration } from '../../lib/confetti'
 import { ShootoutGoal } from './ShootoutGoal'
 import { KickResultOverlay, ShootoutScoreboard } from './ShootoutScoreboard'
 import { ShootoutVictoryScreen } from './ShootoutVictoryScreen'
+import { useShootoutGameSync } from '../../hooks/useShootoutGameSync'
 
 interface ShootoutGameScreenProps {
   challenge: ShootoutChallengeView
@@ -37,11 +38,29 @@ export function ShootoutGameScreen({
   } | null>(null)
   const [showVictory, setShowVictory] = useState(false)
 
+  const [syncing, setSyncing] = useState(false)
+
+  const syncChallenge = useCallback(() => {
+    setSyncing(true)
+    onComplete()
+    window.setTimeout(() => setSyncing(false), 600)
+  }, [onComplete])
+
   useEffect(() => {
     if (open && challenge.status === 'completed' && challenge.winner_id) {
       setShowVictory(true)
     }
   }, [open, challenge.status, challenge.winner_id])
+
+  useEffect(() => {
+    if (!open) {
+      setShowVictory(false)
+      setOverlay(null)
+      setBusy(false)
+    }
+  }, [open])
+
+  useShootoutGameSync(open, challenge.id, challenge.status, syncChallenge)
 
   if (!user || !open) return null
 
@@ -78,7 +97,7 @@ export function ShootoutGameScreen({
       return
     }
     playSound('select')
-    onComplete()
+    syncChallenge()
   }
 
   const handleShot = async (zone: ShootoutZone) => {
@@ -113,7 +132,7 @@ export function ShootoutGameScreen({
     if (result.completed) {
       fireCelebration('podium')
     }
-    onComplete()
+    syncChallenge()
   }
 
   const closeOverlay = () => {
@@ -161,6 +180,14 @@ export function ShootoutGameScreen({
                       ? `${keeperName} is choosing a dive`
                       : `${kickerName} is taking their shot`}
                   </p>
+                  <button
+                    type="button"
+                    onClick={syncChallenge}
+                    disabled={syncing}
+                    className="mt-3 rounded-lg border border-amber-400/40 px-3 py-1.5 text-xs font-semibold text-amber-200 disabled:opacity-50"
+                  >
+                    {syncing ? 'Checking…' : 'Check for update'}
+                  </button>
                 </div>
               )}
 

@@ -44,3 +44,8 @@ export function resolvePrizePoolTotal(
   if (rowTotal > 0) return rowTotal
   return configTotalInr ?? 0
 }
+
+export function prizePoolShare(amount: number, poolTotal: number): number {
+  if (poolTotal <= 0) return 0
+  return Math.round((amount / poolTotal) * 100)
+}
