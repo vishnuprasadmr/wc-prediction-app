@@ -34,3 +34,13 @@ export function formatZomatoGiftCardValue(amount: number): string {
 export function sumPrizeAmounts(prizes: Pick<LeaguePrize, 'amount_inr'>[]): number {
   return prizes.reduce((sum, p) => sum + p.amount_inr, 0)
 }
+
+/** Prize rows are the source of truth; fall back to config when no rows yet. */
+export function resolvePrizePoolTotal(
+  prizes: Pick<LeaguePrize, 'amount_inr'>[],
+  configTotalInr?: number,
+): number {
+  const rowTotal = sumPrizeAmounts(prizes)
+  if (rowTotal > 0) return rowTotal
+  return configTotalInr ?? 0
+}

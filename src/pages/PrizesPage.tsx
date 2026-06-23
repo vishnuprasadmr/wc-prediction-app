@@ -2,13 +2,13 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { useLeaguePrizes } from '../hooks/useLeaguePrizes'
-import { formatInr, sumPrizeAmounts, ZOMATO_GIFT_CARD_LABEL, ZOMATO_GIFT_CARD_TAGLINE } from '../lib/prizes'
+import { formatInr, resolvePrizePoolTotal, ZOMATO_GIFT_CARD_TAGLINE } from '../lib/prizes'
 
 export function PrizesPage() {
   const { profile } = useAuth()
   const { config, prizes, loading } = useLeaguePrizes()
   const isAdmin = Boolean(profile?.is_admin)
-  const poolTotal = config ? sumPrizeAmounts(prizes) : 0
+  const poolTotal = config ? resolvePrizePoolTotal(prizes, config.total_inr) : 0
 
   if (loading) {
     return (
@@ -59,16 +59,13 @@ export function PrizesPage() {
         <p className="type-overline text-simelabs">Tournament prizes</p>
         <h1 className="type-display mt-2">{config.headline}</h1>
         <p className="type-body-sm mx-auto mt-2 max-w-md text-pretty text-muted">{config.intro}</p>
-        <p className="mt-4 font-heading text-4xl font-black text-simelabs">
-          {formatInr(config.total_inr)}
+        <p className="mt-4 font-heading text-4xl font-black tabular-nums text-simelabs">
+          {formatInr(poolTotal)}
         </p>
-        <p className="mt-2 text-sm font-semibold text-theme">{ZOMATO_GIFT_CARD_LABEL}</p>
-        <p className="type-caption mt-1 text-muted">{ZOMATO_GIFT_CARD_TAGLINE}</p>
-        {poolTotal > 0 && poolTotal !== config.total_inr && (
-          <p className="type-caption mt-1 text-muted">
-            Prize rows total {formatInr(poolTotal)} — adjust in admin if needed
-          </p>
-        )}
+        <p className="mt-2 text-sm font-medium text-theme">Total prize pool</p>
+        <p className="type-caption mt-1 text-muted">
+          Paid as Zomato e-gift cards · {ZOMATO_GIFT_CARD_TAGLINE}
+        </p>
       </motion.div>
 
       <div className="space-y-3">
@@ -86,14 +83,9 @@ export function PrizesPage() {
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <h2 className="font-bold text-theme">{prize.title}</h2>
-                <div className="shrink-0 text-right">
-                  <span className="block font-heading text-xl font-extrabold text-simelabs">
-                    {formatInr(prize.amount_inr)}
-                  </span>
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-[#E23744]">
-                    {ZOMATO_GIFT_CARD_LABEL}
-                  </span>
-                </div>
+                <span className="shrink-0 font-heading text-xl font-extrabold tabular-nums text-simelabs">
+                  {formatInr(prize.amount_inr)}
+                </span>
               </div>
               <p className="mt-1 text-sm font-semibold text-simelabs">{prize.winner_rule}</p>
               {prize.description && (

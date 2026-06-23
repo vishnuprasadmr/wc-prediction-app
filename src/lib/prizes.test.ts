@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatInr, formatZomatoGiftCardValue, sumPrizeAmounts } from './prizes'
+import { formatInr, formatZomatoGiftCardValue, resolvePrizePoolTotal, sumPrizeAmounts } from './prizes'
 
 describe('prizes', () => {
   it('formats INR without decimals', () => {
@@ -13,5 +13,11 @@ describe('prizes', () => {
 
   it('sums prize rows', () => {
     expect(sumPrizeAmounts([{ amount_inr: 1500 }, { amount_inr: 800 }])).toBe(2300)
+  })
+
+  it('prefers row sum for pool total', () => {
+    const rows = [{ amount_inr: 1500 }, { amount_inr: 800 }, { amount_inr: 500 }]
+    expect(resolvePrizePoolTotal(rows, 9999)).toBe(2800)
+    expect(resolvePrizePoolTotal([], 5000)).toBe(5000)
   })
 })

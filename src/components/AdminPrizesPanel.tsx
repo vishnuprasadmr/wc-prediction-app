@@ -2,7 +2,12 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { LeaguePrize, LeaguePrizeConfig } from '../lib/prizes'
-import { formatInr, sumPrizeAmounts, ZOMATO_GIFT_CARD_LABEL, ZOMATO_GIFT_CARD_TAGLINE } from '../lib/prizes'
+import {
+  formatInr,
+  resolvePrizePoolTotal,
+  sumPrizeAmounts,
+  ZOMATO_GIFT_CARD_TAGLINE,
+} from '../lib/prizes'
 import { useLeaguePrizes } from '../hooks/useLeaguePrizes'
 
 type PrizeDraft = Omit<LeaguePrize, 'id'> & { id?: string }
@@ -51,6 +56,8 @@ export function AdminPrizesPanel() {
   }, [prizes])
 
   const rowTotal = sumPrizeAmounts(rows)
+  const poolTotal = resolvePrizePoolTotal(rows, totalInr)
+  const totalMismatch = rowTotal > 0 && rowTotal !== totalInr
 
   const updateRow = (index: number, patch: Partial<PrizeDraft>) => {
     setRows((prev) => prev.map((row, i) => (i === index ? { ...row, ...patch } : row)))
@@ -83,11 +90,13 @@ export function AdminPrizesPanel() {
     setSaving(true)
     setMessage(null)
 
+    const syncedTotal = rowTotal > 0 ? rowTotal : totalInr
+
     const configPayload: LeaguePrizeConfig = {
       published,
-      headline: headline.trim() || 'Prize pool',
+      headline: headline.trim() || 'Tournament prize pool',
       intro: intro.trim(),
-      total_inr: totalInr,
+      total_inr: syncedTotal,
       footer_note: footerNote.trim(),
     }
 
@@ -204,20 +213,20 @@ export function AdminPrizesPanel() {
             className="w-full rounded-lg bg-muted px-3 py-2 text-sm outline-none ring-simelabs/40 focus:ring-2"
           />
         </label>
-        <label className="block">
-          <span className="type-caption mb-1 block font-medium">Total gift card value (₹)</span>
-          <input
-            type="number"
-            min={0}
-            value={totalInr}
-            onChange={(e) => setTotalInr(Number(e.target.value) || 0)}
-            className="w-full rounded-lg bg-muted px-3 py-2 text-sm outline-none ring-simelabs/40 focus:ring-2"
-          />
-        </label>
-        <div className="flex items-end rounded-lg bg-muted/60 px-3 py-2 text-sm">
-          <span className="text-muted">
-            Rows sum: <strong className="text-theme">{formatInr(rowTotal)}</strong>
-          </span>
+        <div className="rounded-lg bg-muted/60 px-3 py-3 sm:col-span-2">
+          <p className="type-caption font-medium text-muted">Total prize pool (from rows)</p>
+          <p className="mt-1 font-heading text-2xl font-black tabular-nums text-simelabs">
+            {formatInr(poolTotal)}
+          </p>
+          <p className="type-caption mt-1 text-muted">
+            Paid as Zomato e-gift cards · rows must add up to this total
+          </p>
+          {totalMismatch && (
+            <p className="mt-2 text-xs font-medium text-amber-400">
+              Manual total {formatInr(totalInr)} differs from rows {formatInr(rowTotal)} — saving
+              will sync to {formatInr(rowTotal)}.
+            </p>
+          )}
         </div>
         <label className="block sm:col-span-2">
           <span className="type-caption mb-1 block font-medium">Footer note</span>
@@ -230,9 +239,7 @@ export function AdminPrizesPanel() {
       </div>
 
       <div className="mt-4 space-y-3">
-        <p className="type-caption font-semibold uppercase text-muted">
-          Prize breakdown · {ZOMATO_GIFT_CARD_LABEL}
-        </p>
+        <p className="type-caption font-semibold uppercase text-muted">Prize breakdown</p>
         {rows.map((row, index) => (
           <div key={row.id ?? `new-${index}`} className="rounded-xl border border-default bg-card p-3">
             <div className="grid gap-2 sm:grid-cols-12">
