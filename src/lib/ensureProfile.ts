@@ -160,14 +160,15 @@ export async function ensureUserProfile(user: User): Promise<void> {
         (typeof meta.display_name === 'string' ? meta.display_name : undefined),
     )
 
-    const { error: updateError } = await supabase.from('profiles').upsert({
-      id: user.id,
-      display_name: displayName,
-      league_id: LEAGUE_ID,
-      is_admin: false,
-      employee_id: parsed.normalized,
-      avatar_url: resolveUserAvatarUrl(user),
-    })
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({
+        display_name: displayName,
+        league_id: LEAGUE_ID,
+        employee_id: parsed.normalized,
+        avatar_url: resolveUserAvatarUrl(user),
+      })
+      .eq('id', user.id)
 
     if (updateError) {
       throw new Error(updateError.message || 'Could not update your employee profile.')
