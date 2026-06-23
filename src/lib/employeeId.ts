@@ -14,14 +14,17 @@ export function isSimelabsEmployee(profile: Profile | null | undefined): boolean
   return validateEmployeeId(profile.employee_id).valid
 }
 
+/** Matches normalized and legacy SML IDs stored in profiles (e.g. SML 457, SML457). */
+export const SIMELABS_EMPLOYEE_ID_PATTERN = /^SML\s*\d+$/i
+
 /** Valid SML employee ID — can view the private Simelabs point table. */
 export function canViewSimelabsLeaderboard(profile: Profile | null | undefined): boolean {
-  return isSimelabsEmployee(profile)
+  return isSimelabsEmployee(profile) || Boolean(profile?.is_admin)
 }
 
 export function isSimelabsLeaderboardEntry(entry: LeaderboardEntry): boolean {
   if (!entry.employee_id) return false
-  return validateEmployeeId(entry.employee_id).valid
+  return SIMELABS_EMPLOYEE_ID_PATTERN.test(entry.employee_id.trim())
 }
 
 export function validateEmployeeId(input: string):

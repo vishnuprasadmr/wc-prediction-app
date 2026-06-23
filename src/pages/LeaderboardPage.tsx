@@ -59,18 +59,18 @@ export function LeaderboardPage() {
 
   const tournamentStarted = useMemo(() => hasFinishedMatches(matches, 'all'), [matches])
 
-  const rankingsAvailable = useMemo(
-    () => hasFinishedMatches(matches, stage),
+  const stageHasResults = useMemo(
+    () => stage === 'all' || hasFinishedMatches(matches, stage),
     [matches, stage],
   )
 
-  const effectiveStage = rankingsAvailable ? stage : 'all'
-  const { entries, heartTeams, loading } = useLeaderboard(effectiveStage, effectiveLeague)
+  const effectiveStage = stageHasResults ? stage : 'all'
+  const { entries, heartTeams, loading, error } = useLeaderboard(effectiveStage, effectiveLeague)
 
   const { reveal: rankReveal } = useLeaderboardReveal(
     entries,
     loading,
-    rankingsAvailable,
+    tournamentStarted,
     `${effectiveStage}:${effectiveLeague}`,
   )
 
@@ -128,7 +128,7 @@ export function LeaderboardPage() {
         <div>
           <p className="type-overline !text-[10px]">Simelabs WC 26</p>
           <h2 className="type-section-title">
-            {rankingsAvailable ? 'Point Table' : 'League Players'}
+            {tournamentStarted ? 'Point Table' : 'League Players'}
           </h2>
         </div>
         <button
@@ -157,23 +157,38 @@ export function LeaderboardPage() {
 
       {tournamentStarted && (
         <div className="flex gap-2 overflow-x-auto pb-1">
-          {stages.map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setStage(key)}
-              className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium transition ${
-                stage === key
-                  ? 'bg-simelabs text-simelabs-foreground'
-                  : 'bg-muted text-muted hover:text-theme'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+          {stages.map(({ key, label }) => {
+            const disabled = key !== 'all' && !hasFinishedMatches(matches, key)
+            return (
+              <button
+                key={key}
+                type="button"
+                disabled={disabled}
+                onClick={() => setStage(key)}
+                className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium transition ${
+                  stage === key
+                    ? 'bg-simelabs text-simelabs-foreground'
+                    : disabled
+                      ? 'cursor-not-allowed bg-muted/60 text-muted/50'
+                      : 'bg-muted text-muted hover:text-theme'
+                }`}
+              >
+                {label}
+              </button>
+            )
+          })}
         </div>
       )}
 
-      {rankingsAvailable && entries.length > 0 && (
+      {error && !loading && (
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-theme">
+          {error.includes('Simelabs')
+            ? 'Simelabs point table is for verified employees. Add your SML employee ID on your profile, or sign in as an admin.'
+            : error}
+        </div>
+      )}
+
+      {tournamentStarted && entries.length > 0 && (
         <LeaderboardToolbar
           search={search}
           onSearchChange={setSearch}
@@ -186,19 +201,26 @@ export function LeaderboardPage() {
         />
       )}
 
-      <LeaderboardTable
-        entries={displayEntries}
-        allEntries={entries}
-        heartTeams={heartTeams}
-        loading={loading}
-        rankingsAvailable={rankingsAvailable}
-        rankReveal={rankReveal}
-        selectedPlayerId={selectedPlayerId}
-        onSelectPlayer={handleSelectPlayer}
-        onSetRival={handleSetRival}
-        onArenaChallenge={(id) => navigate(`/arena?opponent=${id}`)}
-        highlightUserId={highlightUserId}
-      />
+      {!(error && !loading && entries.length === 0) && (
+        <LeaderboardTable
+          entries={displayEntries}
+          allEntries={entries}
+          heartTeams={heartTeams}
+          loading={loading}
+          rankingsAvailable={tournamentStarted}
+          rankReveal={rankReveal}
+          selectedPlayerId={selectedPlayerId}
+          onSelectPlayer={handleSelectPlayer}
+          onSetRival={handleSetRival}
+          onArenaChallenge={(id) => navigate(`/arena?opponent=${id}`)}
+          highlightUserId={highlightUserId}
+          emptyMessage={
+            effectiveLeague === 'simelabs' && displayEntries.length === 0
+              ? 'No Simelabs employees on the table yet.'
+              : undefined
+          }
+        />
+      )}
 
       <HeadToHeadCard
         entries={entries}

@@ -24,6 +24,7 @@ interface LeaderboardTableProps {
   onSetRival?: (userId: string) => void
   onArenaChallenge?: (userId: string) => void
   highlightUserId?: string | null
+  emptyMessage?: string
 }
 
 function rankRowMotion(isMe: boolean, reveal: RankReveal | null | undefined) {
@@ -163,6 +164,7 @@ export function LeaderboardTable({
   onSetRival,
   onArenaChallenge,
   highlightUserId,
+  emptyMessage,
 }: LeaderboardTableProps) {
   const { user } = useAuth()
   const fullEntries = allEntries ?? entries
@@ -264,8 +266,12 @@ export function LeaderboardTable({
     return (
       <div className="rounded-2xl border border-default bg-card p-8 text-center">
         <p className="text-4xl">🔍</p>
-        <p className="mt-2 font-medium text-subtle">No players match</p>
-        <p className="mt-1 text-sm text-muted">Try a different search or clear filters.</p>
+        <p className="mt-2 font-medium text-subtle">
+          {emptyMessage ?? 'No players match'}
+        </p>
+        {!emptyMessage && (
+          <p className="mt-1 text-sm text-muted">Try a different search or clear filters.</p>
+        )}
       </div>
     )
   }
