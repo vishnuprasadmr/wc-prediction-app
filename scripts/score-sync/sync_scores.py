@@ -140,7 +140,7 @@ def fetch_db_matches(supabase_url: str, service_key: str) -> dict[int, dict[str,
     resp = requests.get(
         f"{supabase_url}/rest/v1/matches",
         params={
-            "select": "id,api_fixture_id,manual_override,home_score,away_score,status,home_team,away_team",
+            "select": "id,api_fixture_id,manual_override,home_score,away_score,status,home_team,away_team,kickoff_at",
         },
         headers=supabase_headers(service_key),
         timeout=60,

@@ -17,6 +17,8 @@
     "test:scoring": "vitest run src/lib/scoring.test.ts",
     "seed:fixtures": "node scripts/generate-fixtures.mjs && node scripts/seed-fixtures.mjs",
     "sync:schedule": "node scripts/generate-fixtures.mjs && node scripts/generate-full-db-sync.mjs",
+    "sync:fixtures": "py -3 scripts/score-sync/sync_fixtures.py",
+    "sync:fixtures:dry": "py -3 scripts/score-sync/sync_fixtures.py --dry-run",
     "sync:scores": "py -3 scripts/score-sync/sync_scores.py",
     "sync:scores:dry": "py -3 scripts/score-sync/sync_scores.py --dry-run",
     "generate:match-cron": "node scripts/generate-match-sync-schedule.mjs > scripts/match-sync-schedule.sql",

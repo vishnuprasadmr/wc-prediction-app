@@ -809,7 +809,7 @@ ON CONFLICT (api_fixture_id) DO UPDATE SET
   kickoff_at = EXCLUDED.kickoff_at;
 
 INSERT INTO matches (api_fixture_id, stage, group_name, home_team, away_team, home_flag, away_flag, kickoff_at, status)
-VALUES (2072, 'Round of 32', NULL, 'TBD', 'TBD', '🏳️', '🏳️', '2026-06-28T19:00:00.000Z'::timestamptz, 'scheduled')
+VALUES (2072, 'Round of 32', NULL, 'South Africa', 'Canada', '🇿🇦', '🇨🇦', '2026-06-28T19:00:00.000Z'::timestamptz, 'scheduled')
 ON CONFLICT (api_fixture_id) DO UPDATE SET
   stage = EXCLUDED.stage,
   group_name = EXCLUDED.group_name,
@@ -820,7 +820,7 @@ ON CONFLICT (api_fixture_id) DO UPDATE SET
   kickoff_at = EXCLUDED.kickoff_at;
 
 INSERT INTO matches (api_fixture_id, stage, group_name, home_team, away_team, home_flag, away_flag, kickoff_at, status)
-VALUES (2073, 'Round of 32', NULL, 'TBD', 'TBD', '🏳️', '🏳️', '2026-06-29T17:00:00.000Z'::timestamptz, 'scheduled')
+VALUES (2073, 'Round of 32', NULL, 'Germany', 'Paraguay', '🇩🇪', '🇵🇾', '2026-06-29T20:30:00.000Z'::timestamptz, 'scheduled')
 ON CONFLICT (api_fixture_id) DO UPDATE SET
   stage = EXCLUDED.stage,
   group_name = EXCLUDED.group_name,
@@ -831,7 +831,7 @@ ON CONFLICT (api_fixture_id) DO UPDATE SET
   kickoff_at = EXCLUDED.kickoff_at;
 
 INSERT INTO matches (api_fixture_id, stage, group_name, home_team, away_team, home_flag, away_flag, kickoff_at, status)
-VALUES (2074, 'Round of 32', NULL, 'TBD', 'TBD', '🏳️', '🏳️', '2026-06-29T20:30:00.000Z'::timestamptz, 'scheduled')
+VALUES (2074, 'Round of 32', NULL, 'Netherlands', 'Morocco', '🇳🇱', '🇲🇦', '2026-06-30T01:00:00.000Z'::timestamptz, 'scheduled')
 ON CONFLICT (api_fixture_id) DO UPDATE SET
   stage = EXCLUDED.stage,
   group_name = EXCLUDED.group_name,
@@ -842,7 +842,7 @@ ON CONFLICT (api_fixture_id) DO UPDATE SET
   kickoff_at = EXCLUDED.kickoff_at;
 
 INSERT INTO matches (api_fixture_id, stage, group_name, home_team, away_team, home_flag, away_flag, kickoff_at, status)
-VALUES (2075, 'Round of 32', NULL, 'TBD', 'TBD', '🏳️', '🏳️', '2026-06-30T01:00:00.000Z'::timestamptz, 'scheduled')
+VALUES (2075, 'Round of 32', NULL, 'Brazil', 'Japan', '🇧🇷', '🇯🇵', '2026-06-29T17:00:00.000Z'::timestamptz, 'scheduled')
 ON CONFLICT (api_fixture_id) DO UPDATE SET
   stage = EXCLUDED.stage,
   group_name = EXCLUDED.group_name,
@@ -853,7 +853,7 @@ ON CONFLICT (api_fixture_id) DO UPDATE SET
   kickoff_at = EXCLUDED.kickoff_at;
 
 INSERT INTO matches (api_fixture_id, stage, group_name, home_team, away_team, home_flag, away_flag, kickoff_at, status)
-VALUES (2076, 'Round of 32', NULL, 'TBD', 'TBD', '🏳️', '🏳️', '2026-06-30T17:00:00.000Z'::timestamptz, 'scheduled')
+VALUES (2076, 'Round of 32', NULL, 'France', 'Sweden', '🇫🇷', '🇸🇪', '2026-06-30T21:00:00.000Z'::timestamptz, 'scheduled')
 ON CONFLICT (api_fixture_id) DO UPDATE SET
   stage = EXCLUDED.stage,
   group_name = EXCLUDED.group_name,
@@ -864,7 +864,7 @@ ON CONFLICT (api_fixture_id) DO UPDATE SET
   kickoff_at = EXCLUDED.kickoff_at;
 
 INSERT INTO matches (api_fixture_id, stage, group_name, home_team, away_team, home_flag, away_flag, kickoff_at, status)
-VALUES (2077, 'Round of 32', NULL, 'TBD', 'TBD', '🏳️', '🏳️', '2026-06-30T21:00:00.000Z'::timestamptz, 'scheduled')
+VALUES (2077, 'Round of 32', NULL, 'Ivory Coast', 'Norway', '🇨🇮', '🇳🇴', '2026-06-30T17:00:00.000Z'::timestamptz, 'scheduled')
 ON CONFLICT (api_fixture_id) DO UPDATE SET
   stage = EXCLUDED.stage,
   group_name = EXCLUDED.group_name,
@@ -875,7 +875,7 @@ ON CONFLICT (api_fixture_id) DO UPDATE SET
   kickoff_at = EXCLUDED.kickoff_at;
 
 INSERT INTO matches (api_fixture_id, stage, group_name, home_team, away_team, home_flag, away_flag, kickoff_at, status)
-VALUES (2078, 'Round of 32', NULL, 'TBD', 'TBD', '🏳️', '🏳️', '2026-07-01T01:00:00.000Z'::timestamptz, 'scheduled')
+VALUES (2078, 'Round of 32', NULL, 'Mexico', 'Ecuador', '🇲🇽', '🇪🇨', '2026-07-01T01:00:00.000Z'::timestamptz, 'scheduled')
 ON CONFLICT (api_fixture_id) DO UPDATE SET
   stage = EXCLUDED.stage,
   group_name = EXCLUDED.group_name,
@@ -886,7 +886,7 @@ ON CONFLICT (api_fixture_id) DO UPDATE SET
   kickoff_at = EXCLUDED.kickoff_at;
 
 INSERT INTO matches (api_fixture_id, stage, group_name, home_team, away_team, home_flag, away_flag, kickoff_at, status)
-VALUES (2079, 'Round of 32', NULL, 'TBD', 'TBD', '🏳️', '🏳️', '2026-07-01T16:00:00.000Z'::timestamptz, 'scheduled')
+VALUES (2079, 'Round of 32', NULL, 'England', 'TBD', '🏴󠁧󠁢󠁥󠁮󠁧󠁿', '🏳️', '2026-07-01T16:00:00.000Z'::timestamptz, 'scheduled')
 ON CONFLICT (api_fixture_id) DO UPDATE SET
   stage = EXCLUDED.stage,
   group_name = EXCLUDED.group_name,
@@ -897,7 +897,7 @@ ON CONFLICT (api_fixture_id) DO UPDATE SET
   kickoff_at = EXCLUDED.kickoff_at;
 
 INSERT INTO matches (api_fixture_id, stage, group_name, home_team, away_team, home_flag, away_flag, kickoff_at, status)
-VALUES (2080, 'Round of 32', NULL, 'TBD', 'TBD', '🏳️', '🏳️', '2026-07-01T20:00:00.000Z'::timestamptz, 'scheduled')
+VALUES (2080, 'Round of 32', NULL, 'USA', 'Bosnia and Herzegovina', '🇺🇸', '🇧🇦', '2026-07-02T00:00:00.000Z'::timestamptz, 'scheduled')
 ON CONFLICT (api_fixture_id) DO UPDATE SET
   stage = EXCLUDED.stage,
   group_name = EXCLUDED.group_name,
@@ -908,7 +908,7 @@ ON CONFLICT (api_fixture_id) DO UPDATE SET
   kickoff_at = EXCLUDED.kickoff_at;
 
 INSERT INTO matches (api_fixture_id, stage, group_name, home_team, away_team, home_flag, away_flag, kickoff_at, status)
-VALUES (2081, 'Round of 32', NULL, 'TBD', 'TBD', '🏳️', '🏳️', '2026-07-01T20:00:00.000Z'::timestamptz, 'scheduled')
+VALUES (2081, 'Round of 32', NULL, 'Belgium', 'TBD', '🇧🇪', '🏳️', '2026-07-01T20:00:00.000Z'::timestamptz, 'scheduled')
 ON CONFLICT (api_fixture_id) DO UPDATE SET
   stage = EXCLUDED.stage,
   group_name = EXCLUDED.group_name,
@@ -919,7 +919,7 @@ ON CONFLICT (api_fixture_id) DO UPDATE SET
   kickoff_at = EXCLUDED.kickoff_at;
 
 INSERT INTO matches (api_fixture_id, stage, group_name, home_team, away_team, home_flag, away_flag, kickoff_at, status)
-VALUES (2082, 'Round of 32', NULL, 'TBD', 'TBD', '🏳️', '🏳️', '2026-07-02T00:00:00.000Z'::timestamptz, 'scheduled')
+VALUES (2082, 'Round of 32', NULL, 'TBD', 'Croatia', '🏳️', '🇭🇷', '2026-07-02T23:00:00.000Z'::timestamptz, 'scheduled')
 ON CONFLICT (api_fixture_id) DO UPDATE SET
   stage = EXCLUDED.stage,
   group_name = EXCLUDED.group_name,
@@ -930,7 +930,7 @@ ON CONFLICT (api_fixture_id) DO UPDATE SET
   kickoff_at = EXCLUDED.kickoff_at;
 
 INSERT INTO matches (api_fixture_id, stage, group_name, home_team, away_team, home_flag, away_flag, kickoff_at, status)
-VALUES (2083, 'Round of 32', NULL, 'TBD', 'TBD', '🏳️', '🏳️', '2026-07-02T19:00:00.000Z'::timestamptz, 'scheduled')
+VALUES (2083, 'Round of 32', NULL, 'Spain', 'TBD', '🇪🇸', '🏳️', '2026-07-02T19:00:00.000Z'::timestamptz, 'scheduled')
 ON CONFLICT (api_fixture_id) DO UPDATE SET
   stage = EXCLUDED.stage,
   group_name = EXCLUDED.group_name,
@@ -941,7 +941,7 @@ ON CONFLICT (api_fixture_id) DO UPDATE SET
   kickoff_at = EXCLUDED.kickoff_at;
 
 INSERT INTO matches (api_fixture_id, stage, group_name, home_team, away_team, home_flag, away_flag, kickoff_at, status)
-VALUES (2084, 'Round of 32', NULL, 'TBD', 'TBD', '🏳️', '🏳️', '2026-07-02T23:00:00.000Z'::timestamptz, 'scheduled')
+VALUES (2084, 'Round of 32', NULL, 'Switzerland', 'TBD', '🇨🇭', '🏳️', '2026-07-03T03:00:00.000Z'::timestamptz, 'scheduled')
 ON CONFLICT (api_fixture_id) DO UPDATE SET
   stage = EXCLUDED.stage,
   group_name = EXCLUDED.group_name,
@@ -952,7 +952,7 @@ ON CONFLICT (api_fixture_id) DO UPDATE SET
   kickoff_at = EXCLUDED.kickoff_at;
 
 INSERT INTO matches (api_fixture_id, stage, group_name, home_team, away_team, home_flag, away_flag, kickoff_at, status)
-VALUES (2085, 'Round of 32', NULL, 'TBD', 'TBD', '🏳️', '🏳️', '2026-07-03T03:00:00.000Z'::timestamptz, 'scheduled')
+VALUES (2085, 'Round of 32', NULL, 'Argentina', 'Cape Verde', '🇦🇷', '🇨🇻', '2026-07-03T22:00:00.000Z'::timestamptz, 'scheduled')
 ON CONFLICT (api_fixture_id) DO UPDATE SET
   stage = EXCLUDED.stage,
   group_name = EXCLUDED.group_name,
@@ -963,7 +963,7 @@ ON CONFLICT (api_fixture_id) DO UPDATE SET
   kickoff_at = EXCLUDED.kickoff_at;
 
 INSERT INTO matches (api_fixture_id, stage, group_name, home_team, away_team, home_flag, away_flag, kickoff_at, status)
-VALUES (2086, 'Round of 32', NULL, 'TBD', 'TBD', '🏳️', '🏳️', '2026-07-03T18:00:00.000Z'::timestamptz, 'scheduled')
+VALUES (2086, 'Round of 32', NULL, 'TBD', 'Ghana', '🏳️', '🇬🇭', '2026-07-04T01:30:00.000Z'::timestamptz, 'scheduled')
 ON CONFLICT (api_fixture_id) DO UPDATE SET
   stage = EXCLUDED.stage,
   group_name = EXCLUDED.group_name,
@@ -974,7 +974,7 @@ ON CONFLICT (api_fixture_id) DO UPDATE SET
   kickoff_at = EXCLUDED.kickoff_at;
 
 INSERT INTO matches (api_fixture_id, stage, group_name, home_team, away_team, home_flag, away_flag, kickoff_at, status)
-VALUES (2087, 'Round of 32', NULL, 'TBD', 'TBD', '🏳️', '🏳️', '2026-07-03T22:00:00.000Z'::timestamptz, 'scheduled')
+VALUES (2087, 'Round of 32', NULL, 'Australia', 'Egypt', '🇦🇺', '🇪🇬', '2026-07-03T18:00:00.000Z'::timestamptz, 'scheduled')
 ON CONFLICT (api_fixture_id) DO UPDATE SET
   stage = EXCLUDED.stage,
   group_name = EXCLUDED.group_name,

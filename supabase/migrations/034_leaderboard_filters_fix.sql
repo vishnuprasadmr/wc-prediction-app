@@ -51,10 +51,10 @@ BEGIN
   INNER JOIN predictions pr ON pr.user_id = p.id
   INNER JOIN matches m ON m.id = pr.match_id AND m.stage = stage_filter
   LEFT JOIN (
-    SELECT user_id, SUM(points_delta)::INTEGER AS meal_bet_points
-    FROM meal_challenge_point_settlements
-    GROUP BY user_id
-  ) mcp ON mcp.user_id = p.id
+    SELECT mcps.user_id AS settlement_user_id, SUM(mcps.points_delta)::INTEGER AS meal_bet_points
+    FROM meal_challenge_point_settlements mcps
+    GROUP BY mcps.user_id
+  ) mcp ON mcp.settlement_user_id = p.id
   WHERE COALESCE(p.is_admin, false) = false
   GROUP BY p.id, p.display_name, p.avatar_url, p.created_at, mcp.meal_bet_points
   ORDER BY rank;
@@ -85,7 +85,7 @@ BEGIN
     )
     OR EXISTS (
       SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND is_verified_simelabs_employee_id(employee_id)
+      WHERE id = auth.uid() AND is_verified_simelabs_employee_id(profiles.employee_id)
     )
   ) THEN
     RAISE EXCEPTION 'Simelabs point table is for verified employees only'
@@ -126,15 +126,15 @@ BEGIN
     LEFT JOIN predictions pr ON pr.user_id = p.id
     LEFT JOIN season_predictions sp ON sp.user_id = p.id
     LEFT JOIN (
-      SELECT user_id, SUM(points_delta)::INTEGER AS meal_bet_points
-      FROM meal_challenge_point_settlements
-      GROUP BY user_id
-    ) mcp ON mcp.user_id = p.id
+      SELECT mcps.user_id AS settlement_user_id, SUM(mcps.points_delta)::INTEGER AS meal_bet_points
+      FROM meal_challenge_point_settlements mcps
+      GROUP BY mcps.user_id
+    ) mcp ON mcp.settlement_user_id = p.id
     LEFT JOIN (
-      SELECT user_id, SUM(points)::INTEGER AS engagement_bonus_points
-      FROM point_bonuses
-      GROUP BY user_id
-    ) ebp ON ebp.user_id = p.id
+      SELECT pb.user_id AS bonus_user_id, SUM(pb.points)::INTEGER AS engagement_bonus_points
+      FROM point_bonuses pb
+      GROUP BY pb.user_id
+    ) ebp ON ebp.bonus_user_id = p.id
     WHERE COALESCE(p.is_admin, false) = false
       AND is_verified_simelabs_employee_id(p.employee_id)
     GROUP BY
@@ -171,10 +171,10 @@ BEGIN
     INNER JOIN predictions pr ON pr.user_id = p.id
     INNER JOIN matches m ON m.id = pr.match_id AND m.stage = stage_filter
     LEFT JOIN (
-      SELECT user_id, SUM(points_delta)::INTEGER AS meal_bet_points
-      FROM meal_challenge_point_settlements
-      GROUP BY user_id
-    ) mcp ON mcp.user_id = p.id
+      SELECT mcps.user_id AS settlement_user_id, SUM(mcps.points_delta)::INTEGER AS meal_bet_points
+      FROM meal_challenge_point_settlements mcps
+      GROUP BY mcps.user_id
+    ) mcp ON mcp.settlement_user_id = p.id
     WHERE COALESCE(p.is_admin, false) = false
       AND is_verified_simelabs_employee_id(p.employee_id)
     GROUP BY p.id, p.display_name, p.avatar_url, p.created_at, mcp.meal_bet_points
