@@ -9,7 +9,7 @@ import {
   statusLabel,
 } from '../lib/matchUtils'
 import { LockCountdown } from './LockCountdown'
-import { formatKickoffTimeIst } from '../lib/timezone'
+import { formatKickoffIst, formatKickoffTimeIst } from '../lib/timezone'
 import { formatVenueLabel, getMatchVenueCity } from '../lib/venues'
 import { isExactScorePoints } from '../lib/scoring'
 import { playSound } from '../lib/sounds'
@@ -28,7 +28,6 @@ interface MatchCardProps {
   showPoints?: boolean
   /** Pulsing highlight for “next pick” on the Predict page */
   spotlight?: boolean
-  onPenaltyGame?: (match: Match) => void
 }
 
 export function MatchCard({
@@ -38,7 +37,6 @@ export function MatchCard({
   onPredict,
   showPoints,
   spotlight = false,
-  onPenaltyGame,
 }: MatchCardProps) {
   const locked = isMatchLocked(match)
   const filterStatus = getMatchFilterStatus(match)
@@ -116,6 +114,25 @@ export function MatchCard({
           )}
         </p>
 
+        <p className="mt-1 flex items-center justify-center gap-1 text-center type-caption text-muted">
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            className="h-3.5 w-3.5 shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <path d="M16 2v4M8 2v4M3 10h18" />
+          </svg>
+          <time dateTime={match.kickoff_at} className="tabular-nums">
+            {formatKickoffIst(match.kickoff_at)}
+          </time>
+        </p>
+
         {prediction && match.status === 'finished' && showPoints && (
           <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-xs text-muted">
             <span>
@@ -175,19 +192,6 @@ export function MatchCard({
           </>
         )}
       </div>
-
-      {prediction && match.status === 'scheduled' && onPenaltyGame && (
-        <button
-          type="button"
-          onClick={() => {
-            playSound('select')
-            onPenaltyGame(match)
-          }}
-          className="w-full border-t border-default py-2 text-center text-xs font-semibold text-muted transition hover:bg-muted hover:text-simelabs"
-        >
-          🎮 Penalty shootout (just for fun)
-        </button>
-      )}
 
       {onPredict && !locked && (
         <button
@@ -278,12 +282,28 @@ function CenterBlock({
   }
 
   if (showPredictionScore && prediction) {
+    const isDrawPick = prediction.home_pred === prediction.away_pred
+    const showShootoutPick = isDrawPick && prediction.shootout_winner != null
+    const shootoutTeam =
+      prediction.shootout_winner === 'home' ? match.home_team : match.away_team
+    const hasPenScore =
+      prediction.home_pen_pred != null && prediction.away_pen_pred != null
     return (
       <div className={`flex shrink-0 flex-col items-center px-1 ${className}`}>
         <span className="type-overline mb-0.5 !text-simelabs">Your pick</span>
         <span className="type-score">
           {prediction.home_pred} – {prediction.away_pred}
         </span>
+        {showShootoutPick && (
+          <span className="mt-0.5 text-center text-[11px] font-semibold text-amber-500">
+            {shootoutTeam} on pens
+            {hasPenScore && (
+              <span className="ml-1 tabular-nums text-amber-500/80">
+                ({prediction.home_pen_pred}–{prediction.away_pen_pred})
+              </span>
+            )}
+          </span>
+        )}
       </div>
     )
   }

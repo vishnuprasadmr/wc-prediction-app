@@ -23,6 +23,13 @@
   [headers.values]
     Content-Type = "text/javascript; charset=utf-8"
 
+# Team flags are static, stable assets — let the browser cache them so they
+# aren't re-validated on every page load.
+[[headers]]
+  for = "/flags/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+
 [[headers]]
   for = "/manifest.webmanifest"
   [headers.values]
