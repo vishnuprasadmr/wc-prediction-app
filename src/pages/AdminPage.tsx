@@ -7,16 +7,18 @@ import { formatKickoff, isKnockoutStage } from '../lib/matchUtils'
 import type { Match, MatchStatus } from '../lib/types'
 import { AdminSeasonPanel } from '../components/AdminSeasonPanel'
 import { AdminSharePanel } from '../components/AdminSharePanel'
+import { AdminVideoStudioPanel } from '../components/AdminVideoStudioPanel'
 import { AdminStatsPanel } from '../components/AdminStatsPanel'
 import { AdminPrizesPanel } from '../components/AdminPrizesPanel'
 import { AdminMealChallengesPanel } from '../components/AdminMealChallengesPanel'
 
-type AdminTab = 'matches' | 'moderation' | 'share' | 'season' | 'stats'
+type AdminTab = 'matches' | 'moderation' | 'share' | 'video' | 'season' | 'stats'
 
 const ADMIN_TABS: { id: AdminTab; label: string; hint: string }[] = [
   { id: 'matches', label: 'Matches', hint: 'Scores & sync' },
   { id: 'moderation', label: 'Moderation', hint: 'Prizes & meal bets' },
   { id: 'share', label: 'Share cards', hint: 'Social images' },
+  { id: 'video', label: 'AI Video', hint: 'Daily reel brief' },
   { id: 'season', label: 'Season', hint: 'Questionnaire' },
   { id: 'stats', label: 'Stats', hint: 'Engagement data' },
 ]
@@ -223,6 +225,7 @@ export function AdminPage() {
       )}
 
       {tab === 'share' && <AdminSharePanel />}
+      {tab === 'video' && <AdminVideoStudioPanel />}
       {tab === 'season' && <AdminSeasonPanel />}
       {tab === 'stats' && <AdminStatsPanel onSynced={() => void refetch()} />}
 
