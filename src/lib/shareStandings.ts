@@ -54,6 +54,7 @@ export function buildShareImageInput(input: {
     homePred?: number
     awayPred?: number
     firstBonus?: number
+    shootoutBonus?: number
   }
 }): ShareImageInput {
   const [homeScore, awayScore] = input.lastMatch?.score.split('-').map((n) => Number(n.trim())) ?? []
@@ -75,6 +76,7 @@ export function buildShareImageInput(input: {
           awayPred: input.lastMatch.awayPred,
           pointsEarned: input.lastMatch.points,
           firstBonus: input.lastMatch.firstBonus,
+          shootoutBonus: input.lastMatch.shootoutBonus,
         }
       : undefined,
   }
@@ -141,6 +143,7 @@ export async function shareStandingsWithImage(input: {
     homePred?: number
     awayPred?: number
     firstBonus?: number
+    shootoutBonus?: number
   }
   inviteUrl?: string
   preparedBlob?: Blob | null

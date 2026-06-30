@@ -173,7 +173,7 @@ async function drawMatchBlock(ctx: CanvasRenderingContext2D, input: ShareImageIn
   if (match.pointsEarned !== null && match.pointsEarned !== undefined) {
     const exact =
       input.variant === 'oracle' ||
-      isExactScorePoints(match.pointsEarned, match.firstBonus ?? 0)
+      isExactScorePoints(match.pointsEarned, match.firstBonus ?? 0, match.shootoutBonus ?? 0)
     const chipW = 220
     const chipH = 56
     const chipX = W / 2 - chipW / 2

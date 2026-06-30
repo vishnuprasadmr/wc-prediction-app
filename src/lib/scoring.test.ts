@@ -1,11 +1,85 @@
 import { describe, expect, it } from 'vitest'
-import { basePointsEarned, calculatePoints, isExactScorePoints } from './scoring'
+import {
+  basePointsEarned,
+  calculatePoints,
+  calculateShootoutBonus,
+  isExactScorePoints,
+} from './scoring'
 
 describe('early bird helpers', () => {
   it('separates base points from early bonus', () => {
     expect(basePointsEarned(6, 1)).toBe(5)
     expect(isExactScorePoints(6, 1)).toBe(true)
     expect(isExactScorePoints(5, 0)).toBe(true)
+  })
+
+  it('subtracts the shootout bonus when detecting an exact score', () => {
+    // exact draw (5) + shootout winner (2) = 7, with no early bonus
+    expect(basePointsEarned(7, 0, 2)).toBe(5)
+    expect(isExactScorePoints(7, 0, 2)).toBe(true)
+    // exact draw (5) + winner (2) + exact pens (1) + early (1) = 9
+    expect(isExactScorePoints(9, 1, 3)).toBe(true)
+  })
+})
+
+describe('calculateShootoutBonus', () => {
+  const wonOnPens = {
+    actualHomePens: 4,
+    actualAwayPens: 3,
+  }
+
+  it('awards nothing when the match did not go to penalties', () => {
+    const r = calculateShootoutBonus({
+      predWinner: 'home',
+      predictedDraw: true,
+      actualHomePens: null,
+      actualAwayPens: null,
+    })
+    expect(r.wentToShootout).toBe(false)
+    expect(r.bonus).toBe(0)
+  })
+
+  it('awards nothing when the user did not predict a draw', () => {
+    const r = calculateShootoutBonus({
+      predWinner: 'home',
+      predictedDraw: false,
+      ...wonOnPens,
+    })
+    expect(r.bonus).toBe(0)
+  })
+
+  it('awards +2 for the correct shootout winner', () => {
+    const r = calculateShootoutBonus({
+      predWinner: 'home',
+      predictedDraw: true,
+      ...wonOnPens,
+    })
+    expect(r.correctWinner).toBe(true)
+    expect(r.exactPenScore).toBe(false)
+    expect(r.bonus).toBe(2)
+  })
+
+  it('awards +3 for the correct winner and exact penalty score', () => {
+    const r = calculateShootoutBonus({
+      predWinner: 'home',
+      predHomePens: 4,
+      predAwayPens: 3,
+      predictedDraw: true,
+      ...wonOnPens,
+    })
+    expect(r.correctWinner).toBe(true)
+    expect(r.exactPenScore).toBe(true)
+    expect(r.bonus).toBe(3)
+  })
+
+  it('awards nothing for the wrong shootout winner', () => {
+    const r = calculateShootoutBonus({
+      predWinner: 'away',
+      predictedDraw: true,
+      ...wonOnPens,
+    })
+    expect(r.correctWinner).toBe(false)
+    expect(r.bonus).toBe(0)
   })
 })
 

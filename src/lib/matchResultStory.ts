@@ -16,6 +16,9 @@ export interface MatchResultShare {
   awayTeam: string
   homeScore: number
   awayScore: number
+  homePenalties: number | null
+  awayPenalties: number | null
+  wentToShootout: boolean
   stageLabel: string
   winnerLabel: string
   winnerTeam?: string
@@ -59,13 +62,28 @@ export function buildGoalScorerLines(goals: FifaGoalEvent[]): GoalScorerLine[] {
   return [...map.values()].sort((a, b) => b.goalCount - a.goalCount || b.minutes.length - a.minutes.length)
 }
 
-function winnerLabel(match: Pick<Match, 'home_team' | 'away_team' | 'home_score' | 'away_score'>): {
+function winnerLabel(
+  match: Pick<
+    Match,
+    'home_team' | 'away_team' | 'home_score' | 'away_score' | 'home_penalties' | 'away_penalties'
+  >,
+): {
   label: string
   team?: string
   isDraw: boolean
 } {
   const home = match.home_score ?? 0
   const away = match.away_score ?? 0
+  const wentToShootout = match.home_penalties != null && match.away_penalties != null
+
+  if (home === away && wentToShootout) {
+    const team =
+      (match.home_penalties as number) > (match.away_penalties as number)
+        ? match.home_team
+        : match.away_team
+    return { label: `${team.toUpperCase()} ADVANCE`, team, isDraw: false }
+  }
+
   if (home === away) return { label: 'HONOURS EVEN', isDraw: true }
   const team = home > away ? match.home_team : match.away_team
   return { label: `${team.toUpperCase()} WIN`, team, isDraw: false }
@@ -74,15 +92,19 @@ function winnerLabel(match: Pick<Match, 'home_team' | 'away_team' | 'home_score'
 export function buildMatchResultShare(match: Match, details: FifaMatchDetails | null): MatchResultShare {
   const home = match.home_score ?? 0
   const away = match.away_score ?? 0
+  const wentToShootout = match.home_penalties != null && match.away_penalties != null
   const win = winnerLabel(match)
   const loserScore = win.team === match.home_team ? away : home
-  const isCleanSheet = !win.isDraw && loserScore === 0
+  const isCleanSheet = !win.isDraw && !wentToShootout && loserScore === 0
 
   return {
     homeTeam: match.home_team,
     awayTeam: match.away_team,
     homeScore: home,
     awayScore: away,
+    homePenalties: match.home_penalties ?? null,
+    awayPenalties: match.away_penalties ?? null,
+    wentToShootout,
     stageLabel: formatStageLabel(match.stage, match.group_name),
     winnerLabel: win.label,
     winnerTeam: win.team,

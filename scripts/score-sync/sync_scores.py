@@ -95,6 +95,17 @@ def extract_scores(fifa_match: dict[str, Any]) -> tuple[int | None, int | None]:
     return home, away
 
 
+def extract_penalties(fifa_match: dict[str, Any]) -> tuple[int | None, int | None]:
+    """Shootout totals — None unless the knockout tie went to penalties."""
+    home = fifa_match.get("HomeTeamPenaltyScore")
+    away = fifa_match.get("AwayTeamPenaltyScore")
+    if home is None:
+        home = (fifa_match.get("Home") or {}).get("PenaltyScore")
+    if away is None:
+        away = (fifa_match.get("Away") or {}).get("PenaltyScore")
+    return home, away
+
+
 def fetch_all_fifa_matches() -> list[dict[str, Any]]:
     results: list[dict[str, Any]] = []
     params: dict[str, str | int] = {
@@ -140,7 +151,7 @@ def fetch_db_matches(supabase_url: str, service_key: str) -> dict[int, dict[str,
     resp = requests.get(
         f"{supabase_url}/rest/v1/matches",
         params={
-            "select": "id,api_fixture_id,manual_override,home_score,away_score,status,home_team,away_team,kickoff_at",
+            "select": "id,api_fixture_id,manual_override,home_score,away_score,home_penalties,away_penalties,status,home_team,away_team,kickoff_at",
         },
         headers=supabase_headers(service_key),
         timeout=60,
@@ -211,6 +222,7 @@ def sync_scores(dry_run: bool = False, match_number: int | None = None) -> int:
             continue
 
         home_score, away_score = extract_scores(fm)
+        home_pens, away_pens = extract_penalties(fm)
         status = map_fifa_status(int(fm.get("MatchStatus", 1)), home_score, away_score)
 
         # Don't wipe scores for upcoming fixtures
@@ -222,6 +234,8 @@ def sync_scores(dry_run: bool = False, match_number: int | None = None) -> int:
         payload = {
             "home_score": home_score,
             "away_score": away_score,
+            "home_penalties": home_pens,
+            "away_penalties": away_pens,
             "status": status,
             "score_source": "api",
         }
@@ -229,6 +243,8 @@ def sync_scores(dry_run: bool = False, match_number: int | None = None) -> int:
         changed = (
             db_row.get("home_score") != home_score
             or db_row.get("away_score") != away_score
+            or db_row.get("home_penalties") != home_pens
+            or db_row.get("away_penalties") != away_pens
             or db_row.get("status") != status
         )
 
@@ -243,6 +259,8 @@ def sync_scores(dry_run: bool = False, match_number: int | None = None) -> int:
             if home_score is not None and away_score is not None
             else "—"
         )
+        if home_pens is not None and away_pens is not None:
+            score_str += f" ({home_pens}-{away_pens} pens)"
         prefix = "[dry-run] " if dry_run else ""
         print(f"{prefix}Match {num}: {home_team} vs {away_team} -> {score_str} ({status})")
 

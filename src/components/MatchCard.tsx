@@ -117,15 +117,26 @@ export function MatchCard({
         </p>
 
         {prediction && match.status === 'finished' && showPoints && (
-          <div className="mt-2 flex items-center justify-center gap-2 text-xs text-muted">
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-xs text-muted">
             <span>
               Your pick: {prediction.home_pred} - {prediction.away_pred}
+              {prediction.home_pred === prediction.away_pred && prediction.shootout_winner && (
+                <>
+                  {' '}
+                  · {prediction.shootout_winner === 'home' ? match.home_team : match.away_team} on
+                  pens
+                </>
+              )}
             </span>
             {prediction.points_earned !== null && (
               <>
                 <span
                   className={`rounded-full px-2 py-0.5 font-semibold ${
-                    isExactScorePoints(prediction.points_earned, prediction.first_bonus ?? 0)
+                    isExactScorePoints(
+                      prediction.points_earned,
+                      prediction.first_bonus ?? 0,
+                      prediction.shootout_bonus ?? 0,
+                    )
                       ? 'bg-amber-500/20 text-amber-500'
                       : prediction.points_earned > 0
                         ? 'bg-emerald-500/20 text-emerald-600'
@@ -137,6 +148,11 @@ export function MatchCard({
                 {(prediction.first_bonus ?? 0) > 0 && (
                   <span className="rounded-full bg-simelabs/15 px-2 py-0.5 font-semibold text-simelabs">
                     early
+                  </span>
+                )}
+                {(prediction.shootout_bonus ?? 0) > 0 && (
+                  <span className="rounded-full bg-amber-500/15 px-2 py-0.5 font-semibold text-amber-500">
+                    shootout
                   </span>
                 )}
                 <ShareMatchButton match={match} prediction={prediction} />
@@ -243,6 +259,7 @@ function CenterBlock({
   }
 
   if (hasScore || match.status === 'finished') {
+    const shootout = match.home_penalties != null && match.away_penalties != null
     return (
       <div className={`flex shrink-0 flex-col items-center px-1 ${className}`}>
         <span className="type-overline mb-0.5 !text-muted">
@@ -251,6 +268,11 @@ function CenterBlock({
         <span className="type-score">
           {match.home_score} – {match.away_score}
         </span>
+        {shootout && (
+          <span className="mt-0.5 text-[11px] font-semibold text-amber-500">
+            {match.home_penalties}–{match.away_penalties} pens
+          </span>
+        )}
       </div>
     )
   }

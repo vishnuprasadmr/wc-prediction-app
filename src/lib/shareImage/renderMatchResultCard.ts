@@ -57,6 +57,17 @@ async function drawScoreStrip(
   ctx.fillText(scoreText, scoreX, centerY)
   ctx.textBaseline = 'alphabetic'
 
+  if (result.wentToShootout) {
+    ctx.font = '700 24px Inter, system-ui, sans-serif'
+    ctx.fillStyle = C.gold
+    ctx.textAlign = 'center'
+    ctx.fillText(
+      `${result.homePenalties} – ${result.awayPenalties} on penalties`,
+      scoreX,
+      centerY + 52,
+    )
+  }
+
   ctx.font = '600 20px Inter, system-ui, sans-serif'
   ctx.fillStyle = C.textSubtle
   ctx.textAlign = 'center'
@@ -212,7 +223,7 @@ export async function renderMatchResultCanvas(input: MatchResultCardInput): Prom
   let y = PANEL_TOP + 28
   y = drawWinnerBanner(ctx, input, y)
   y = drawHeroHeadline(ctx, input, y)
-  y = drawScorersPanel(ctx, input, y, PANEL_BOTTOM - 36)
+  drawScorersPanel(ctx, input, y, PANEL_BOTTOM - 36)
   drawStage(ctx, input, PANEL_BOTTOM - 16)
 
   drawShareFooter(ctx, input.dateLabel)

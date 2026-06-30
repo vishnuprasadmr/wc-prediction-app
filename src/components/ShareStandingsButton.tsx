@@ -39,6 +39,7 @@ export function ShareStandingsButton({
           homePred: lastPrediction.home_pred,
           awayPred: lastPrediction.away_pred,
           firstBonus: lastPrediction.first_bonus ?? 0,
+          shootoutBonus: lastPrediction.shootout_bonus ?? 0,
         }
       : undefined
 

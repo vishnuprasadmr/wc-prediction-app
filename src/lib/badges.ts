@@ -12,7 +12,8 @@ export function computeBadges(predictions: PredictionWithMatch[]): Badge[] {
   const finished = predictions.filter((p) => p.match?.status === 'finished')
   const withPoints = finished.filter((p) => (p.points_earned ?? 0) > 0)
   const exacts = finished.filter((p) =>
-    p.points_earned !== null && isExactScorePoints(p.points_earned, p.first_bonus ?? 0),
+    p.points_earned !== null &&
+    isExactScorePoints(p.points_earned, p.first_bonus ?? 0, p.shootout_bonus ?? 0),
   )
   const earlyBirds = finished.filter((p) => (p.first_bonus ?? 0) > 0)
 

@@ -25,7 +25,11 @@ export function ShareMatchButton({ match, prediction }: { match: Match; predicti
     setSharing(true)
     primeAudio()
 
-    const exact = isExactScorePoints(prediction.points_earned, prediction.first_bonus ?? 0)
+    const exact = isExactScorePoints(
+      prediction.points_earned,
+      prediction.first_bonus ?? 0,
+      prediction.shootout_bonus ?? 0,
+    )
     const inviteUrl = user?.id ? buildReferralUrl(user.id) : undefined
     const { share: result } = await shareWithEngagementBonus(() =>
       shareStandingsWithImage({
@@ -43,6 +47,7 @@ export function ShareMatchButton({ match, prediction }: { match: Match; predicti
           homePred: prediction.home_pred,
           awayPred: prediction.away_pred,
           firstBonus: prediction.first_bonus ?? 0,
+          shootoutBonus: prediction.shootout_bonus ?? 0,
         },
         inviteUrl,
       }),

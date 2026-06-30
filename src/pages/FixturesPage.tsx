@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { PenaltyShootout } from '../components/PenaltyShootout'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
@@ -71,6 +71,9 @@ export function FixturesPage() {
     return matches.filter((m) => getMatchFilterStatus(m) === filter)
   }, [matches, filter])
 
+  // Finished matches read best newest-first; everything else stays chronological.
+  const newestFirst = filter === 'finished'
+
   const grouped = useMemo(() => {
     const groups: Record<string, Match[]> = {}
     for (const match of filtered) {
@@ -78,13 +81,45 @@ export function FixturesPage() {
       if (!groups[key]) groups[key] = []
       groups[key].push(match)
     }
+    const dir = newestFirst ? -1 : 1
     for (const key of Object.keys(groups)) {
       groups[key].sort(
-        (a, b) => new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime(),
+        (a, b) =>
+          dir * (new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime()),
       )
     }
-    return groups
-  }, [filtered])
+    return Object.entries(groups).sort(([a], [b]) =>
+      newestFirst ? b.localeCompare(a) : a.localeCompare(b),
+    )
+  }, [filtered, newestFirst])
+
+  // Incrementally reveal date sections so heavy MatchCards never render all at once.
+  const PAGE_SIZE = 3
+  const [visibleGroups, setVisibleGroups] = useState(PAGE_SIZE)
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    setVisibleGroups(PAGE_SIZE)
+  }, [filter])
+
+  const visibleEntries = grouped.slice(0, visibleGroups)
+  const hasMore = visibleGroups < grouped.length
+
+  useEffect(() => {
+    if (!hasMore) return
+    const el = sentinelRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleGroups((count) => Math.min(count + PAGE_SIZE, grouped.length))
+        }
+      },
+      { rootMargin: '600px 0px' },
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [hasMore, grouped.length])
 
   if (error) {
     return (
@@ -171,7 +206,7 @@ export function FixturesPage() {
         </div>
       ) : (
         <div className="space-y-8">
-          {Object.entries(grouped).map(([date, dayMatches]) => (
+          {visibleEntries.map(([date, dayMatches]) => (
             <section key={date}>
               <div className="mb-3 flex items-baseline justify-between gap-2">
                 <h2 className="type-section-title min-w-0">{formatIstDateHeader(date)}</h2>
@@ -215,6 +250,19 @@ export function FixturesPage() {
               </div>
             </section>
           ))}
+
+          {hasMore && (
+            <div
+              ref={sentinelRef}
+              className="flex items-center justify-center py-6"
+              aria-hidden
+            >
+              <span className="inline-flex items-center gap-2 text-sm text-muted">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-simelabs" />
+                Loading more…
+              </span>
+            </div>
+          )}
         </div>
       )}
 

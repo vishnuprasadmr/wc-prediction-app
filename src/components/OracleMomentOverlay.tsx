@@ -57,6 +57,7 @@ export function OracleMomentOverlay({
           homePred: moment.prediction.home_pred,
           awayPred: moment.prediction.away_pred,
           firstBonus: moment.prediction.first_bonus ?? 0,
+          shootoutBonus: moment.prediction.shootout_bonus ?? 0,
         },
         inviteUrl,
       }),

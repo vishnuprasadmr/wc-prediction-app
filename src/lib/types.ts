@@ -36,9 +36,14 @@ export interface Match {
   status: MatchStatus
   home_score: number | null
   away_score: number | null
+  /** Knockout shootout totals — null/undefined unless the tie was decided on penalties. */
+  home_penalties?: number | null
+  away_penalties?: number | null
   score_source: ScoreSource
   manual_override: boolean
 }
+
+export type ShootoutWinner = 'home' | 'away'
 
 export interface Prediction {
   id: string
@@ -46,8 +51,13 @@ export interface Prediction {
   match_id: string
   home_pred: number
   away_pred: number
+  /** Knockout draw pick: which team the user thinks wins the shootout. */
+  shootout_winner?: ShootoutWinner | null
+  home_pen_pred?: number | null
+  away_pen_pred?: number | null
   points_earned: number | null
   first_bonus?: number
+  shootout_bonus?: number
   locked_at: string | null
   created_at: string
   updated_at: string

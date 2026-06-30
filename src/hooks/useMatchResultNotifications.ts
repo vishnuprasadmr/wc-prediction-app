@@ -46,7 +46,11 @@ export function useMatchResultNotifications() {
 
           markNotified(match.id)
           const score = `${match.home_score ?? 0}-${match.away_score ?? 0}`
-          const exact = isExactScorePoints(pred.points_earned, pred.first_bonus ?? 0)
+          const exact = isExactScorePoints(
+            pred.points_earned,
+            pred.first_bonus ?? 0,
+            pred.shootout_bonus ?? 0,
+          )
           const title = exact ? 'Exact score!' : 'Full time!'
           const body = `${match.home_team} ${score} ${match.away_team} — +${pred.points_earned} pts (you picked ${pred.home_pred}-${pred.away_pred})`
 

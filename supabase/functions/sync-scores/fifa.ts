@@ -12,8 +12,10 @@ export interface FifaMatch {
   MatchStatus: number
   HomeTeamScore: number | null
   AwayTeamScore: number | null
-  Home?: { Score: number | null } | null
-  Away?: { Score: number | null } | null
+  HomeTeamPenaltyScore?: number | null
+  AwayTeamPenaltyScore?: number | null
+  Home?: { Score: number | null; PenaltyScore?: number | null } | null
+  Away?: { Score: number | null; PenaltyScore?: number | null } | null
 }
 
 export function mapFifaStatus(
@@ -31,6 +33,13 @@ export function mapFifaStatus(
 export function extractScores(m: FifaMatch): [number | null, number | null] {
   const home = m.HomeTeamScore ?? m.Home?.Score ?? null
   const away = m.AwayTeamScore ?? m.Away?.Score ?? null
+  return [home, away]
+}
+
+/** Penalty shootout totals — null unless the knockout tie went to penalties. */
+export function extractPenalties(m: FifaMatch): [number | null, number | null] {
+  const home = m.HomeTeamPenaltyScore ?? m.Home?.PenaltyScore ?? null
+  const away = m.AwayTeamPenaltyScore ?? m.Away?.PenaltyScore ?? null
   return [home, away]
 }
 

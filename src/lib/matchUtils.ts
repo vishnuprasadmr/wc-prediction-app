@@ -99,6 +99,16 @@ export function canPredictMatch(match: Match, _matches?: Match[], now = Date.now
   return isMatchPredictable(match, now)
 }
 
+/** Knockout ties can be decided on penalties (group games cannot). */
+export function isKnockoutStage(stage: Match['stage']): boolean {
+  return stage !== 'Group'
+}
+
+/** True when this finished match was decided by a penalty shootout. */
+export function wentToShootout(match: Pick<Match, 'home_penalties' | 'away_penalties'>): boolean {
+  return match.home_penalties != null && match.away_penalties != null
+}
+
 export function getMatchFilterStatus(match: Match): 'upcoming' | 'live' | 'finished' {
   if (match.status === 'finished') return 'finished'
   if (match.status === 'live') return 'live'

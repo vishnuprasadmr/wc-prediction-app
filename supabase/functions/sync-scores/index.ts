@@ -1,6 +1,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import {
+  extractPenalties,
   extractScores,
   fetchAllFifaMatches,
   mapFifaStatus,
@@ -18,6 +19,8 @@ interface DbMatch {
   manual_override: boolean
   home_score: number | null
   away_score: number | null
+  home_penalties: number | null
+  away_penalties: number | null
   status: string
   kickoff_at: string
 }
@@ -40,7 +43,9 @@ async function syncFifaToDb(
 
   const { data: dbMatches, error: loadError } = await supabase
     .from('matches')
-    .select('id, api_fixture_id, manual_override, home_score, away_score, status, kickoff_at')
+    .select(
+      'id, api_fixture_id, manual_override, home_score, away_score, home_penalties, away_penalties, status, kickoff_at',
+    )
 
   if (loadError) throw loadError
 
@@ -83,6 +88,7 @@ async function syncFifaToDb(
     }
 
     const [homeScore, awayScore] = extractScores(fm)
+    const [homePens, awayPens] = extractPenalties(fm)
     const status = mapFifaStatus(fm.MatchStatus, homeScore, awayScore)
 
     if (status === 'scheduled' && homeScore === null && awayScore === null) {
@@ -93,6 +99,8 @@ async function syncFifaToDb(
     const changed =
       dbRow.home_score !== homeScore ||
       dbRow.away_score !== awayScore ||
+      dbRow.home_penalties !== homePens ||
+      dbRow.away_penalties !== awayPens ||
       dbRow.status !== status
 
     if (!changed) {
@@ -105,6 +113,8 @@ async function syncFifaToDb(
       .update({
         home_score: homeScore,
         away_score: awayScore,
+        home_penalties: homePens,
+        away_penalties: awayPens,
         status,
         score_source: 'api',
       })

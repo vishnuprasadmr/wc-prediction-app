@@ -15,13 +15,17 @@ export interface FifaMatchRow {
   MatchStatus: number
   HomeTeamScore: number | null
   AwayTeamScore: number | null
-  Home?: { Score: number | null } | null
-  Away?: { Score: number | null } | null
+  HomeTeamPenaltyScore?: number | null
+  AwayTeamPenaltyScore?: number | null
+  Home?: { Score: number | null; PenaltyScore?: number | null } | null
+  Away?: { Score: number | null; PenaltyScore?: number | null } | null
 }
 
 export interface FifaLiveSnapshot {
   home_score: number | null
   away_score: number | null
+  home_penalties: number | null
+  away_penalties: number | null
   status: MatchStatus
 }
 
@@ -40,6 +44,12 @@ function mapFifaStatus(
 function extractScores(m: FifaMatchRow): [number | null, number | null] {
   const home = m.HomeTeamScore ?? m.Home?.Score ?? null
   const away = m.AwayTeamScore ?? m.Away?.Score ?? null
+  return [home, away]
+}
+
+function extractPenalties(m: FifaMatchRow): [number | null, number | null] {
+  const home = m.HomeTeamPenaltyScore ?? m.Home?.PenaltyScore ?? null
+  const away = m.AwayTeamPenaltyScore ?? m.Away?.PenaltyScore ?? null
   return [home, away]
 }
 
@@ -74,9 +84,16 @@ export async function fetchFifaLiveMap(): Promise<Map<number, FifaLiveSnapshot>>
     const num = row.MatchNumber
     if (!num) continue
     const [home, away] = extractScores(row)
+    const [homePens, awayPens] = extractPenalties(row)
     const status = mapFifaStatus(row.MatchStatus, home, away)
     if (status === 'scheduled' && home === null && away === null) continue
-    map.set(MATCH_NUMBER_OFFSET + num, { home_score: home, away_score: away, status })
+    map.set(MATCH_NUMBER_OFFSET + num, {
+      home_score: home,
+      away_score: away,
+      home_penalties: homePens,
+      away_penalties: awayPens,
+      status,
+    })
   }
 
   return map
@@ -105,6 +122,8 @@ export function mergeMatchesWithFifaLive(
       ...match,
       home_score: live.home_score ?? match.home_score,
       away_score: live.away_score ?? match.away_score,
+      home_penalties: live.home_penalties ?? match.home_penalties,
+      away_penalties: live.away_penalties ?? match.away_penalties,
       status:
         live.status !== 'scheduled'
           ? live.status

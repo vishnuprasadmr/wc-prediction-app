@@ -8,9 +8,13 @@ import { shareStandings, type ShareResult } from './shareStandings'
 import { downloadShareImage } from './shareDownload'
 
 export function buildMatchResultShareText(result: MatchResultShare): string {
+  const scoreLine = result.wentToShootout
+    ? `${result.homeTeam} ${result.homeScore}–${result.awayScore} ${result.awayTeam} (${result.homePenalties}–${result.awayPenalties} pens)`
+    : `${result.homeTeam} ${result.homeScore}–${result.awayScore} ${result.awayTeam}`
+
   const lines = [
     '⚽ Simelabs WC 2026 — Full Time',
-    `${result.homeTeam} ${result.homeScore}–${result.awayScore} ${result.awayTeam}`,
+    scoreLine,
     result.winnerLabel,
     result.hero.headline,
   ]

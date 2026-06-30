@@ -18,6 +18,8 @@ export function makeMatch(overrides: Partial<Match> = {}): Match {
     status: 'scheduled',
     home_score: null,
     away_score: null,
+    home_penalties: null,
+    away_penalties: null,
     score_source: null,
     manual_override: false,
     ...overrides,

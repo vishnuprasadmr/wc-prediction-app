@@ -39,7 +39,8 @@ export function useOracleMoment() {
       if (match.status !== 'finished') continue
       const pred = predictions[match.id]
       if (!pred || pred.points_earned === null) continue
-      if (!isExactScorePoints(pred.points_earned, pred.first_bonus ?? 0)) continue
+      if (!isExactScorePoints(pred.points_earned, pred.first_bonus ?? 0, pred.shootout_bonus ?? 0))
+        continue
       if (wasShown(match.id)) continue
 
       markShown(match.id)

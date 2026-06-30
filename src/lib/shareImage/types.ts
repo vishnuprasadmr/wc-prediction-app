@@ -9,6 +9,7 @@ export interface ShareImageMatch {
   awayPred?: number
   pointsEarned?: number | null
   firstBonus?: number
+  shootoutBonus?: number
 }
 
 export interface ShareImageInput {
