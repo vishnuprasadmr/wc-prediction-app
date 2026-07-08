@@ -50,19 +50,9 @@ CREATE POLICY season_edit_poll_votes_select ON season_edit_poll_votes
   FOR SELECT TO authenticated
   USING (true);
 
+-- Insert only — one vote per user (PK on user_id); no UPDATE so votes cannot be changed
 CREATE POLICY season_edit_poll_votes_insert ON season_edit_poll_votes
   FOR INSERT TO authenticated
-  WITH CHECK (
-    auth.uid() = user_id
-    AND EXISTS (SELECT 1 FROM season_edit_poll WHERE id = true AND status = 'open')
-  );
-
-CREATE POLICY season_edit_poll_votes_update ON season_edit_poll_votes
-  FOR UPDATE TO authenticated
-  USING (
-    auth.uid() = user_id
-    AND EXISTS (SELECT 1 FROM season_edit_poll WHERE id = true AND status = 'open')
-  )
   WITH CHECK (
     auth.uid() = user_id
     AND EXISTS (SELECT 1 FROM season_edit_poll WHERE id = true AND status = 'open')
@@ -71,4 +61,4 @@ CREATE POLICY season_edit_poll_votes_update ON season_edit_poll_votes
 GRANT SELECT ON season_edit_poll TO authenticated;
 GRANT SELECT ON season_edit_poll_votes TO authenticated;
 GRANT INSERT, UPDATE, DELETE ON season_edit_poll TO authenticated;
-GRANT INSERT, UPDATE ON season_edit_poll_votes TO authenticated;
+GRANT INSERT ON season_edit_poll_votes TO authenticated;

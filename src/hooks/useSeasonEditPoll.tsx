@@ -170,8 +170,9 @@ function useSeasonEditPollState(): SeasonEditPollApi {
   const poll = config ?? EMPTY_CONFIG
   const qfExpired = isSeasonEditWindowExpired(matches)
 
-  const canVote = poll.status === 'open' && Boolean(user)
-  const showPollCard = !unavailable && ready && poll.status === 'open'
+  const canVote = poll.status === 'open' && Boolean(user) && !myVote
+  // One vote only — hide the card once the player has cast yes/no
+  const showPollCard = !unavailable && ready && poll.status === 'open' && !myVote
   const showPublishedReveal =
     !unavailable && ready && poll.status === 'published' && Boolean(poll.published_at)
 
@@ -180,26 +181,30 @@ function useSeasonEditPollState(): SeasonEditPollApi {
 
   const castVote = useCallback(
     async (vote: SeasonEditPollVote) => {
-      if (!user || !canVote) throw new Error('Poll is not open for voting.')
+      if (!user || poll.status !== 'open') throw new Error('Poll is not open for voting.')
+      if (myVote) throw new Error('You already voted — one vote only.')
       setSaving(true)
       try {
         const now = new Date().toISOString()
-        const { error } = await supabase.from('season_edit_poll_votes').upsert(
-          {
-            user_id: user.id,
-            vote,
-            updated_at: now,
-          },
-          { onConflict: 'user_id' },
-        )
-        if (error) throw formatSupabaseError(error, 'Could not save your vote')
+        const { error } = await supabase.from('season_edit_poll_votes').insert({
+          user_id: user.id,
+          vote,
+          updated_at: now,
+        })
+        if (error) {
+          // Unique violation if they already voted (race / refresh)
+          if (error.code === '23505') {
+            throw new Error('You already voted — one vote only.')
+          }
+          throw formatSupabaseError(error, 'Could not save your vote')
+        }
         setMyVote(vote)
         await fetchAll()
       } finally {
         setSaving(false)
       }
     },
-    [user, canVote, fetchAll],
+    [user, poll.status, myVote, fetchAll],
   )
 
   const adminUpdate = useCallback(
