@@ -13,6 +13,7 @@ import { BadgeUnlockModal } from './BadgeUnlockModal'
 import { OracleMomentOverlay } from './OracleMomentOverlay'
 import { MatchesProvider } from '../contexts/MatchesContext'
 import { QuestionnaireGate } from './QuestionnaireGate'
+import { SeasonEditPollProvider } from '../hooks/useSeasonEditPoll'
 import { SeasonPicksReminder } from './SeasonPicksReminder'
 import { useBadgeUnlock } from '../hooks/useBadgeUnlock'
 import { useMatchResultNotifications } from '../hooks/useMatchResultNotifications'
@@ -65,6 +66,7 @@ export function Layout() {
 
   return (
     <MatchesProvider>
+    <SeasonEditPollProvider>
     <QuestionnaireGate>
     <EngagementHooks />
     <GameNotificationHost />
@@ -122,6 +124,7 @@ export function Layout() {
       <BottomNav onOpenMenu={() => setSidebarOpen(true)} />
     </div>
     </QuestionnaireGate>
+    </SeasonEditPollProvider>
     </MatchesProvider>
   )
 }

@@ -225,7 +225,7 @@ export function SeasonQuestionnaire({
   const [playerCustom, setPlayerCustom] = useState(() => {
     const boot = initialAnswers?.golden_boot?.trim()
     if (!boot) return ''
-    return GOLDEN_BOOT_CANDIDATES.includes(boot) ? '' : boot
+    return (GOLDEN_BOOT_CANDIDATES as readonly string[]).includes(boot) ? '' : boot
   })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
