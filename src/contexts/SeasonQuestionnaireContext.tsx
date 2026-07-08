@@ -13,7 +13,10 @@ import { SeasonQuestionnaire } from '../components/SeasonQuestionnaire'
 import { useAuth } from './AuthContext'
 import { useMatches } from '../hooks/useMatches'
 import { useSeasonQuestionnaire } from '../hooks/useSeasonQuestionnaire'
+import { useSeasonEditPoll } from '../hooks/useSeasonEditPoll'
 import { pushGameNotification } from '../lib/gameNotificationBus'
+import { formatSeasonEditLockHint } from '../lib/seasonEditPoll'
+import type { SeasonAnswers } from '../lib/seasonQuestions'
 
 interface SeasonQuestionnaireContextValue {
   ready: boolean
@@ -21,7 +24,9 @@ interface SeasonQuestionnaireContextValue {
   isLocked: boolean
   canPredictMatches: boolean
   needsSeasonPicks: boolean
+  canEditSeasonPicks: boolean
   openQuestionnaire: () => void
+  openSeasonEdit: () => void
   skipForNow: () => Promise<void>
 }
 
@@ -49,21 +54,51 @@ export function SeasonQuestionnaireProvider({ children }: { children: ReactNode 
     isLocked,
     needsSeasonPicks,
     shouldAutoShowQuestionnaire,
+    unavailable,
+    row,
     submit,
     skipForNow,
   } = useSeasonQuestionnaire()
+  const { editAllowed } = useSeasonEditPoll()
 
   const [manualOpen, setManualOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
   const loginReminderSent = useRef(false)
 
-  const showQuestionnaire = (shouldAutoShowQuestionnaire || manualOpen) && needsSeasonPicks
+  /** One re-edit of already-submitted season picks during admin-opened QF window. */
+  const canEditSeasonPicks = editAllowed && hasSubmitted
+
+  /**
+   * Original incomplete flow OR reopen window for players who never finished season picks
+   * (edit window lifts the R32 client lock for first-time submit).
+   */
+  const needsPicksNow =
+    needsSeasonPicks || (editAllowed && !hasSubmitted && ready && !unavailable)
+
+  const showInitialQuestionnaire =
+    !editOpen &&
+    needsPicksNow &&
+    (shouldAutoShowQuestionnaire ||
+      manualOpen ||
+      (editAllowed && !hasSubmitted && !profile?.questionnaire_skipped_at))
+
+  const showEditQuestionnaire = editOpen && canEditSeasonPicks
+  const showQuestionnaire = showInitialQuestionnaire || showEditQuestionnaire
 
   const openQuestionnaire = useCallback(() => {
+    setEditOpen(false)
     setManualOpen(true)
   }, [])
 
+  const openSeasonEdit = useCallback(() => {
+    if (!canEditSeasonPicks) return
+    setManualOpen(false)
+    setEditOpen(true)
+  }, [canEditSeasonPicks])
+
   const handleComplete = useCallback(() => {
     setManualOpen(false)
+    setEditOpen(false)
   }, [])
 
   const handleSkip = useCallback(async () => {
@@ -71,21 +106,30 @@ export function SeasonQuestionnaireProvider({ children }: { children: ReactNode 
     setManualOpen(false)
   }, [skipForNow])
 
-  const canPredictMatches = hasSubmitted || isLocked
+  const handleSubmit = useCallback(
+    async (answers: SeasonAnswers) => {
+      await submit(answers)
+    },
+    [submit],
+  )
+
+  const canPredictMatches = hasSubmitted || (isLocked && !editAllowed)
 
   useEffect(() => {
-    if (!ready || !needsSeasonPicks || loginReminderSent.current) return
-    if (showQuestionnaire) return
+    if (!ready || !needsPicksNow || loginReminderSent.current) return
+    if (showInitialQuestionnaire) return
 
     loginReminderSent.current = true
     pushGameNotification({
       kind: 'predict',
-      title: 'Complete your season picks',
-      body: 'Golden Boot, winner, dark horse & more — open through group stage. Required before match predictions.',
+      title: editAllowed ? 'Season picks reopened' : 'Complete your season picks',
+      body: editAllowed
+        ? 'One more chance before Quarter-finals — Golden Boot, winner, dark horse & more.'
+        : 'Golden Boot, winner, dark horse & more — open through group stage. Required before match predictions.',
       url: '/profile',
       action: 'open-season-questionnaire',
     })
-  }, [ready, needsSeasonPicks, showQuestionnaire])
+  }, [ready, needsPicksNow, showInitialQuestionnaire, editAllowed])
 
   useEffect(() => {
     if (!profile?.id) loginReminderSent.current = false
@@ -97,11 +141,23 @@ export function SeasonQuestionnaireProvider({ children }: { children: ReactNode 
       hasSubmitted,
       isLocked,
       canPredictMatches,
-      needsSeasonPicks,
+      needsSeasonPicks: needsPicksNow,
+      canEditSeasonPicks,
       openQuestionnaire,
+      openSeasonEdit,
       skipForNow: handleSkip,
     }),
-    [ready, hasSubmitted, isLocked, canPredictMatches, needsSeasonPicks, openQuestionnaire, handleSkip],
+    [
+      ready,
+      hasSubmitted,
+      isLocked,
+      canPredictMatches,
+      needsPicksNow,
+      canEditSeasonPicks,
+      openQuestionnaire,
+      openSeasonEdit,
+      handleSkip,
+    ],
   )
 
   return (
@@ -120,11 +176,18 @@ export function SeasonQuestionnaireProvider({ children }: { children: ReactNode 
       <AnimatePresence>
         {showQuestionnaire && (
           <SeasonQuestionnaire
-            key="season-questionnaire"
+            key={showEditQuestionnaire ? 'season-edit' : 'season-questionnaire'}
             matches={matches}
-            onSubmit={submit}
+            onSubmit={handleSubmit}
             onComplete={handleComplete}
-            onSkip={() => void handleSkip()}
+            onSkip={showEditQuestionnaire ? undefined : () => void handleSkip()}
+            initialAnswers={showEditQuestionnaire ? row?.answers : undefined}
+            editMode={showEditQuestionnaire}
+            lockHint={
+              showEditQuestionnaire || editAllowed
+                ? formatSeasonEditLockHint(matches)
+                : undefined
+            }
           />
         )}
       </AnimatePresence>

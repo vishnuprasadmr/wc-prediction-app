@@ -6,6 +6,7 @@ import {
   WC_TEAMS,
   GOLDEN_BOOT_CANDIDATES,
 } from '../lib/seasonQuestions'
+import { AdminSeasonEditPollPanel } from './AdminSeasonEditPollPanel'
 
 const KEY_LABELS: Record<string, string> = Object.fromEntries(
   SEASON_QUESTIONS.filter((q) => q.points > 0).map((q) => [q.key, q.title]),
@@ -66,6 +67,8 @@ export function AdminSeasonPanel() {
   if (loading) return null
 
   return (
+    <>
+    <AdminSeasonEditPollPanel />
     <div className="mb-6 rounded-2xl border border-simelabs/30 bg-simelabs/5 p-4">
       <h3 className="type-section-title">Season questionnaire settlement</h3>
       <p className="type-caption mt-1 text-pretty">
@@ -132,5 +135,6 @@ export function AdminSeasonPanel() {
         </button>
       </div>
     </div>
+    </>
   )
 }

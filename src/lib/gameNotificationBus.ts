@@ -6,7 +6,7 @@ export interface GameNotification {
   body: string
   url?: string
   kind: GameNotificationKind
-  action?: 'open-season-questionnaire'
+  action?: 'open-season-questionnaire' | 'open-season-edit'
 }
 
 type Listener = (items: GameNotification[]) => void

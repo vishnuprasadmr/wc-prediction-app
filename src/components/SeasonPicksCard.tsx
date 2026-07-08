@@ -7,6 +7,8 @@ interface SeasonPicksCardProps {
   pointsEarned?: number | null
   loading?: boolean
   onComplete?: () => void
+  onEdit?: () => void
+  canEdit?: boolean
   isLocked?: boolean
 }
 
@@ -15,6 +17,8 @@ export function SeasonPicksCard({
   pointsEarned,
   loading,
   onComplete,
+  onEdit,
+  canEdit = false,
   isLocked = false,
 }: SeasonPicksCardProps) {
   if (loading) {
@@ -54,8 +58,13 @@ export function SeasonPicksCard({
             +{pointsEarned} season pts
           </span>
         )}
-        {pointsEarned === null && (
+        {pointsEarned === null && !canEdit && (
           <span className="type-caption font-medium text-muted">Settled after Final</span>
+        )}
+        {canEdit && (
+          <span className="rounded-full bg-amber-500/20 px-2.5 py-0.5 text-xs font-bold text-amber-400">
+            QF edit open
+          </span>
         )}
       </div>
 
@@ -95,6 +104,16 @@ export function SeasonPicksCard({
           )
         })}
       </ul>
+
+      {canEdit && onEdit && (
+        <button
+          type="button"
+          onClick={onEdit}
+          className="mt-3 w-full rounded-xl border border-simelabs/40 bg-simelabs/10 py-2.5 text-sm font-semibold text-simelabs transition hover:bg-simelabs/20"
+        >
+          Edit season picks before QF
+        </button>
+      )}
     </div>
   )
 }

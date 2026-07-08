@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { LiveScoreboard } from '../components/LiveScoreboard'
 import { MealBetHomeSurprise } from '../components/MealBetHomeSurprise'
+import { SeasonEditPollCard } from '../components/SeasonEditPollCard'
+import { SeasonEditPollReveal } from '../components/SeasonEditPollReveal'
+import { SeasonEditWindowBanner } from '../components/SeasonEditWindowBanner'
 import { MatchCard } from '../components/MatchCard'
 import { PredictionModal } from '../components/PredictionModal'
 import { useGuardedPredict } from '../hooks/useGuardedPredict'
@@ -131,6 +134,9 @@ export function FixturesPage() {
   return (
     <div>
       <LiveScoreboard matches={matches} syncing={liveScoreSyncing} />
+      <SeasonEditPollReveal />
+      <SeasonEditWindowBanner />
+      <SeasonEditPollCard />
       <MealBetHomeSurprise />
 
       {unpickedCount > 0 && filter === 'next' && (

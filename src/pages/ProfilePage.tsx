@@ -31,7 +31,12 @@ export function ProfilePage() {
   const { entries } = useLeaderboard()
   const { predictions, loading } = useUserPredictions(user?.id)
   const [showRules, setShowRules] = useState(false)
-  const { openQuestionnaire, isLocked: seasonLocked } = useSeasonQuestionnaireContext()
+  const {
+    openQuestionnaire,
+    openSeasonEdit,
+    canEditSeasonPicks,
+    isLocked: seasonLocked,
+  } = useSeasonQuestionnaireContext()
   const { row: seasonRow, ready: seasonReady } = useSeasonQuestionnaire()
   const heartTeam = seasonRow?.answers?.heart_team
   const rankingsAvailable = useMemo(() => hasFinishedMatches(matches), [matches])
@@ -106,6 +111,8 @@ export function ProfilePage() {
         pointsEarned={seasonRow?.points_earned}
         loading={!seasonReady}
         onComplete={openQuestionnaire}
+        onEdit={openSeasonEdit}
+        canEdit={canEditSeasonPicks}
         isLocked={seasonLocked}
       />
 

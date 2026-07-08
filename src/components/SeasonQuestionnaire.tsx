@@ -18,8 +18,13 @@ import type { Match } from '../lib/types'
 interface SeasonQuestionnaireProps {
   onComplete: () => void
   onSubmit: (answers: SeasonAnswers) => Promise<void>
-  onSkip: () => void
+  onSkip?: () => void
   matches?: Match[]
+  /** Prefill when re-editing existing season picks. */
+  initialAnswers?: SeasonAnswers
+  /** Re-edit before Quarter-finals — skips “Skip for now”, different copy. */
+  editMode?: boolean
+  lockHint?: string
 }
 
 function PitchProgress({ step, total }: { step: number; total: number }) {
@@ -210,11 +215,18 @@ export function SeasonQuestionnaire({
   onSubmit,
   onSkip,
   matches = [],
+  initialAnswers,
+  editMode = false,
+  lockHint,
 }: SeasonQuestionnaireProps) {
   const reduceMotion = useReducedMotion()
   const [step, setStep] = useState(0)
-  const [answers, setAnswers] = useState<SeasonAnswers>({})
-  const [playerCustom, setPlayerCustom] = useState('')
+  const [answers, setAnswers] = useState<SeasonAnswers>(() => ({ ...initialAnswers }))
+  const [playerCustom, setPlayerCustom] = useState(() => {
+    const boot = initialAnswers?.golden_boot?.trim()
+    if (!boot) return ''
+    return GOLDEN_BOOT_CANDIDATES.includes(boot) ? '' : boot
+  })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -267,6 +279,12 @@ export function SeasonQuestionnaire({
     }
   }
 
+  const hint =
+    lockHint ??
+    (editMode
+      ? 'One re-edit before Quarter-finals — then season picks lock for good'
+      : `${formatSeasonQuestionnaireLockHint(matches)} · Match predictions need season picks first`)
+
   return (
     <div
       className="fixed inset-0 z-[190] flex flex-col overflow-hidden bg-page text-theme safe-top safe-bottom"
@@ -288,13 +306,25 @@ export function SeasonQuestionnaire({
 
       <header className="relative z-10 border-b border-default/80 bg-elevated/90 px-4 py-4 backdrop-blur-md">
         <p id="season-questionnaire-title" className="type-overline">
-          Season specials
+          {editMode ? 'Season specials · QF edit' : 'Season specials'}
         </p>
-        <h1 className="type-page-title mt-1">Build your World Cup dossier</h1>
+        <h1 className="type-page-title mt-1">
+          {editMode ? 'Tweak your season picks' : 'Build your World Cup dossier'}
+        </h1>
         <p className="type-caption mt-1 text-pretty">
-          Like IPL caps — Golden Boot, dark horses &amp; the champion. Up to{' '}
-          <span className="font-semibold text-simelabs">{MAX_SEASON_BONUS} bonus pts</span> after
-          the Final.
+          {editMode ? (
+            <>
+              Golden Boot, winner, dark horse &amp; more — last change before QF. Still worth up to{' '}
+              <span className="font-semibold text-simelabs">{MAX_SEASON_BONUS} bonus pts</span> after
+              the Final.
+            </>
+          ) : (
+            <>
+              Like IPL caps — Golden Boot, dark horses &amp; the champion. Up to{' '}
+              <span className="font-semibold text-simelabs">{MAX_SEASON_BONUS} bonus pts</span> after
+              the Final.
+            </>
+          )}
         </p>
         <div className="mt-4">
           <div className="mb-1.5 flex justify-between type-caption font-medium">
@@ -343,26 +373,42 @@ export function SeasonQuestionnaire({
               Back
             </button>
           )}
+          {editMode && step === 0 && (
+            <button
+              type="button"
+              onClick={onComplete}
+              disabled={submitting}
+              className="flex-1 rounded-xl border border-default py-3.5 text-sm font-semibold text-subtle transition hover:bg-muted disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          )}
           <button
             type="button"
             onClick={() => void goNext()}
             disabled={!canContinue || submitting}
             className="btn-primary flex-[2] !w-auto"
           >
-            {submitting ? 'Saving…' : isLast ? 'Kick off my picks ⚽' : 'Next'}
+            {submitting
+              ? 'Saving…'
+              : isLast
+                ? editMode
+                  ? 'Save updated picks ⚽'
+                  : 'Kick off my picks ⚽'
+                : 'Next'}
           </button>
         </div>
-        <button
-          type="button"
-          onClick={onSkip}
-          disabled={submitting}
-          className="type-caption mt-3 w-full text-center font-medium text-muted transition hover:text-theme disabled:opacity-50"
-        >
-          Skip for now — complete later from Profile
-        </button>
-        <p className="type-caption mt-2 text-center text-pretty">
-          {formatSeasonQuestionnaireLockHint(matches)} · Match predictions need season picks first
-        </p>
+        {!editMode && onSkip && (
+          <button
+            type="button"
+            onClick={onSkip}
+            disabled={submitting}
+            className="type-caption mt-3 w-full text-center font-medium text-muted transition hover:text-theme disabled:opacity-50"
+          >
+            Skip for now — complete later from Profile
+          </button>
+        )}
+        <p className="type-caption mt-2 text-center text-pretty">{hint}</p>
       </footer>
     </div>
   )

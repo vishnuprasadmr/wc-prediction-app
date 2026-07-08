@@ -128,6 +128,10 @@ export function GameNotificationHost() {
       season?.openQuestionnaire()
       return
     }
+    if (item.action === 'open-season-edit') {
+      season?.openSeasonEdit()
+      return
+    }
     if (item.url) navigate(item.url)
   }
 
