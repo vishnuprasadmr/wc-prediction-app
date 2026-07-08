@@ -128,9 +128,9 @@ export function useSeasonEditPoll() {
       const now = new Date().toISOString()
       const { error } = await supabase.from('season_edit_poll').upsert(
         {
-          id: true,
           ...poll,
           ...patch,
+          id: true,
           updated_at: now,
         },
         { onConflict: 'id' },
