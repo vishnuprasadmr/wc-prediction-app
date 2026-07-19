@@ -11,8 +11,9 @@ import { AdminVideoStudioPanel } from '../components/AdminVideoStudioPanel'
 import { AdminStatsPanel } from '../components/AdminStatsPanel'
 import { AdminPrizesPanel } from '../components/AdminPrizesPanel'
 import { AdminMealChallengesPanel } from '../components/AdminMealChallengesPanel'
+import { AdminFinalePanel } from '../components/AdminFinalePanel'
 
-type AdminTab = 'matches' | 'moderation' | 'share' | 'video' | 'season' | 'stats'
+type AdminTab = 'matches' | 'moderation' | 'share' | 'video' | 'season' | 'finale' | 'stats'
 
 const ADMIN_TABS: { id: AdminTab; label: string; hint: string }[] = [
   { id: 'matches', label: 'Matches', hint: 'Scores & sync' },
@@ -20,6 +21,7 @@ const ADMIN_TABS: { id: AdminTab; label: string; hint: string }[] = [
   { id: 'share', label: 'Share cards', hint: 'Social images' },
   { id: 'video', label: 'AI Video', hint: 'Daily reel brief' },
   { id: 'season', label: 'Season', hint: 'Questionnaire' },
+  { id: 'finale', label: 'Finale', hint: 'Party & gifts' },
   { id: 'stats', label: 'Stats', hint: 'Engagement data' },
 ]
 
@@ -227,6 +229,7 @@ export function AdminPage() {
       {tab === 'share' && <AdminSharePanel />}
       {tab === 'video' && <AdminVideoStudioPanel />}
       {tab === 'season' && <AdminSeasonPanel />}
+      {tab === 'finale' && <AdminFinalePanel />}
       {tab === 'stats' && <AdminStatsPanel onSynced={() => void refetch()} />}
 
       {editing && (

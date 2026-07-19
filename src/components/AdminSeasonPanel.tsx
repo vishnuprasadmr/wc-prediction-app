@@ -73,6 +73,7 @@ export function AdminSeasonPanel() {
       <h3 className="type-section-title">Season questionnaire settlement</h3>
       <p className="type-caption mt-1 text-pretty">
         Set official answers after the tournament, then settle bonus points on the leaderboard.
+        After that, assign Zomato gifts and publish the party in Admin → Finale.
       </p>
 
       <div className="mt-4 space-y-3">

@@ -1,12 +1,15 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { LiveScoreboard } from '../components/LiveScoreboard'
 import { MatchCard } from '../components/MatchCard'
 import { PredictionModal } from '../components/PredictionModal'
 import { useGuardedPredict } from '../hooks/useGuardedPredict'
 import { useNextMatchFocus } from '../hooks/useNextMatchFocus'
+import { useFinaleParty } from '../hooks/useFinaleParty'
 import { useMatches } from '../hooks/useMatches'
 import { LockCountdown } from '../components/LockCountdown'
+import { resolveFinaleHomePhase } from '../lib/finaleParty'
 import {
   getPredictableMatches,
   PREDICTION_LOCK_BUFFER_MINUTES,
@@ -18,7 +21,9 @@ import type { Match } from '../lib/types'
 
 export function PredictPage() {
   const { matches, predictions, loading, refetch, liveScoreSyncing } = useMatches()
+  const { config: finaleConfig } = useFinaleParty()
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null)
+  const finalePhase = resolveFinaleHomePhase(matches, finaleConfig)
 
   const openMatches = useMemo(() => getPredictableMatches(matches), [matches])
 
@@ -130,11 +135,25 @@ export function PredictPage() {
         </div>
       ) : openMatches.length === 0 ? (
         <div className="rounded-2xl border border-default bg-card p-8 text-center">
-          <p className="text-4xl">✅</p>
-          <p className="mt-2 font-medium">All caught up!</p>
-          <p className="mt-1 text-sm text-muted">
-            More matches open the day before they kick off (IST).
+          <p className="text-4xl">{finalePhase === 'tournament' ? '✅' : '🎉'}</p>
+          <p className="mt-2 font-medium">
+            {finalePhase === 'tournament' ? 'All caught up!' : 'Tournament complete'}
           </p>
+          <p className="mt-1 text-sm text-muted">
+            {finalePhase === 'tournament'
+              ? 'More matches open the day before they kick off (IST).'
+              : finalePhase === 'published'
+                ? 'The after-game party is on Home — gifts and thanks are waiting.'
+                : 'The after-game party is warming up on Home while results are locked in.'}
+          </p>
+          {finalePhase !== 'tournament' && (
+            <Link
+              to="/"
+              className="mt-4 inline-block text-sm font-semibold text-simelabs hover:underline"
+            >
+              Go to Home →
+            </Link>
+          )}
         </div>
       ) : (
         <div className="space-y-6">

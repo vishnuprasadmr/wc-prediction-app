@@ -14,6 +14,8 @@ export type SoundId =
   | 'standingsHappy'
   | 'standingsSad'
   | 'splashAnthem'
+  | 'partyTease'
+  | 'finaleParty'
 
 const STORAGE_KEY = 'wc-sounds-enabled'
 
@@ -241,6 +243,23 @@ function playStandingsSad(ctx: AudioContext, when: number) {
   tone(ctx, { freq: 330, freqEnd: 247, duration: 0.28, type: 'triangle', gain: 0.16, when: when + 0.12 })
 }
 
+/** Soft envelope tease while finale results are pending */
+function playPartyTease(ctx: AudioContext, when: number) {
+  tone(ctx, { freq: 262, duration: 0.14, type: 'sine', gain: 0.16, when })
+  tone(ctx, { freq: 330, duration: 0.16, type: 'triangle', gain: 0.14, when: when + 0.12 })
+  tone(ctx, { freq: 392, freqEnd: 349, duration: 0.28, type: 'sine', gain: 0.12, when: when + 0.26 })
+}
+
+/** Full party fanfare when results publish / gift opens */
+function playFinaleParty(ctx: AudioContext, when: number) {
+  playSplashAnthem(ctx, when)
+  tone(ctx, { freq: 523, duration: 0.12, type: 'sine', gain: 0.22, when: when + 1.15 })
+  tone(ctx, { freq: 659, duration: 0.12, type: 'sine', gain: 0.24, when: when + 1.26 })
+  tone(ctx, { freq: 784, duration: 0.14, type: 'triangle', gain: 0.26, when: when + 1.38 })
+  tone(ctx, { freq: 1047, duration: 0.28, type: 'sine', gain: 0.2, when: when + 1.5 })
+  noiseBurst(ctx, 0.12, 0.1, when + 1.52)
+}
+
 /** Stadium swell + whistle when the welcome screen opens */
 function playSplashAnthem(ctx: AudioContext, when: number) {
   const t0 = ctx.currentTime + when
@@ -286,6 +305,8 @@ const PLAYERS: Record<SoundId, Player> = {
   standingsHappy: playStandingsHappy,
   standingsSad: playStandingsSad,
   splashAnthem: playSplashAnthem,
+  partyTease: playPartyTease,
+  finaleParty: playFinaleParty,
 }
 
 /**

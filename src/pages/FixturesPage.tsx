@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { LiveScoreboard } from '../components/LiveScoreboard'
+import { FinalePartyHome } from '../components/FinalePartyHome'
 import { MealBetHomeSurprise } from '../components/MealBetHomeSurprise'
 import { SeasonEditPollCard } from '../components/SeasonEditPollCard'
 import { SeasonEditPollReveal } from '../components/SeasonEditPollReveal'
@@ -12,6 +13,8 @@ import { PredictionModal } from '../components/PredictionModal'
 import { useGuardedPredict } from '../hooks/useGuardedPredict'
 import { useNextMatchFocus } from '../hooks/useNextMatchFocus'
 import { useMatches } from '../hooks/useMatches'
+import { resolveFinaleHomePhase } from '../lib/finaleParty'
+import { useFinaleParty } from '../hooks/useFinaleParty'
 import {
   getActionableMatches,
   getMatchFilterStatus,
@@ -35,8 +38,11 @@ const filters: { key: Filter; label: string }[] = [
 
 export function FixturesPage() {
   const { matches, predictions, loading, error, liveScoreSyncing, refetch } = useMatches()
+  const { config: finaleConfig } = useFinaleParty()
   const [filter, setFilter] = useState<Filter>('next')
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null)
+  const finalePhase = resolveFinaleHomePhase(matches, finaleConfig)
+  const showFinaleParty = finalePhase !== 'tournament'
 
   const openMatches = useMemo(() => getPredictableMatches(matches), [matches])
   const unpickedCount = useMemo(
@@ -142,6 +148,10 @@ export function FixturesPage() {
       </SoftErrorBoundary>
       <MealBetHomeSurprise />
 
+      {showFinaleParty && (
+        <FinalePartyHome onBrowseFinished={() => setFilter('finished')} />
+      )}
+
       {unpickedCount > 0 && filter === 'next' && (
         <motion.div
           initial={{ opacity: 0, y: 6 }}
@@ -198,19 +208,21 @@ export function FixturesPage() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-2xl border border-default bg-card p-8 text-center">
-          <p className="text-4xl">⚽</p>
-          <p className="mt-2 text-muted">No matches in this filter</p>
-          {filter !== 'all' && (
-            <button
-              type="button"
-              onClick={() => setFilter('all')}
-              className="mt-3 text-sm font-medium text-simelabs hover:underline"
-            >
-              Show all matches
-            </button>
-          )}
-        </div>
+        showFinaleParty && filter === 'next' ? null : (
+          <div className="rounded-2xl border border-default bg-card p-8 text-center">
+            <p className="text-4xl">⚽</p>
+            <p className="mt-2 text-muted">No matches in this filter</p>
+            {filter !== 'all' && (
+              <button
+                type="button"
+                onClick={() => setFilter('all')}
+                className="mt-3 text-sm font-medium text-simelabs hover:underline"
+              >
+                Show all matches
+              </button>
+            )}
+          </div>
+        )
       ) : (
         <div className="space-y-8">
           {visibleEntries.map(([date, dayMatches]) => (
