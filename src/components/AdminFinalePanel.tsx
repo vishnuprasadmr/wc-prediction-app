@@ -46,7 +46,12 @@ export function AdminFinalePanel() {
   }, [config])
 
   useEffect(() => {
-    setDrafts(adminAwards.map((a) => ({ ...a, zomato_code: a.zomato_code ?? '' })))
+    const allowed = new Set(FINALE_SLOT_DEFS.map((d) => d.slot_key))
+    setDrafts(
+      adminAwards
+        .filter((a) => allowed.has(a.slot_key as FinaleSlotKey))
+        .map((a) => ({ ...a, zomato_code: a.zomato_code ?? '' })),
+    )
   }, [adminAwards])
 
   useEffect(() => {
@@ -170,6 +175,7 @@ export function AdminFinalePanel() {
     }
 
     for (const row of drafts) {
+      const def = FINALE_SLOT_DEFS.find((d) => d.slot_key === row.slot_key)
       const { error: rowError } = await supabase
         .from('finale_prize_awards')
         .update({
@@ -177,6 +183,7 @@ export function AdminFinalePanel() {
           zomato_code: row.zomato_code?.trim() || null,
           night_label: row.night_label?.trim() || null,
           suggested_user_id: row.suggested_user_id || null,
+          amount_inr: def?.amount_inr ?? row.amount_inr,
           updated_at: new Date().toISOString(),
         })
         .eq('id', row.id)
@@ -216,6 +223,7 @@ export function AdminFinalePanel() {
 
     // Persist assignments first
     for (const row of drafts) {
+      const def = FINALE_SLOT_DEFS.find((d) => d.slot_key === row.slot_key)
       const { error: rowError } = await supabase
         .from('finale_prize_awards')
         .update({
@@ -223,6 +231,7 @@ export function AdminFinalePanel() {
           zomato_code: row.zomato_code?.trim() || null,
           night_label: row.night_label?.trim() || null,
           suggested_user_id: row.suggested_user_id || null,
+          amount_inr: def?.amount_inr ?? row.amount_inr,
           updated_at: new Date().toISOString(),
         })
         .eq('id', row.id)
@@ -418,12 +427,12 @@ export function AdminFinalePanel() {
           const suggestedName = row.suggested_user_id
             ? nameById.get(row.suggested_user_id)
             : null
-          const isHero = row.slot_key.startsWith('matchday_hero')
           const isLucky = row.slot_key === 'lucky_draw'
           const options =
             isLucky && luckyEligible.length > 0
               ? players.filter((p) => luckyEligible.includes(p.user_id))
               : players
+          const amount = def?.amount_inr ?? row.amount_inr
 
           return (
             <div
@@ -434,7 +443,7 @@ export function AdminFinalePanel() {
                 <div>
                   <p className="font-bold">{row.title}</p>
                   <p className="text-xs text-muted">
-                    {formatInr(row.amount_inr)} · {def?.suggestionHint ?? row.slot_key}
+                    {formatInr(amount)} · {def?.suggestionHint ?? row.slot_key}
                   </p>
                 </div>
                 {row.revealed_at && (
@@ -443,17 +452,6 @@ export function AdminFinalePanel() {
                   </span>
                 )}
               </div>
-
-              {isHero && (
-                <label className="mt-3 block text-xs text-muted">
-                  Night label
-                  <input
-                    value={row.night_label ?? ''}
-                    onChange={(e) => updateDraft(index, { night_label: e.target.value })}
-                    className="mt-1 w-full rounded-lg border border-default bg-background px-3 py-2 text-sm"
-                  />
-                </label>
-              )}
 
               {suggestedName && (
                 <button

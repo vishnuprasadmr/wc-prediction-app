@@ -33,6 +33,9 @@ export function SeasonAwardsCard() {
               </p>
               <p className="mt-1 font-bold">{a.winner_display_name ?? '—'}</p>
               <p className="text-xs text-muted">{formatInr(a.amount_inr)} Zomato gift</p>
+              {a.masked_card && (
+                <p className="mt-1 font-mono text-[11px] text-simelabs">{a.masked_card}</p>
+              )}
             </div>
           ))}
         </div>

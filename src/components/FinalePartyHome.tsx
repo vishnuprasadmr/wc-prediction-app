@@ -204,12 +204,30 @@ export function FinalePartyHome({ onBrowseFinished }: FinalePartyHomeProps) {
                 key={a.id}
                 className="flex items-center justify-between gap-3 rounded-xl bg-muted/40 px-3 py-2 text-sm"
               >
-                <span className="min-w-0">
-                  <span className="block font-semibold text-theme">
-                    {awardDisplayTitle(a)}
-                  </span>
-                  <span className="text-muted">
-                    {a.winner_display_name ?? '—'} · {formatInr(a.amount_inr)}
+                <span className="flex min-w-0 items-center gap-3">
+                  {a.winner_avatar_url ? (
+                    <img
+                      src={a.winner_avatar_url}
+                      alt=""
+                      className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-simelabs/30"
+                    />
+                  ) : (
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-simelabs/15 text-xs font-bold text-simelabs">
+                      {(a.winner_display_name ?? '?').charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                  <span className="min-w-0">
+                    <span className="block font-semibold text-theme">
+                      {awardDisplayTitle(a)}
+                    </span>
+                    <span className="text-muted">
+                      {a.winner_display_name ?? '—'} · {formatInr(a.amount_inr)}
+                    </span>
+                    {a.masked_card && (
+                      <span className="mt-0.5 block font-mono text-[11px] text-simelabs">
+                        {a.masked_card}
+                      </span>
+                    )}
                   </span>
                 </span>
                 {a.user_id === profile?.id && (

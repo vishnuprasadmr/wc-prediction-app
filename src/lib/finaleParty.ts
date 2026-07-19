@@ -7,9 +7,6 @@ export type FinaleSlotKey =
   | 'runner_up'
   | 'bronze'
   | 'oracle'
-  | 'matchday_hero_1'
-  | 'matchday_hero_2'
-  | 'matchday_hero_3'
   | 'season_star'
   | 'lucky_draw'
 
@@ -23,7 +20,7 @@ export interface FinalePartyConfig {
   updated_at?: string
 }
 
-/** Public award row (never includes zomato_code). */
+/** Public award row (never includes full zomato_code). */
 export interface FinalePrizeAwardPublic {
   id: string
   slot_key: FinaleSlotKey | string
@@ -35,6 +32,8 @@ export interface FinalePrizeAwardPublic {
   revealed_at: string | null
   sort_order: number
   winner_display_name?: string | null
+  winner_avatar_url?: string | null
+  masked_card?: string | null
 }
 
 /** Admin-only row including gift code. */
@@ -46,7 +45,6 @@ export interface FinaleSlotDef {
   slot_key: FinaleSlotKey
   title: string
   amount_inr: number
-  defaultNightLabel?: string
   suggestionHint: string
 }
 
@@ -76,27 +74,6 @@ export const FINALE_SLOT_DEFS: FinaleSlotDef[] = [
     suggestionHint: 'Most exact scores',
   },
   {
-    slot_key: 'matchday_hero_1',
-    title: 'Matchday hero',
-    amount_inr: 300,
-    defaultNightLabel: 'Opening weekend',
-    suggestionHint: 'Admin pick',
-  },
-  {
-    slot_key: 'matchday_hero_2',
-    title: 'Matchday hero',
-    amount_inr: 300,
-    defaultNightLabel: 'Knockout round',
-    suggestionHint: 'Admin pick',
-  },
-  {
-    slot_key: 'matchday_hero_3',
-    title: 'Matchday hero',
-    amount_inr: 300,
-    defaultNightLabel: 'Final week',
-    suggestionHint: 'Admin pick',
-  },
-  {
     slot_key: 'season_star',
     title: 'Season specials star',
     amount_inr: 500,
@@ -105,7 +82,7 @@ export const FINALE_SLOT_DEFS: FinaleSlotDef[] = [
   {
     slot_key: 'lucky_draw',
     title: 'Lucky league draw',
-    amount_inr: 300,
+    amount_inr: 500,
     suggestionHint: '70%+ match picks',
   },
 ]
@@ -130,11 +107,6 @@ export function finaleCelebrateStorageKey(publishedAt: string | null): string {
   return `wc-finale-celebrated:${publishedAt ?? 'none'}`
 }
 
-export interface PlayerOption {
-  user_id: string
-  display_name: string
-}
-
 export interface FinaleSuggestions {
   bySlot: Partial<Record<FinaleSlotKey, string | null>>
   luckyEligibleIds: string[]
@@ -142,7 +114,6 @@ export interface FinaleSuggestions {
 
 /**
  * Build admin suggestions from leaderboard + season bonuses + prediction counts.
- * Matchday heroes are left null (admin picks).
  */
 export function buildFinaleSuggestions(
   entries: LeaderboardEntry[],
@@ -155,9 +126,6 @@ export function buildFinaleSuggestions(
     runner_up: entries[1]?.user_id ?? null,
     bronze: entries[2]?.user_id ?? null,
     oracle: null,
-    matchday_hero_1: null,
-    matchday_hero_2: null,
-    matchday_hero_3: null,
     season_star: null,
     lucky_draw: null,
   }
@@ -184,12 +152,12 @@ export function buildFinaleSuggestions(
 
 export function awardsReadyToPublish(awards: FinalePrizeAwardAdmin[]): boolean {
   if (awards.length < FINALE_SLOT_DEFS.length) return false
-  return awards.every(
-    (a) => Boolean(a.user_id) && Boolean(a.zomato_code?.trim()),
-  )
+  return awards.every((a) => Boolean(a.user_id) && Boolean(a.zomato_code?.trim()))
 }
 
-export function awardDisplayTitle(award: Pick<FinalePrizeAwardPublic, 'title' | 'night_label'>): string {
+export function awardDisplayTitle(
+  award: Pick<FinalePrizeAwardPublic, 'title' | 'night_label'>,
+): string {
   if (award.night_label?.trim()) return `${award.title} · ${award.night_label.trim()}`
   return award.title
 }
@@ -208,9 +176,7 @@ export function playerFinaleHomeMode(
 }
 
 /** Strip gift codes before any public/player-facing payload. */
-export function toPublicAward(
-  award: FinalePrizeAwardAdmin,
-): FinalePrizeAwardPublic {
+export function toPublicAward(award: FinalePrizeAwardAdmin): FinalePrizeAwardPublic {
   return {
     id: award.id,
     slot_key: award.slot_key,
@@ -222,11 +188,27 @@ export function toPublicAward(
     revealed_at: award.revealed_at,
     sort_order: award.sort_order,
     winner_display_name: award.winner_display_name,
+    winner_avatar_url: award.winner_avatar_url,
+    masked_card: award.masked_card ?? maskGiftCardNumber(award.zomato_code),
   }
 }
 
-export function publicAwardsLeakCodes(
-  awards: FinalePrizeAwardPublic[],
-): boolean {
-  return awards.some((a) => 'zomato_code' in a && Boolean((a as { zomato_code?: string }).zomato_code))
+export function publicAwardsLeakCodes(awards: FinalePrizeAwardPublic[]): boolean {
+  return awards.some(
+    (a) => 'zomato_code' in a && Boolean((a as { zomato_code?: string }).zomato_code),
+  )
+}
+
+/** Mask a stored Zomato card blob — shows first/last 4 of the 16-digit card only. */
+export function maskGiftCardNumber(code: string | null | undefined): string | null {
+  if (!code?.trim()) return null
+  const digits = code.replace(/\D/g, '')
+  if (digits.length >= 16) {
+    const card = digits.slice(0, 16)
+    return `${card.slice(0, 4)} **** **** ${card.slice(12)}`
+  }
+  if (digits.length >= 8) {
+    return `${digits.slice(0, 4)} **** ${digits.slice(-4)}`
+  }
+  return '****'
 }

@@ -65,7 +65,7 @@ export function useFinaleParty(options: UseFinalePartyOptions = {}) {
       const { data, error: awardsError } = await supabase
         .from('finale_prize_awards_public')
         .select(
-          'id, slot_key, title, amount_inr, night_label, user_id, suggested_user_id, revealed_at, sort_order, created_at, updated_at, winner_display_name',
+          'id, slot_key, title, amount_inr, night_label, user_id, suggested_user_id, revealed_at, sort_order, created_at, updated_at, winner_display_name, winner_avatar_url, masked_card',
         )
         .order('sort_order', { ascending: true })
 

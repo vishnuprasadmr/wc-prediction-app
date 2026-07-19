@@ -14,9 +14,10 @@ import {
 
 export function PrizesPage() {
   const { profile } = useAuth()
-  const { config, prizes, loading } = useLeaguePrizes()
+  const { config, prizes: allPrizes, loading } = useLeaguePrizes()
   const { config: finaleConfig, awards: finaleAwards } = useFinaleParty()
   const isAdmin = Boolean(profile?.is_admin)
+  const prizes = allPrizes.filter((p) => !p.title.toLowerCase().includes('matchday'))
   const winnersPublished = finaleConfig?.status === 'published' && finaleAwards.length > 0
   const poolTotal = config ? resolvePrizePoolTotal(prizes, config.total_inr) : 0
   const rowTotal = sumPrizeAmounts(prizes)
@@ -120,6 +121,11 @@ export function PrizesPage() {
                 <span className="min-w-0">
                   <span className="block font-semibold">{awardDisplayTitle(a)}</span>
                   <span className="text-muted">{a.winner_display_name ?? '—'}</span>
+                  {a.masked_card && (
+                    <span className="mt-0.5 block font-mono text-xs text-simelabs">
+                      Zomato {a.masked_card}
+                    </span>
+                  )}
                 </span>
                 <span className="shrink-0 font-bold tabular-nums text-simelabs">
                   {formatInr(a.amount_inr)}
@@ -144,7 +150,6 @@ export function PrizesPage() {
             ? finaleAwards.filter((a) => {
                 const pt = prize.title.toLowerCase()
                 const at = a.title.toLowerCase()
-                if (pt.includes('matchday') && at.includes('matchday')) return true
                 if (pt.includes('season') && at.includes('season')) return true
                 if (pt.includes('lucky') && at.includes('lucky')) return true
                 return pt.includes(at) || at.includes(pt.split(' ')[0] ?? '')

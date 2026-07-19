@@ -65,6 +65,17 @@ import {
   prepareShootoutVictoryBlob,
   shareShootoutVictoryWithImage,
 } from '../lib/shareShootoutVictory'
+import {
+  buildPrizeWinnerInput,
+  buildPrizeWinnerShareText,
+  downloadPrizeWinnerImage,
+  preparePrizeWinnerBlob,
+  sharePrizeWinnerWithImage,
+} from '../lib/sharePrizeWinner'
+import { useFinaleParty } from '../hooks/useFinaleParty'
+import { maskGiftCardNumber } from '../lib/finaleParty'
+import { formatInr } from '../lib/prizes'
+import { supabase } from '../lib/supabase'
 import { useShootoutChallenges } from '../hooks/useShootoutChallenges'
 import { LeaderboardAvatar } from './LeaderboardAvatar'
 import type { Match } from '../lib/types'
@@ -81,6 +92,7 @@ type ShareTab =
   | 'leader'
   | 'matchday'
   | 'arena'
+  | 'prizes'
 
 function HeroPreview({
   pictureUrl,
@@ -176,10 +188,44 @@ export function AdminSharePanel() {
   const [selectedMealLiveId, setSelectedMealLiveId] = useState<string | null>(null)
   const [selectedMealResultId, setSelectedMealResultId] = useState<string | null>(null)
   const [selectedArenaId, setSelectedArenaId] = useState<string | null>(null)
+  const [selectedPrizeId, setSelectedPrizeId] = useState<string | null>(null)
+  const [prizeProfiles, setPrizeProfiles] = useState<
+    Record<string, { display_name: string; avatar_url: string | null }>
+  >({})
   const [status, setStatus] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
   const { allCompleted: arenaCompleted, loading: arenaLoading } = useShootoutChallenges()
+  const { adminAwards, awards: publicAwards, loading: prizeLoading } = useFinaleParty({
+    admin: true,
+  })
+
+  const prizeAwards = useMemo(() => {
+    const rows = adminAwards.length > 0 ? adminAwards : publicAwards
+    return rows.filter((a) => a.user_id && !String(a.slot_key).startsWith('matchday_hero'))
+  }, [adminAwards, publicAwards])
+
+  useEffect(() => {
+    const ids = [...new Set(prizeAwards.map((a) => a.user_id).filter(Boolean))] as string[]
+    if (ids.length === 0) {
+      setPrizeProfiles({})
+      return
+    }
+    void (async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar_url')
+        .in('id', ids)
+      const map: Record<string, { display_name: string; avatar_url: string | null }> = {}
+      for (const p of data ?? []) {
+        map[p.id as string] = {
+          display_name: (p.display_name as string) || 'Winner',
+          avatar_url: (p.avatar_url as string | null) ?? null,
+        }
+      }
+      setPrizeProfiles(map)
+    })()
+  }, [prizeAwards])
 
   const selectedArena = useMemo(
     () => arenaCompleted.find((c) => c.id === selectedArenaId) ?? arenaCompleted[0] ?? null,
@@ -190,6 +236,30 @@ export function AdminSharePanel() {
     () => (selectedArena ? buildShootoutVictoryInput(selectedArena) : null),
     [selectedArena],
   )
+
+  const selectedPrize = useMemo(
+    () => prizeAwards.find((a) => a.id === selectedPrizeId) ?? prizeAwards[0] ?? null,
+    [prizeAwards, selectedPrizeId],
+  )
+
+  const prizeWinnerInput = useMemo(() => {
+    if (!selectedPrize?.user_id) return null
+    const profile = prizeProfiles[selectedPrize.user_id]
+    const enriched = {
+      ...selectedPrize,
+      winner_display_name:
+        selectedPrize.winner_display_name ?? profile?.display_name ?? 'Winner',
+      winner_avatar_url: selectedPrize.winner_avatar_url ?? profile?.avatar_url ?? null,
+      masked_card:
+        selectedPrize.masked_card ??
+        maskGiftCardNumber(
+          'zomato_code' in selectedPrize
+            ? (selectedPrize as { zomato_code?: string | null }).zomato_code
+            : null,
+        ),
+    }
+    return buildPrizeWinnerInput(enriched)
+  }, [selectedPrize, prizeProfiles])
 
   const { entries, loading } = useLeaderboard('all', league)
   const { lastMatch, hero, loading: heroLoading, error: heroError } = useLastMatchHero(matches)
@@ -319,6 +389,12 @@ export function AdminSharePanel() {
     tab === 'snapshot' && entries.length > 0,
     [gameSnapshotInput, tab, entries.length],
   )
+  const { blob: prizeBlob, generating: prizeGenerating } = useShareBlobCache(
+    () => preparePrizeWinnerBlob(prizeWinnerInput!),
+    tab === 'prizes' && Boolean(prizeWinnerInput),
+    [prizeWinnerInput, tab],
+  )
+
   const { blob: arenaBlob, generating: arenaGenerating } = useShareBlobCache(
     () => prepareShootoutVictoryBlob(arenaVictoryInput!),
     tab === 'arena' && Boolean(arenaVictoryInput),
@@ -334,7 +410,8 @@ export function AdminSharePanel() {
     (tab === 'leaderboard' && leagueTableGenerating) ||
     (tab === 'leader' && leaderGenerating) ||
     (tab === 'matchday' && matchdayGenerating) ||
-    (tab === 'arena' && arenaGenerating)
+    (tab === 'arena' && arenaGenerating) ||
+    (tab === 'prizes' && prizeGenerating)
 
   useEffect(() => {
     for (const e of topThree) {
@@ -373,6 +450,7 @@ export function AdminSharePanel() {
     { id: 'leader', label: 'Top 3', hint: 'Podium + daily challenge' },
     { id: 'matchday', label: 'Matchday', hint: 'Recent results grid' },
     { id: 'arena', label: 'Arena win', hint: 'Shootout victory poster' },
+    { id: 'prizes', label: 'Prize winners', hint: 'Poster + masked Zomato card' },
   ]
 
   return (
@@ -1154,6 +1232,97 @@ export function AdminSharePanel() {
                 onCopy={() =>
                   void run(
                     () => shareStandings(buildMatchdayShareText(matchdayPreview)),
+                    'Copied!',
+                    'Copy failed',
+                  )
+                }
+              />
+            </>
+          )}
+        </div>
+      )}
+
+      {tab === 'prizes' && (
+        <div className="mt-4 space-y-3">
+          {prizeLoading ? (
+            <div className="h-24 animate-pulse rounded-xl bg-muted" />
+          ) : prizeAwards.length === 0 ? (
+            <p className="text-sm text-muted">
+              Assign prize winners (+ gift codes) in Admin → Finale first.
+            </p>
+          ) : (
+            <>
+              <select
+                value={selectedPrize?.id ?? ''}
+                onChange={(e) => setSelectedPrizeId(e.target.value)}
+                className="w-full rounded-lg bg-muted px-3 py-2 text-sm outline-none"
+              >
+                {prizeAwards.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.title}
+                    {a.night_label ? ` · ${a.night_label}` : ''} —{' '}
+                    {a.winner_display_name ??
+                      (a.user_id ? prizeProfiles[a.user_id]?.display_name : null) ??
+                      'Winner'}{' '}
+                    · {formatInr(a.amount_inr)}
+                  </option>
+                ))}
+              </select>
+
+              {prizeWinnerInput && (
+                <div className="rounded-xl border border-[#E23744]/35 bg-[#E23744]/5 p-4 text-center">
+                  <LeaderboardAvatar
+                    name={prizeWinnerInput.winnerName}
+                    avatarUrl={prizeWinnerInput.winnerAvatarUrl}
+                    size="lg"
+                  />
+                  <p className="mt-2 text-xs font-bold uppercase tracking-wide text-[#E23744]">
+                    {prizeWinnerInput.prizeTitle}
+                  </p>
+                  <p className="mt-1 text-xl font-bold">{prizeWinnerInput.winnerName}</p>
+                  <p className="mt-1 font-heading text-2xl font-black text-simelabs">
+                    {prizeWinnerInput.amountLabel}
+                  </p>
+                  {prizeWinnerInput.maskedCard && (
+                    <p className="mt-2 font-mono text-sm font-semibold tracking-wide">
+                      {prizeWinnerInput.maskedCard}
+                    </p>
+                  )}
+                  <p className="mt-1 text-[11px] text-muted">
+                    Full PIN stays private — poster shows masked card only
+                  </p>
+                </div>
+              )}
+
+              <ShareActions
+                busy={busy}
+                disabled={!prizeWinnerInput || prizeGenerating}
+                onShare={() =>
+                  void run(
+                    () =>
+                      prizeWinnerInput
+                        ? sharePrizeWinnerWithImage(prizeWinnerInput, prizeBlob)
+                        : Promise.resolve({ ok: false }),
+                    'Shared!',
+                    'Could not share',
+                  )
+                }
+                onDownload={() =>
+                  void run(
+                    () =>
+                      prizeWinnerInput
+                        ? downloadPrizeWinnerImage(prizeWinnerInput, prizeBlob)
+                        : Promise.resolve(false),
+                    'Downloaded!',
+                    'Download failed',
+                  )
+                }
+                onCopy={() =>
+                  void run(
+                    () =>
+                      prizeWinnerInput
+                        ? shareStandings(buildPrizeWinnerShareText(prizeWinnerInput))
+                        : Promise.resolve({ ok: false }),
                     'Copied!',
                     'Copy failed',
                   )
