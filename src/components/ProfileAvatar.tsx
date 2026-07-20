@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { useCachedAvatarUrl } from '../hooks/useCachedAvatarUrl'
 
-export type ProfileAvatarSize = 'sm' | 'md' | 'lg' | 'xl'
+export type ProfileAvatarSize = 'sm' | 'md' | 'lg' | 'xl' | 'hero'
 
 const sizeClasses: Record<ProfileAvatarSize, string> = {
   sm: 'h-10 w-10 text-sm',
   md: 'h-12 w-12 text-base',
   lg: 'h-16 w-16 text-2xl',
   xl: 'h-20 w-20 text-3xl',
+  hero: 'h-36 w-36 text-5xl sm:h-44 sm:w-44 sm:text-6xl',
 }
 
 interface ProfileAvatarProps {

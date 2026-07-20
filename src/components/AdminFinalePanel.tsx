@@ -14,6 +14,7 @@ import {
 import { formatInr } from '../lib/prizes'
 import { SEASON_OFFICIAL_KEYS } from '../lib/seasonQuestions'
 import { supabase } from '../lib/supabase'
+import { AdminPrizeWinnerShare } from './AdminPrizeWinnerShare'
 
 type DraftAward = FinalePrizeAwardAdmin
 
@@ -302,6 +303,8 @@ export function AdminFinalePanel() {
 
   return (
     <div className="space-y-6">
+      <AdminPrizeWinnerShare />
+
       <div className="rounded-2xl border border-simelabs/30 bg-simelabs/5 p-4">
         <h3 className="type-section-title">After-final party</h3>
         <p className="type-caption mt-1 text-pretty text-muted">

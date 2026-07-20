@@ -138,6 +138,15 @@ export function FixturesPage() {
     )
   }
 
+  // After the Final / prize release: home is the party board only — no live/next fixtures.
+  if (showFinaleParty) {
+    return (
+      <div>
+        <FinalePartyHome />
+      </div>
+    )
+  }
+
   return (
     <div>
       <LiveScoreboard matches={matches} syncing={liveScoreSyncing} />
@@ -147,10 +156,6 @@ export function FixturesPage() {
         <SeasonEditPollCard />
       </SoftErrorBoundary>
       <MealBetHomeSurprise />
-
-      {showFinaleParty && (
-        <FinalePartyHome onBrowseFinished={() => setFilter('finished')} />
-      )}
 
       {unpickedCount > 0 && filter === 'next' && (
         <motion.div
@@ -208,21 +213,19 @@ export function FixturesPage() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        showFinaleParty && filter === 'next' ? null : (
-          <div className="rounded-2xl border border-default bg-card p-8 text-center">
-            <p className="text-4xl">⚽</p>
-            <p className="mt-2 text-muted">No matches in this filter</p>
-            {filter !== 'all' && (
-              <button
-                type="button"
-                onClick={() => setFilter('all')}
-                className="mt-3 text-sm font-medium text-simelabs hover:underline"
-              >
-                Show all matches
-              </button>
-            )}
-          </div>
-        )
+        <div className="rounded-2xl border border-default bg-card p-8 text-center">
+          <p className="text-4xl">⚽</p>
+          <p className="mt-2 text-muted">No matches in this filter</p>
+          {filter !== 'all' && (
+            <button
+              type="button"
+              onClick={() => setFilter('all')}
+              className="mt-3 text-sm font-medium text-simelabs hover:underline"
+            >
+              Show all matches
+            </button>
+          )}
+        </div>
       ) : (
         <div className="space-y-8">
           {visibleEntries.map(([date, dayMatches]) => (

@@ -180,7 +180,7 @@ function ShareActions({
 export function AdminSharePanel() {
   const { matches } = useMatches()
   const { live: liveMealBets, settled: settledMealBets } = useMealChallenges(matches)
-  const [tab, setTab] = useState<ShareTab>('snapshot')
+  const [tab, setTab] = useState<ShareTab>('prizes')
   const [league, setLeague] = useState<LeaderboardLeague>('simelabs')
   const [topN, setTopN] = useState<number>(10)
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null)
@@ -441,6 +441,7 @@ export function AdminSharePanel() {
   }
 
   const tabs: { id: ShareTab; label: string; hint: string }[] = [
+    { id: 'prizes', label: 'Prize winners', hint: 'Poster + masked Zomato card' },
     { id: 'snapshot', label: 'Game recap', hint: 'Top 3 + latest result + meal bets' },
     { id: 'upcoming', label: 'Next match', hint: 'Captain + IST + league picks %' },
     { id: 'fulltime', label: 'Full-time', hint: 'Winner + hero + scorers' },
@@ -450,7 +451,6 @@ export function AdminSharePanel() {
     { id: 'leader', label: 'Top 3', hint: 'Podium + daily challenge' },
     { id: 'matchday', label: 'Matchday', hint: 'Recent results grid' },
     { id: 'arena', label: 'Arena win', hint: 'Shootout victory poster' },
-    { id: 'prizes', label: 'Prize winners', hint: 'Poster + masked Zomato card' },
   ]
 
   return (
@@ -1247,9 +1247,13 @@ export function AdminSharePanel() {
           {prizeLoading ? (
             <div className="h-24 animate-pulse rounded-xl bg-muted" />
           ) : prizeAwards.length === 0 ? (
-            <p className="text-sm text-muted">
-              Assign prize winners (+ gift codes) in Admin → Finale first.
-            </p>
+            <div className="rounded-xl border border-amber-400/40 bg-amber-400/10 p-4 text-sm">
+              <p className="font-semibold text-amber-300">No prize winners loaded</p>
+              <p className="mt-1 text-muted">
+                Open Admin → Finale (winners are published there), refresh this page, then come
+                back. You can also download posters from the Finale tab.
+              </p>
+            </div>
           ) : (
             <>
               <select

@@ -103,7 +103,7 @@ export async function renderPrizeWinnerCanvas(
   ctx.fillStyle = ZOMATO
   ctx.fillText('GIFT CARD RECEIVED', CARD_W / 2, 815)
 
-  ctx.font = '800 36px "JetBrains Mono", ui-monospace, monospace'
+  ctx.font = '800 34px "Plus Jakarta Sans", Inter, monospace'
   ctx.fillStyle = C.text
   ctx.fillText(input.maskedCard ?? '•••• **** **** ••••', CARD_W / 2, 870)
 
