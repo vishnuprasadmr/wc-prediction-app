@@ -65,16 +65,16 @@ export function AdminPrizeWinnerShare() {
         {rows.map((award) => {
           if (!award.user_id) return null
           const profile = profiles[award.user_id]
+          const zomatoCode =
+            'zomato_code' in award && typeof award.zomato_code === 'string'
+              ? award.zomato_code
+              : null
           const input = buildPrizeWinnerInput({
             ...award,
             winner_display_name:
               award.winner_display_name ?? profile?.display_name ?? 'Winner',
             winner_avatar_url: award.winner_avatar_url ?? profile?.avatar_url ?? null,
-            masked_card:
-              award.masked_card ??
-              maskGiftCardNumber(
-                'zomato_code' in award ? award.zomato_code : null,
-              ),
+            masked_card: award.masked_card ?? maskGiftCardNumber(zomatoCode),
           })
           const busy = busyId === award.id
 
