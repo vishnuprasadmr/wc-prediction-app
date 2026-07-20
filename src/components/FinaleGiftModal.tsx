@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   fetchFinaleGiftCode,
@@ -18,45 +18,83 @@ interface FinaleGiftModalProps {
   onRevealed: () => void
 }
 
+/** Split stored "Card: …\nPIN: …" (or plain code) for clearer display. */
+export function parseGiftCodeParts(raw: string): {
+  card: string | null
+  pin: string | null
+  plain: string
+} {
+  const text = raw.trim()
+  const cardMatch = text.match(/Card:\s*([^\n\r]+)/i)
+  const pinMatch = text.match(/PIN:\s*([^\n\r]+)/i)
+  if (cardMatch || pinMatch) {
+    return {
+      card: cardMatch?.[1]?.trim() || null,
+      pin: pinMatch?.[1]?.trim() || null,
+      plain: text,
+    }
+  }
+  return { card: null, pin: null, plain: text }
+}
+
 export function FinaleGiftModal({ award, onClose, onRevealed }: FinaleGiftModalProps) {
-  const [phase, setPhase] = useState<'closed' | 'opening' | 'code'>('closed')
+  const titleId = useId()
+  const loadedForId = useRef<string | null>(null)
+  const onRevealedRef = useRef(onRevealed)
+  onRevealedRef.current = onRevealed
+
   const [code, setCode] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [busy, setBusy] = useState(false)
 
-  useEffect(() => {
-    if (!award) {
-      setPhase('closed')
-      setCode(null)
-      setError(null)
-      setCopied(false)
-      return
-    }
-    setPhase('opening')
-    primeAudio()
-    playSound('finaleParty')
-    fireCelebration('podium')
-  }, [award])
-
-  const openGift = async () => {
-    if (!award || busy) return
+  const loadGift = useCallback(async (awardId: string, celebrate: boolean) => {
     setBusy(true)
     setError(null)
     try {
-      const giftCode = await fetchFinaleGiftCode(award.id)
-      setCode(giftCode)
-      await markFinaleGiftRevealed(award.id)
-      setPhase('code')
+      if (celebrate) {
+        primeAudio()
+        playSound('finaleParty')
+        fireCelebration('podium')
+      }
+      const giftCode = await fetchFinaleGiftCode(awardId)
+      if (!giftCode.trim()) {
+        throw new Error('Gift code is empty — ask the host to re-save your prize.')
+      }
+      setCode(giftCode.trim())
+      try {
+        await markFinaleGiftRevealed(awardId)
+      } catch {
+        // Code is already shown; reveal stamp is best-effort.
+      }
       playSound('save')
-      fireCelebration('exact')
-      onRevealed()
+      if (celebrate) fireCelebration('exact')
+      onRevealedRef.current()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not open gift')
     } finally {
       setBusy(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    if (!award) {
+      loadedForId.current = null
+      setCode(null)
+      setError(null)
+      setCopied(false)
+      setBusy(false)
+      return
+    }
+
+    // Only load once per award open — parent refetch after reveal must not reset UI.
+    if (loadedForId.current === award.id) return
+    loadedForId.current = award.id
+    setCode(null)
+    setError(null)
+    setCopied(false)
+    void loadGift(award.id, true)
+  }, [award, loadGift])
 
   const copyCode = async () => {
     if (!code) return
@@ -73,15 +111,17 @@ export function FinaleGiftModal({ award, onClose, onRevealed }: FinaleGiftModalP
   const downloadCard = () => {
     if (!award || !code) return
     const title = awardDisplayTitle(award)
+    const parts = parseGiftCodeParts(code)
     const lines = [
       'WC Prediction League — Zomato gift',
       title,
       formatInr(award.amount_inr),
       '',
-      `Code: ${code}`,
+      parts.card ? `Card: ${parts.card}` : `Code: ${parts.plain}`,
+      parts.pin ? `PIN: ${parts.pin}` : null,
       '',
-      'Redeem in the Zomato app.',
-    ]
+      'Redeem in the Zomato app (Online orders).',
+    ].filter((line): line is string => line != null)
     const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -92,6 +132,8 @@ export function FinaleGiftModal({ award, onClose, onRevealed }: FinaleGiftModalP
     playSound('select')
   }
 
+  const parts = code ? parseGiftCodeParts(code) : null
+
   return (
     <AnimatePresence>
       {award && (
@@ -101,8 +143,12 @@ export function FinaleGiftModal({ award, onClose, onRevealed }: FinaleGiftModalP
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[290] flex items-end justify-center bg-black/55 p-4 pb-28 backdrop-blur-sm sm:items-center sm:pb-4"
           onClick={onClose}
+          role="presentation"
         >
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
             initial={{ y: 80, scale: 0.94 }}
             animate={{ y: 0, scale: 1 }}
             exit={{ y: 40, opacity: 0 }}
@@ -111,47 +157,60 @@ export function FinaleGiftModal({ award, onClose, onRevealed }: FinaleGiftModalP
             onClick={(e) => e.stopPropagation()}
           >
             <p className="type-overline !text-simelabs">Your gift</p>
-            <h3 className="type-section-title mt-1">{awardDisplayTitle(award)}</h3>
+            <h3 id={titleId} className="type-section-title mt-1">
+              {awardDisplayTitle(award)}
+            </h3>
             <p className="mt-1 font-heading text-2xl font-black text-simelabs">
               {formatInr(award.amount_inr)}
             </p>
 
-            {phase === 'opening' && (
+            {busy && !code && (
               <>
                 <motion.div
-                  className="mx-auto mt-6 flex h-24 w-24 items-center justify-center rounded-2xl bg-simelabs/15 text-5xl ring-2 ring-simelabs/35"
-                  animate={{ rotate: [0, -6, 6, 0], scale: [1, 1.05, 1] }}
-                  transition={{ duration: 1.4, repeat: Infinity }}
-                >
-                  🎁
-                </motion.div>
-                <p className="type-caption mt-4 text-muted">
-                  A Zomato e-gift card is waiting inside.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => void openGift()}
-                  disabled={busy}
-                  className="mt-5 w-full rounded-xl bg-simelabs py-2.5 text-sm font-semibold text-simelabs-foreground disabled:opacity-50"
-                >
-                  {busy ? 'Opening…' : 'Open gift'}
-                </button>
+                  className="mx-auto mt-6 h-20 w-16 rounded-md bg-gradient-to-b from-simelabs/40 to-simelabs/10 ring-1 ring-simelabs/35"
+                  animate={{ y: [0, -6, 0] }}
+                  transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+                />
+                <p className="type-caption mt-4 text-muted">Unlocking your Zomato e-gift…</p>
               </>
             )}
 
-            {phase === 'code' && code && (
+            {code && parts && (
               <>
-                <p className="mt-5 text-sm font-semibold text-theme">Your Zomato code</p>
-                <p className="mt-2 break-all rounded-xl border border-simelabs/30 bg-simelabs/10 px-3 py-3 font-mono text-lg font-bold tracking-wide text-simelabs">
-                  {code}
-                </p>
+                <p className="mt-5 text-sm font-semibold text-theme">Your Zomato e-gift</p>
+                {parts.card ? (
+                  <div className="mt-3 space-y-2 text-left">
+                    <div className="rounded-xl border border-simelabs/30 bg-simelabs/10 px-3 py-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-muted">
+                        Card number
+                      </p>
+                      <p className="mt-1 break-all font-mono text-base font-bold tracking-wide text-simelabs">
+                        {parts.card}
+                      </p>
+                    </div>
+                    {parts.pin && (
+                      <div className="rounded-xl border border-simelabs/30 bg-simelabs/10 px-3 py-3">
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-muted">
+                          PIN
+                        </p>
+                        <p className="mt-1 break-all font-mono text-base font-bold tracking-wide text-simelabs">
+                          {parts.pin}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="mt-2 break-all rounded-xl border border-simelabs/30 bg-simelabs/10 px-3 py-3 font-mono text-lg font-bold tracking-wide text-simelabs">
+                    {parts.plain}
+                  </p>
+                )}
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => void copyCode()}
                     className="rounded-xl bg-simelabs py-2.5 text-sm font-semibold text-simelabs-foreground"
                   >
-                    {copied ? 'Copied!' : 'Copy'}
+                    {copied ? 'Copied!' : 'Copy all'}
                   </button>
                   <button
                     type="button"
@@ -171,7 +230,22 @@ export function FinaleGiftModal({ award, onClose, onRevealed }: FinaleGiftModalP
               </>
             )}
 
-            {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
+            {error && (
+              <div className="mt-4 space-y-3">
+                <p className="text-sm text-red-400">{error}</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!award) return
+                    void loadGift(award.id, false)
+                  }}
+                  disabled={busy}
+                  className="w-full rounded-xl bg-simelabs py-2.5 text-sm font-semibold text-simelabs-foreground disabled:opacity-50"
+                >
+                  {busy ? 'Retrying…' : 'Try again'}
+                </button>
+              </div>
+            )}
           </motion.div>
         </motion.div>
       )}
