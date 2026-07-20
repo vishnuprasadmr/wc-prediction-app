@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { FinaleGiftModal } from '../components/FinaleGiftModal'
 import { useAuth } from '../contexts/AuthContext'
 import { useFinaleParty } from '../hooks/useFinaleParty'
 import { useLeaguePrizes } from '../hooks/useLeaguePrizes'
-import { awardDisplayTitle } from '../lib/finaleParty'
+import { awardDisplayTitle, type FinalePrizeAwardPublic } from '../lib/finaleParty'
 import {
   formatInr,
   prizePoolShare,
@@ -15,7 +17,8 @@ import {
 export function PrizesPage() {
   const { profile } = useAuth()
   const { config, prizes: allPrizes, loading } = useLeaguePrizes()
-  const { config: finaleConfig, awards: finaleAwards } = useFinaleParty()
+  const { config: finaleConfig, awards: finaleAwards, myAwards, refetch } = useFinaleParty()
+  const [giftAward, setGiftAward] = useState<FinalePrizeAwardPublic | null>(null)
   const isAdmin = Boolean(profile?.is_admin)
   const prizes = allPrizes.filter((p) => !p.title.toLowerCase().includes('matchday'))
   const winnersPublished = finaleConfig?.status === 'published' && finaleAwards.length > 0
@@ -108,6 +111,37 @@ export function PrizesPage() {
         </ul>
       </div>
 
+      {myAwards.length > 0 && (
+        <div className="rounded-2xl border border-simelabs/40 bg-simelabs/10 p-4">
+          <p className="type-overline !text-simelabs">Your Zomato gift</p>
+          <h2 className="type-section-title mt-1">View anytime</h2>
+          <p className="type-caption mt-1 text-muted">
+            Card number and PIN stay available whenever you need them.
+          </p>
+          <ul className="mt-3 space-y-2">
+            {myAwards.map((a) => (
+              <li key={a.id}>
+                <button
+                  type="button"
+                  onClick={() => setGiftAward(a)}
+                  className="flex w-full items-center justify-between gap-3 rounded-xl border border-simelabs/30 bg-card px-3 py-3 text-left text-sm transition hover:bg-simelabs/10"
+                >
+                  <span className="min-w-0">
+                    <span className="block font-semibold">{awardDisplayTitle(a)}</span>
+                    <span className="text-muted">
+                      {a.revealed_at ? 'Tap to view card & PIN' : 'Tap to unlock gift'}
+                    </span>
+                  </span>
+                  <span className="shrink-0 rounded-lg bg-simelabs px-3 py-1.5 text-xs font-bold text-simelabs-foreground">
+                    {formatInr(a.amount_inr)}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {winnersPublished && (
         <div className="rounded-2xl border border-simelabs/30 bg-simelabs/5 p-4">
           <p className="type-overline !text-simelabs">Winners announced</p>
@@ -135,6 +169,12 @@ export function PrizesPage() {
           </ul>
         </div>
       )}
+
+      <FinaleGiftModal
+        award={giftAward}
+        onClose={() => setGiftAward(null)}
+        onRevealed={() => void refetch({ silent: true })}
+      />
 
       <div>
         <h2 className="type-section-title">Prize breakdown</h2>

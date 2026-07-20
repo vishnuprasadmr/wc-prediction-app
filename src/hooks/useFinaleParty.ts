@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import {
   type FinalePartyConfig,
@@ -23,9 +23,12 @@ export function useFinaleParty(options: UseFinalePartyOptions = {}) {
   const [adminAwards, setAdminAwards] = useState<FinalePrizeAwardAdmin[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const hasLoadedRef = useRef(false)
 
-  const refetch = useCallback(async () => {
-    setLoading(true)
+  const refetch = useCallback(async (opts?: { silent?: boolean }) => {
+    // Never flash a full-page skeleton after the first load — that unmounts open modals.
+    const silent = opts?.silent === true || hasLoadedRef.current
+    if (!silent) setLoading(true)
     setError(null)
 
     const { data: configRow, error: configError } = await supabase
@@ -38,7 +41,7 @@ export function useFinaleParty(options: UseFinalePartyOptions = {}) {
 
     if (configError) {
       setError(configError.message)
-      setLoading(false)
+      if (!silent) setLoading(false)
       return
     }
 
@@ -79,7 +82,8 @@ export function useFinaleParty(options: UseFinalePartyOptions = {}) {
       setAdminAwards([])
     }
 
-    setLoading(false)
+    hasLoadedRef.current = true
+    if (!silent) setLoading(false)
   }, [loadAdmin])
 
   useEffect(() => {

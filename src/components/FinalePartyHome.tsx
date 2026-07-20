@@ -29,7 +29,7 @@ type WinnerView = FinalePrizeAwardPublic & {
 export function FinalePartyHome() {
   const { profile } = useAuth()
   const { matches } = useMatches()
-  const { config, awards, loading, refetch } = useFinaleParty()
+  const { config, awards, myAwards, loading, refetch } = useFinaleParty()
   const { entries } = useLeaderboard()
   const [giftAward, setGiftAward] = useState<FinalePrizeAwardPublic | null>(null)
   const [profiles, setProfiles] = useState<
@@ -120,7 +120,8 @@ export function FinalePartyHome() {
 
   if (homeMode === 'hidden') return null
 
-  if (loading) {
+  // Initial load only — never tear down the party UI (or gift modal) on background refetch.
+  if (loading && !config) {
     return <div className="mb-4 h-[70vh] animate-pulse rounded-none bg-muted/60 -mx-4" />
   }
 
@@ -237,6 +238,10 @@ export function FinalePartyHome() {
             </motion.p>
           </div>
 
+          {myAwards.length > 0 && (
+            <MyGiftPanel awards={myAwards} onOpen={(a) => setGiftAward(a)} />
+          )}
+
           {champion && (
             <motion.div
               initial={{ opacity: 0, scale: 0.92 }}
@@ -270,37 +275,16 @@ export function FinalePartyHome() {
                   {champion.masked_card}
                 </p>
               )}
-              {champion.user_id === profile?.id && (
-                <button
-                  type="button"
-                  onClick={() => setGiftAward(champion)}
-                  className="mt-4 rounded-xl bg-simelabs px-5 py-2.5 text-sm font-bold text-simelabs-foreground"
-                >
-                  {champion.revealed_at ? 'View your gift' : 'Open your gift'}
-                </button>
-              )}
             </motion.div>
           )}
 
           {(runnerUp || bronze) && (
             <div className="mx-auto mt-12 grid max-w-lg grid-cols-2 gap-6">
               {runnerUp && (
-                <PodiumWinner
-                  award={runnerUp}
-                  label="Runner-up"
-                  delay={0.3}
-                  isYou={runnerUp.user_id === profile?.id}
-                  onOpenGift={() => setGiftAward(runnerUp)}
-                />
+                <PodiumWinner award={runnerUp} label="Runner-up" delay={0.3} />
               )}
               {bronze && (
-                <PodiumWinner
-                  award={bronze}
-                  label="Bronze"
-                  delay={0.38}
-                  isYou={bronze.user_id === profile?.id}
-                  onOpenGift={() => setGiftAward(bronze)}
-                />
+                <PodiumWinner award={bronze} label="Bronze" delay={0.38} />
               )}
             </div>
           )}
@@ -335,15 +319,6 @@ export function FinalePartyHome() {
                     {award.masked_card && (
                       <p className="mt-1 font-mono text-[10px] text-white/40">{award.masked_card}</p>
                     )}
-                    {award.user_id === profile?.id && (
-                      <button
-                        type="button"
-                        onClick={() => setGiftAward(award)}
-                        className="mt-3 text-xs font-bold text-simelabs underline-offset-2 hover:underline"
-                      >
-                        {award.revealed_at ? 'View gift' : 'Open gift'}
-                      </button>
-                    )}
                   </motion.li>
                 ))}
               </ul>
@@ -359,7 +334,16 @@ export function FinalePartyHome() {
             />
           )}
 
-          <div className="mt-10 flex justify-center">
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+            {myAwards[0] && (
+              <button
+                type="button"
+                onClick={() => setGiftAward(myAwards[0]!)}
+                className="rounded-xl bg-simelabs px-5 py-2.5 text-sm font-bold text-simelabs-foreground"
+              >
+                {myAwards[0].revealed_at ? 'View my Zomato gift' : 'Open my Zomato gift'}
+              </button>
+            )}
             <Link
               to="/leaderboard"
               className="rounded-xl bg-white/10 px-5 py-2.5 text-sm font-semibold text-white ring-1 ring-white/15 transition hover:bg-white/15"
@@ -373,9 +357,64 @@ export function FinalePartyHome() {
       <FinaleGiftModal
         award={giftAward}
         onClose={() => setGiftAward(null)}
-        onRevealed={() => void refetch()}
+        onRevealed={() => {
+          // Keep the open modal mounted; only refresh winner list labels in the background.
+          void refetch({ silent: true })
+        }}
       />
     </>
+  )
+}
+
+function MyGiftPanel({
+  awards,
+  onOpen,
+}: {
+  awards: FinalePrizeAwardPublic[]
+  onOpen: (award: FinalePrizeAwardPublic) => void
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.18 }}
+      className="mx-auto mt-8 w-full max-w-md rounded-2xl bg-simelabs/20 px-4 py-4 ring-1 ring-simelabs/50"
+    >
+      <p className="text-center text-[11px] font-bold uppercase tracking-[0.2em] text-simelabs">
+        Your prize
+      </p>
+      <p className="mt-1 text-center text-sm text-white/70">
+        Open anytime — card number and PIN stay here for you.
+      </p>
+      <ul className="mt-4 space-y-2">
+        {awards.map((award) => (
+          <li key={award.id}>
+            <button
+              type="button"
+              onClick={() => onOpen(award)}
+              className="flex w-full items-center justify-between gap-3 rounded-xl bg-[#0a1f18] px-4 py-3 text-left ring-1 ring-simelabs/40 transition hover:bg-simelabs/15"
+            >
+              <span className="min-w-0">
+                <span className="block text-[10px] font-bold uppercase tracking-wide text-simelabs">
+                  {award.revealed_at ? 'Tap to view again' : 'Tap to unlock'}
+                </span>
+                <span className="block font-heading text-base font-bold text-white">
+                  {awardDisplayTitle(award)}
+                </span>
+                {award.masked_card && (
+                  <span className="mt-0.5 block font-mono text-[11px] text-white/50">
+                    {award.masked_card}
+                  </span>
+                )}
+              </span>
+              <span className="shrink-0 rounded-lg bg-simelabs px-3 py-1.5 text-xs font-bold text-simelabs-foreground">
+                {formatInr(award.amount_inr)}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </motion.div>
   )
 }
 
@@ -383,14 +422,10 @@ function PodiumWinner({
   award,
   label,
   delay,
-  isYou,
-  onOpenGift,
 }: {
   award: WinnerView
   label: string
   delay: number
-  isYou: boolean
-  onOpenGift: () => void
 }) {
   return (
     <motion.div
@@ -416,15 +451,6 @@ function PodiumWinner({
       </p>
       {award.masked_card && (
         <p className="mt-1 font-mono text-[10px] text-white/40">{award.masked_card}</p>
-      )}
-      {isYou && (
-        <button
-          type="button"
-          onClick={onOpenGift}
-          className="mt-2 text-xs font-bold text-simelabs underline-offset-2 hover:underline"
-        >
-          {award.revealed_at ? 'View gift' : 'Open gift'}
-        </button>
       )}
     </motion.div>
   )

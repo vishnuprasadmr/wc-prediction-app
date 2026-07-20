@@ -67,8 +67,12 @@ export function FinaleGiftModal({ award, onClose, onRevealed }: FinaleGiftModalP
       } catch {
         // Code is already shown; reveal stamp is best-effort.
       }
-      playSound('save')
-      if (celebrate) fireCelebration('exact')
+      if (celebrate) {
+        playSound('save')
+        fireCelebration('exact')
+      } else {
+        playSound('select')
+      }
       onRevealedRef.current()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not open gift')
@@ -77,8 +81,11 @@ export function FinaleGiftModal({ award, onClose, onRevealed }: FinaleGiftModalP
     }
   }, [])
 
+  const awardId = award?.id ?? null
+  const alreadyRevealed = Boolean(award?.revealed_at)
+
   useEffect(() => {
-    if (!award) {
+    if (!awardId) {
       loadedForId.current = null
       setCode(null)
       setError(null)
@@ -87,14 +94,15 @@ export function FinaleGiftModal({ award, onClose, onRevealed }: FinaleGiftModalP
       return
     }
 
-    // Only load once per award open — parent refetch after reveal must not reset UI.
-    if (loadedForId.current === award.id) return
-    loadedForId.current = award.id
+    // Key off id only — parent award object identity changes must not reopen/reload.
+    if (loadedForId.current === awardId) return
+    loadedForId.current = awardId
     setCode(null)
     setError(null)
     setCopied(false)
-    void loadGift(award.id, true)
-  }, [award, loadGift])
+    // Celebrate only on first unlock; reopening later is quiet.
+    void loadGift(awardId, !alreadyRevealed)
+  }, [awardId, alreadyRevealed, loadGift])
 
   const copyCode = async () => {
     if (!code) return
