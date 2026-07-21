@@ -430,7 +430,8 @@ export function AdminFinalePanel() {
           const suggestedName = row.suggested_user_id
             ? nameById.get(row.suggested_user_id)
             : null
-          const isLucky = row.slot_key === 'lucky_draw'
+          const isLucky =
+            row.slot_key === 'lucky_draw' || row.slot_key === 'lucky_draw_simelabs'
           const options =
             isLucky && luckyEligible.length > 0
               ? players.filter((p) => luckyEligible.includes(p.user_id))

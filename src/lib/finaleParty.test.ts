@@ -75,11 +75,12 @@ function fullAwards(patch?: Partial<FinalePrizeAwardAdmin>): FinalePrizeAwardAdm
 }
 
 describe('finaleParty — phases after Final', () => {
-  it('sums prize pool to ₹4,300 across 6 slots (no matchday heroes)', () => {
-    expect(FINALE_SLOT_DEFS).toHaveLength(6)
+  it('sums prize pool to ₹4,800 across 7 slots (global + Simelabs lucky draw)', () => {
+    expect(FINALE_SLOT_DEFS).toHaveLength(7)
     expect(FINALE_SLOT_DEFS.some((s) => s.slot_key.startsWith('matchday_hero'))).toBe(false)
-    expect(FINALE_POOL_TOTAL_INR).toBe(4300)
+    expect(FINALE_POOL_TOTAL_INR).toBe(4800)
     expect(FINALE_SLOT_DEFS.find((s) => s.slot_key === 'lucky_draw')?.amount_inr).toBe(500)
+    expect(FINALE_SLOT_DEFS.find((s) => s.slot_key === 'lucky_draw_simelabs')?.amount_inr).toBe(500)
   })
 
   it('stays tournament while Final is still live/scheduled', () => {

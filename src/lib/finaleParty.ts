@@ -9,6 +9,7 @@ export type FinaleSlotKey =
   | 'oracle'
   | 'season_star'
   | 'lucky_draw'
+  | 'lucky_draw_simelabs'
 
 export interface FinalePartyConfig {
   status: FinalePartyStatus
@@ -81,9 +82,15 @@ export const FINALE_SLOT_DEFS: FinaleSlotDef[] = [
   },
   {
     slot_key: 'lucky_draw',
-    title: 'Lucky league draw',
+    title: 'Lucky draw · Global',
     amount_inr: 500,
-    suggestionHint: '70%+ match picks',
+    suggestionHint: 'Global lucky draw (70%+ picks)',
+  },
+  {
+    slot_key: 'lucky_draw_simelabs',
+    title: 'Lucky draw · Simelabs',
+    amount_inr: 500,
+    suggestionHint: 'Simelabs lucky draw (prize-less)',
   },
 ]
 
@@ -128,6 +135,7 @@ export function buildFinaleSuggestions(
     oracle: null,
     season_star: null,
     lucky_draw: null,
+    lucky_draw_simelabs: null,
   }
 
   if (entries.length > 0) {

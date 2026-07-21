@@ -72,6 +72,13 @@ import {
   preparePrizeWinnerBlob,
   sharePrizeWinnerWithImage,
 } from '../lib/sharePrizeWinner'
+import {
+  buildWinnersBoardInput,
+  buildWinnersBoardShareText,
+  downloadWinnersBoardImage,
+  prepareWinnersBoardBlob,
+  shareWinnersBoardWithImage,
+} from '../lib/shareWinnersBoard'
 import { useFinaleParty } from '../hooks/useFinaleParty'
 import { maskGiftCardNumber } from '../lib/finaleParty'
 import { formatInr } from '../lib/prizes'
@@ -93,6 +100,7 @@ type ShareTab =
   | 'matchday'
   | 'arena'
   | 'prizes'
+  | 'winners-board'
 
 function HeroPreview({
   pictureUrl,
@@ -180,7 +188,7 @@ function ShareActions({
 export function AdminSharePanel() {
   const { matches } = useMatches()
   const { live: liveMealBets, settled: settledMealBets } = useMealChallenges(matches)
-  const [tab, setTab] = useState<ShareTab>('prizes')
+  const [tab, setTab] = useState<ShareTab>('winners-board')
   const [league, setLeague] = useState<LeaderboardLeague>('simelabs')
   const [topN, setTopN] = useState<number>(10)
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null)
@@ -260,6 +268,19 @@ export function AdminSharePanel() {
     }
     return buildPrizeWinnerInput(enriched)
   }, [selectedPrize, prizeProfiles])
+
+  const winnersBoardInput = useMemo(() => {
+    if (prizeAwards.length === 0) return null
+    const enriched = prizeAwards.map((a) => {
+      const profile = a.user_id ? prizeProfiles[a.user_id] : undefined
+      return {
+        ...a,
+        winner_display_name: a.winner_display_name ?? profile?.display_name ?? 'Winner',
+        winner_avatar_url: a.winner_avatar_url ?? profile?.avatar_url ?? null,
+      }
+    })
+    return buildWinnersBoardInput(enriched)
+  }, [prizeAwards, prizeProfiles])
 
   const { entries, loading } = useLeaderboard('all', league)
   const { lastMatch, hero, loading: heroLoading, error: heroError } = useLastMatchHero(matches)
@@ -395,6 +416,12 @@ export function AdminSharePanel() {
     [prizeWinnerInput, tab],
   )
 
+  const { blob: winnersBoardBlob, generating: winnersBoardGenerating } = useShareBlobCache(
+    () => prepareWinnersBoardBlob(winnersBoardInput!),
+    tab === 'winners-board' && Boolean(winnersBoardInput),
+    [winnersBoardInput, tab],
+  )
+
   const { blob: arenaBlob, generating: arenaGenerating } = useShareBlobCache(
     () => prepareShootoutVictoryBlob(arenaVictoryInput!),
     tab === 'arena' && Boolean(arenaVictoryInput),
@@ -411,7 +438,8 @@ export function AdminSharePanel() {
     (tab === 'leader' && leaderGenerating) ||
     (tab === 'matchday' && matchdayGenerating) ||
     (tab === 'arena' && arenaGenerating) ||
-    (tab === 'prizes' && prizeGenerating)
+    (tab === 'prizes' && prizeGenerating) ||
+    (tab === 'winners-board' && winnersBoardGenerating)
 
   useEffect(() => {
     for (const e of topThree) {
@@ -441,6 +469,7 @@ export function AdminSharePanel() {
   }
 
   const tabs: { id: ShareTab; label: string; hint: string }[] = [
+    { id: 'winners-board', label: 'All winners', hint: 'Full board with avatars' },
     { id: 'prizes', label: 'Prize winners', hint: 'Poster + masked Zomato card' },
     { id: 'snapshot', label: 'Game recap', hint: 'Top 3 + latest result + meal bets' },
     { id: 'upcoming', label: 'Next match', hint: 'Captain + IST + league picks %' },
@@ -1232,6 +1261,82 @@ export function AdminSharePanel() {
                 onCopy={() =>
                   void run(
                     () => shareStandings(buildMatchdayShareText(matchdayPreview)),
+                    'Copied!',
+                    'Copy failed',
+                  )
+                }
+              />
+            </>
+          )}
+        </div>
+      )}
+
+      {tab === 'winners-board' && (
+        <div className="mt-4 space-y-3">
+          {prizeLoading ? (
+            <div className="h-24 animate-pulse rounded-xl bg-muted" />
+          ) : !winnersBoardInput || winnersBoardInput.winners.length === 0 ? (
+            <p className="text-sm text-muted">No prize winners published yet.</p>
+          ) : (
+            <>
+              <div className="rounded-xl border border-simelabs/30 bg-simelabs/5 p-4">
+                <p className="text-xs font-bold uppercase tracking-wide text-simelabs">
+                  {winnersBoardInput.headline}
+                </p>
+                <p className="mt-1 text-sm text-muted">{winnersBoardInput.poolLabel}</p>
+                <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {winnersBoardInput.winners.map((w) => (
+                    <li
+                      key={`${w.prizeTitle}-${w.winnerName}`}
+                      className="flex items-center gap-3 rounded-xl bg-card/80 px-3 py-2"
+                    >
+                      <LeaderboardAvatar
+                        name={w.winnerName}
+                        avatarUrl={w.winnerAvatarUrl}
+                        size="md"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-amber-500">
+                          {w.badge}
+                        </p>
+                        <p className="truncate font-semibold">{w.winnerName}</p>
+                        <p className="text-xs text-simelabs">
+                          {w.prizeTitle} · {w.amountLabel}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <ShareActions
+                busy={busy}
+                disabled={!winnersBoardInput || winnersBoardGenerating}
+                onShare={() =>
+                  void run(
+                    () =>
+                      winnersBoardInput
+                        ? shareWinnersBoardWithImage(winnersBoardInput, winnersBoardBlob)
+                        : Promise.resolve({ ok: false }),
+                    'Shared!',
+                    'Share failed',
+                  )
+                }
+                onDownload={() =>
+                  void run(
+                    () =>
+                      winnersBoardInput
+                        ? downloadWinnersBoardImage(winnersBoardInput, winnersBoardBlob)
+                        : Promise.resolve(false),
+                    'Downloaded!',
+                    'Download failed',
+                  )
+                }
+                onCopy={() =>
+                  void run(
+                    () =>
+                      winnersBoardInput
+                        ? shareStandings(buildWinnersBoardShareText(winnersBoardInput))
+                        : Promise.resolve({ ok: false }),
                     'Copied!',
                     'Copy failed',
                   )

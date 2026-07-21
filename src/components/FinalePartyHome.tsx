@@ -87,8 +87,14 @@ export function FinalePartyHome() {
   const champion = winners.find((w) => w.slot_key === 'champion')
   const runnerUp = winners.find((w) => w.slot_key === 'runner_up')
   const bronze = winners.find((w) => w.slot_key === 'bronze')
-  const specials = winners.filter(
-    (w) => !['champion', 'runner_up', 'bronze'].includes(String(w.slot_key)),
+  const luckyDraws = winners.filter((w) =>
+    ['lucky_draw', 'lucky_draw_simelabs'].includes(String(w.slot_key)),
+  )
+  const otherSpecials = winners.filter(
+    (w) =>
+      !['champion', 'runner_up', 'bronze', 'lucky_draw', 'lucky_draw_simelabs'].includes(
+        String(w.slot_key),
+      ),
   )
 
   useEffect(() => {
@@ -280,27 +286,36 @@ export function FinalePartyHome() {
 
           {(runnerUp || bronze) && (
             <div className="mx-auto mt-12 grid max-w-lg grid-cols-2 gap-6">
-              {runnerUp && (
-                <PodiumWinner award={runnerUp} label="Runner-up" delay={0.3} />
-              )}
-              {bronze && (
-                <PodiumWinner award={bronze} label="Bronze" delay={0.38} />
-              )}
+              {runnerUp && <PodiumWinner award={runnerUp} label="Runner-up" delay={0.3} />}
+              {bronze && <PodiumWinner award={bronze} label="Bronze" delay={0.38} />}
             </div>
           )}
 
-          {specials.length > 0 && (
+          {luckyDraws.length > 0 && (
+            <div className="mx-auto mt-14 max-w-2xl">
+              <p className="text-center text-[11px] font-bold uppercase tracking-[0.22em] text-amber-300/80">
+                Lucky draws
+              </p>
+              <ul className="mt-6 grid gap-5 sm:grid-cols-2">
+                {luckyDraws.map((award, i) => (
+                  <LuckyDrawWinner key={award.id} award={award} delay={0.4 + i * 0.08} />
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {otherSpecials.length > 0 && (
             <div className="mx-auto mt-14 max-w-2xl">
               <p className="text-center text-[11px] font-bold uppercase tracking-[0.22em] text-white/45">
                 Special prizes
               </p>
-              <ul className="mt-6 grid gap-8 sm:grid-cols-3">
-                {specials.map((award, i) => (
+              <ul className="mt-6 grid gap-8 sm:grid-cols-2">
+                {otherSpecials.map((award, i) => (
                   <motion.li
                     key={award.id}
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.42 + i * 0.08 }}
+                    transition={{ delay: 0.5 + i * 0.08 }}
                     className="flex flex-col items-center text-center"
                   >
                     <ProfileAvatar
@@ -319,6 +334,46 @@ export function FinalePartyHome() {
                     {award.masked_card && (
                       <p className="mt-1 font-mono text-[10px] text-white/40">{award.masked_card}</p>
                     )}
+                  </motion.li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {winners.length > 0 && (
+            <div className="mx-auto mt-16 max-w-2xl">
+              <p className="text-center text-[11px] font-bold uppercase tracking-[0.22em] text-white/45">
+                Full winners board
+              </p>
+              <ul className="mt-5 space-y-3">
+                {winners.map((award, i) => (
+                  <motion.li
+                    key={award.id}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.55 + i * 0.04 }}
+                    className="flex items-center gap-3 rounded-2xl bg-white/[0.04] px-3 py-3 ring-1 ring-white/10"
+                  >
+                    <ProfileAvatar
+                      name={award.winner_display_name}
+                      avatarUrl={award.winner_avatar_url}
+                      size="md"
+                      className="ring-2 ring-simelabs/40"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-simelabs">
+                        {awardDisplayTitle(award)}
+                      </p>
+                      <p className="truncate font-heading text-base font-extrabold">
+                        {award.winner_display_name}
+                        {award.user_id === profile?.id ? (
+                          <span className="ml-2 text-xs font-bold text-amber-300">You</span>
+                        ) : null}
+                      </p>
+                    </div>
+                    <p className="shrink-0 text-sm font-bold text-simelabs">
+                      {formatInr(award.amount_inr)}
+                    </p>
                   </motion.li>
                 ))}
               </ul>
@@ -363,6 +418,39 @@ export function FinalePartyHome() {
         }}
       />
     </>
+  )
+}
+
+function LuckyDrawWinner({ award, delay }: { award: WinnerView; delay: number }) {
+  const label =
+    award.slot_key === 'lucky_draw_simelabs' || award.night_label === 'Simelabs'
+      ? 'Simelabs league'
+      : 'Global league'
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay }}
+      className="flex flex-col items-center rounded-2xl bg-gradient-to-b from-amber-400/15 to-transparent px-4 py-6 text-center ring-1 ring-amber-300/25"
+    >
+      <ProfileAvatar
+        name={award.winner_display_name}
+        avatarUrl={award.winner_avatar_url}
+        size="xl"
+        className="ring-2 ring-amber-300/70 ring-offset-2 ring-offset-[#061510]"
+      />
+      <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-300">
+        Lucky draw · {label}
+      </p>
+      <p className="mt-1 font-heading text-xl font-extrabold leading-tight">
+        {award.winner_display_name}
+      </p>
+      <p className="mt-0.5 text-sm font-semibold text-simelabs">{formatInr(award.amount_inr)}</p>
+      {award.masked_card && (
+        <p className="mt-1 font-mono text-[10px] text-white/40">{award.masked_card}</p>
+      )}
+    </motion.div>
   )
 }
 
